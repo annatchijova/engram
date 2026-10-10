@@ -38,6 +38,18 @@ Spatial form must communicate something true about the underlying state. Direct,
 
 Proximity does not automatically mean causality. Size does not mean authority. Brightness does not mean truth. Weight must not collapse confidence and standing into one signal. A line does not generically mean “related.”
 
+## Live
+
+- **Client**: https://client-six-mu-93.vercel.app
+- **Adapter**: https://engram-mneme-adapter.fly.dev
+
+Both are deployed and talking to each other for real — not a local-only
+demo. See `server/README.md` / `client/README.md` for redeploy commands.
+**Known limitation**: the backend has no persistent volume, so it
+reseeds a fresh demo field on every restart — a live quarantine/export
+someone runs against the public link resets on the next redeploy, not
+preserved indefinitely.
+
 ## Project status
 
 The architectural destination and investigation are documented in [ENGRAM-ARCHITECTURAL-INVESTIGATION.md](ENGRAM-ARCHITECTURAL-INVESTIGATION.md).

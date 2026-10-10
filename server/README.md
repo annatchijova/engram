@@ -128,3 +128,28 @@ not against two simultaneous ones racing each other), physical device
 pairing/integration testing, importing or re-verifying a bundle produced
 elsewhere, and any protocol-version negotiation beyond the client's
 `console.warn` on mismatch (`client/src/engram-api.ts`).
+
+## Deploy (Fly.io)
+
+```sh
+export FLYCTL_INSTALL="$HOME/.fly" && export PATH="$FLYCTL_INSTALL/bin:$PATH"
+fly auth login             # first time only, opens a browser
+fly launch --no-deploy     # first time only, creates the app from fly.toml
+fly secrets set \
+  ENGRAM_READ_TOKEN=<token> \
+  ENGRAM_DEMO_PASSWORD=<password> \
+  ENGRAM_CLIENT_ORIGIN=<the deployed client's https URL>
+fly deploy
+```
+
+The `Dockerfile` clones MNEME from its public GitHub mirror
+(`github.com/annatchijova/mneme`) at a pinned commit (`ARG MNEME_COMMIT`
+at the top of the file) rather than vendoring a copy — re-pin that build
+arg (and rebuild) when the sibling MNEME checkout moves to a commit the
+deployed adapter should pick up.
+
+**Named tradeoff**: no persistent volume. The field reseeds fresh on
+every boot (`seed_demo_field.py` is idempotent — a no-op against a
+non-empty field) rather than persisting across restarts, so a live
+quarantine/export demo resets on redeploy. Acceptable for a competition
+demo; would need a Fly volume (or an external DB) for real persistence.

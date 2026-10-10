@@ -79,3 +79,22 @@ input, not a Quest hand-tracking claim.
 
 - Minimal scene walkthrough: https://iwsdk.dev/guides/01b-minimal-scene.html
 - XR-enabled projects — IWER emulator controls: https://iwsdk.dev/guides/02-testing-experience.html#iwer-controls
+
+## Deploy (Vercel)
+
+```sh
+npm run build                         # -> dist/
+npx -y vercel@latest whoami           # first time: interactive login
+npx -y vercel@latest deploy --prod --yes
+```
+
+Set `VITE_ENGRAM_API_BASE` (the deployed adapter's `https://...fly.dev`
+URL) and `VITE_ENGRAM_READ_TOKEN` as Vercel project environment variables
+before building — they're baked into the static bundle at build time,
+same as locally. `vite.config.ts` already sets `base: './'`, so the build
+works unmodified at the Vercel root or any subpath.
+
+**Named limitation, now genuinely public, not just local**: the read
+token is readable by anyone who opens devtools on the deployed site. Only
+acceptable because the adapter's read endpoints are, by design, the only
+thing that token unlocks — see `server/app.py`'s module docstring.
