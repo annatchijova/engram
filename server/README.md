@@ -1,4 +1,4 @@
-# ENGRAM server — Nivel 1 + Nivel 2 + Nivel 3 + Nivel 4 adapter
+# ENGRAM server — Nivel 1-5 adapter
 
 FastAPI gateway over MNEME (`/home/labestiadevigia/mneme` by default).
 Nearly every endpoint is read-only — see `app.py`'s module docstring. The
@@ -96,3 +96,35 @@ never folded into the query-scoped interference verdict, per
 Out of scope this slice: arbitrary query/target input (no embedding-input
 UI), a full dual-world field renderer (the client renders the delta as a
 spatially distinct "ghost" cluster, not two complete independent fields).
+
+## Nivel 5 — Portable Epistemic Instrument (first slice)
+
+Two unrelated additions, chosen as the first honest slice of a level that
+is really several (multi-user backend, concurrency, bundle handoff,
+offline verification, device integration):
+
+- `GET /api/v1/bundle/export` — exports the whole field with MNEME's real
+  `bundle.export_bundle()`, then verifies it with MNEME's **genuinely
+  separate** `verify_offline.py`, run as a `subprocess` (mirroring
+  `mneme/demo.py`'s own `run_verifier()`) — never an in-process function
+  call, because a bundle's writer must never also be its only checker.
+  Returns the bundle JSON, its own declared `bundle_sha256`, and the
+  verifier's real stdout/exit code.
+- **Stale-snapshot rejection**: a process-lifetime `FIELD_VERSION` counter
+  (named honestly as single-process, not durable — a real multi-instance
+  deployment needs this in the DB) is now in `field/overview` and
+  `quarantine-preview`'s responses. `POST .../quarantine` requires
+  `expected_field_version` and rejects a stale one with 409, worded
+  distinctly from "already QUARANTINED" — checked before MNEME is ever
+  called.
+
+**Already true, not rebuilt for this slice**: the existing
+`_rw_conn()` + `commit()`/`rollback()` transaction already answers "what
+if the network drops mid-commit" — atomicity was never the gap.
+
+Out of scope this slice (a deferral, not a silent gap): true concurrent
+multi-operator sessions (the version counter guards against stale clients,
+not against two simultaneous ones racing each other), physical device
+pairing/integration testing, importing or re-verifying a bundle produced
+elsewhere, and any protocol-version negotiation beyond the client's
+`console.warn` on mismatch (`client/src/engram-api.ts`).

@@ -21,6 +21,10 @@ const TARGET_ACTOR_ID = 'pipeline-logs';
 
 export class ContainmentSystem extends createSystem({}) {
   private stagedCount = 0;
+  // Nivel 5 — captured at Stage time, sent back at Commit, so the server
+  // can reject a Commit staged against a field that has since moved
+  // (stale-snapshot precondition) rather than blindly applying it.
+  private stagedFieldVersion = 0;
 
   init(): void {
     const panel = this.world.getSceneObject<UIKitMLAsset>('containment-panel');
@@ -56,6 +60,7 @@ export class ContainmentSystem extends createSystem({}) {
         try {
           const preview = await EngramApi.previewQuarantine(TARGET_ACTOR_ID);
           this.stagedCount = preview.count;
+          this.stagedFieldVersion = preview.field_version;
           if (preview.already_quarantined) {
             previewText?.setProperties({
               text: `${TARGET_ACTOR_ID} is already QUARANTINED — nothing to stage.`,
@@ -87,6 +92,7 @@ export class ContainmentSystem extends createSystem({}) {
             session.sessionToken,
             'INC-hackathon containment demo',
             crypto.randomUUID(),
+            this.stagedFieldVersion,
           );
           resultText?.setProperties({
             text: `committed: sweep ${result.sweep_id} flagged ` +

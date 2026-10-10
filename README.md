@@ -43,10 +43,11 @@ Proximity does not automatically mean causality. Size does not mean authority. B
 The architectural destination and investigation are documented in [ENGRAM-ARCHITECTURAL-INVESTIGATION.md](ENGRAM-ARCHITECTURAL-INVESTIGATION.md).
 
 **Nivel 1 — Provenance Field**, **Nivel 2 — Audited Containment**,
-**Nivel 3 — Causal Field**, and **Nivel 4 — Counterfactual Chambers** are
-all live. Nivel 1 is read-only inspection of a real MNEME field: custody
-chains, authority grants, custody status. Nivel 2 adds the first real
-mutation path: an operator logs in as a real MNEME actor, stages a
+**Nivel 3 — Causal Field**, **Nivel 4 — Counterfactual Chambers**, and a
+first slice of **Nivel 5 — Portable Epistemic Instrument** are all live.
+Nivel 1 is read-only inspection of a real MNEME field: custody chains,
+authority grants, custody status. Nivel 2 adds the first real mutation
+path: an operator logs in as a real MNEME actor, stages a
 `QUARANTINE_ACTOR` sweep (sees exactly which memories would be tainted
 first), and only then commits — the field re-renders live with the result.
 Nivel 3 adds Trace: pulling on a memory's real causal history
@@ -59,7 +60,13 @@ run both directions — excluding more needs no authority, revealing what
 containment withheld needs the Nivel 2 session, and MNEME's own
 `authority.gate` is what enforces that, not the adapter — rendered as a
 translucent, spatially distinct "ghost" chamber, never a recolor of the
-real field. All of Nivel 3 and 4 are fully read-only and fully reversible.
+real field. Nivel 5's first slice adds bundle export verified by a
+genuinely separate process (MNEME's `verify_offline.py`, run as a real
+subprocess, never an in-process call) and a stale-snapshot precondition
+on the one mutation, so a Commit staged against a field that has since
+moved is rejected rather than silently applied. All of Nivel 3-5 are
+fully read-only except that one mutation, which stays fully reversible up
+to the moment it's committed.
 
 - `server/` — a FastAPI adapter (`app.py`) over the sibling MNEME
   repository. Almost every endpoint is read-only; the one exception

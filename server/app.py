@@ -22,10 +22,13 @@ nothing else.
 """
 from __future__ import annotations
 
+import json
 import os
 import secrets
 import sqlite3
+import subprocess
 import sys
+import tempfile
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -38,12 +41,19 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 MNEME_REPO_PATH = os.environ.get("MNEME_REPO_PATH", "/home/labestiadevigia/mneme")
 sys.path.insert(0, MNEME_REPO_PATH)
 
-from mneme import authority, causality, counterfactual, field, trust  # noqa: E402
+from mneme import authority, bundle, causality, counterfactual, field, trust  # noqa: E402
+
+VERIFIER_PATH = Path(MNEME_REPO_PATH) / "verify_offline.py"
 
 PROTOCOL_VERSION = "engram-query/v1"
 DB_PATH = Path(os.environ.get("MNEME_DB_PATH", Path(__file__).parent / "data" / "demo_field.db"))
 READ_TOKEN = os.environ.get("ENGRAM_READ_TOKEN")
 DEV_ORIGIN = os.environ.get("ENGRAM_CLIENT_ORIGIN", "http://localhost:5173")
+
+# Nivel 5 — process-lifetime only, named honestly: a real multi-instance
+# deployment would need this durable (in the DB), not a module global.
+# Bumped after every successful mutation; staged commits check it first.
+FIELD_VERSION = 0
 
 app = FastAPI(title="ENGRAM MNEME read adapter", version=PROTOCOL_VERSION)
 app.add_middleware(
@@ -112,6 +122,7 @@ def field_overview() -> dict[str, Any]:
         "authority_ledger_exists": ledger,
         "root_actors": roots,
         "capability_vocabulary": sorted(authority.CAPABILITIES),
+        "field_version": FIELD_VERSION,
     })
 
 
@@ -331,6 +342,7 @@ def quarantine_preview(actor_id: str) -> dict[str, Any]:
         "already_quarantined": already_quarantined,
         "would_flag_memory_ids": would_flag,
         "count": len(would_flag),
+        "field_version": FIELD_VERSION,
     })
 
 
@@ -348,9 +360,10 @@ def _map_mneme_error(err: ValueError) -> HTTPException:
 @app.post("/api/v1/actors/{actor_id}/quarantine")
 def quarantine_actor(
     actor_id: str,
-    payload: dict[str, str] = Body(...),
+    payload: dict[str, Any] = Body(...),
     session: dict[str, Any] = Depends(require_session),
 ) -> dict[str, Any]:
+    global FIELD_VERSION
     reason = payload.get("reason", "")
     idempotency_key = payload.get("idempotency_key", "")
     if not reason.strip():
@@ -363,6 +376,17 @@ def quarantine_actor(
     if cached is not None:
         return cached
 
+    # Stale-snapshot precondition (Nivel 5): checked before touching MNEME,
+    # and worded distinctly from "already QUARANTINED" so an operator can
+    # tell "the world moved under you" from "someone already did this."
+    expected_version = payload.get("expected_field_version")
+    if expected_version is not None and int(expected_version) != FIELD_VERSION:
+        raise HTTPException(
+            409,
+            f"stale snapshot: field is now at version {FIELD_VERSION}, you "
+            f"staged against version {expected_version} — refresh and restage.",
+        )
+
     conn = _rw_conn()
     try:
         cur = conn.cursor()
@@ -371,6 +395,7 @@ def quarantine_actor(
             reason=reason,
         )
         conn.commit()
+        FIELD_VERSION += 1
     except ValueError as err:
         conn.rollback()
         raise _map_mneme_error(err) from err
@@ -462,3 +487,46 @@ def containment_effect(session: dict[str, Any] = Depends(require_session)) -> di
         raise _map_mneme_error(err) from err
     conn.close()
     return _delta_envelope(delta)
+
+
+# ---------------------------------------------------------------------------
+# NIVEL 5 — bundle export + INDEPENDENT offline verification. The verifier
+# runs as a genuinely separate subprocess (mneme/verify_offline.py), never
+# an in-process function call — mirroring mneme/demo.py's own
+# run_verifier() — because a bundle's writer must never also be its only
+# checker. Read-only: export_bundle() and the standalone verifier both only
+# read the field.
+# ---------------------------------------------------------------------------
+
+@app.get("/api/v1/bundle/export", dependencies=[Depends(require_token)])
+def export_bundle() -> dict[str, Any]:
+    conn = _conn()
+    cur = conn.cursor()
+    bundle_json = bundle.export_bundle(cur)
+    conn.close()
+
+    outer = json.loads(bundle_json)
+    memory_count = len(outer.get("body", {}).get("memories", []))
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        f.write(bundle_json)
+        tmp_path = f.name
+    try:
+        r = subprocess.run(
+            [sys.executable, str(VERIFIER_PATH), tmp_path],
+            capture_output=True, text=True, timeout=30,
+        )
+    finally:
+        os.unlink(tmp_path)
+
+    output = (r.stdout.strip() or r.stderr.strip()).splitlines()
+    return _envelope({
+        "bundle_json": bundle_json,
+        "bundle_sha256": outer.get("bundle_sha256"),
+        "memory_count": memory_count,
+        "verifier": {
+            "verified": r.returncode == 0,
+            "exit_code": r.returncode,
+            "output_lines": output,
+        },
+    })

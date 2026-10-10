@@ -1,10 +1,12 @@
-# ENGRAM client — Nivel 1-4: Provenance, Containment, Causal Field, Counterfactual
+# ENGRAM client — Nivel 1-5
 
 Seated WebXR/IWSDK client. Fetches a real MNEME field from `server/app.py`
 and renders it. One real mutation path exists: log in, stage a quarantine,
 see the exact preview, commit — see `src/containment-system.ts`. Nivel 3
 adds "Trace impact" and Nivel 4 adds the Counterfactual Chamber: both
-fully read-only, fully reversible.
+fully read-only, fully reversible. Nivel 5 adds bundle export with
+independent offline verification, and a stale-snapshot precondition on
+the one mutation.
 
 This project uses `iwsdk.config.json` for declarative scene, asset, component,
 XR, and emulator configuration. Application systems remain explicit in
@@ -64,6 +66,16 @@ input, not a Quest hand-tracking claim.
   doc calls insufficient — tied back to real nodes by thin lines.
   "Collapse chamber" disposes every chamber entity; the factual field is
   never touched by any of it.
+- `src/portable-system.ts` + `public/ui/portable.uikitml` — "Export &
+  Verify Bundle" calls `GET /api/v1/bundle/export` and shows exactly what
+  the server's independent `verify_offline.py` subprocess printed, never
+  a synthesized verdict. "Download bundle.json" triggers a real browser
+  file download (`Blob`/`URL.createObjectURL`) — this is ENGRAM's own
+  hosted page, not a sandboxed artifact viewer, so that's legitimate here.
+- `src/containment-system.ts` also now captures `field_version` from the
+  Stage preview and sends it back on Commit — a Commit staged against a
+  field that has since moved is rejected by the server (409), distinctly
+  worded from "already QUARANTINED."
 
 - Minimal scene walkthrough: https://iwsdk.dev/guides/01b-minimal-scene.html
 - XR-enabled projects — IWER emulator controls: https://iwsdk.dev/guides/02-testing-experience.html#iwer-controls

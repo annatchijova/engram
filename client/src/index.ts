@@ -11,6 +11,7 @@ import { ContainmentSystem } from './containment-system.js';
 import { CounterfactualSystem } from './counterfactual-system.js';
 import { FieldSystem } from './field-system.js';
 import { initLoginOverlay } from './login-overlay.js';
+import { PortableSystem } from './portable-system.js';
 import { SelectionSystem } from './selection-system.js';
 import { TraceSystem } from './trace-system.js';
 
@@ -25,4 +26,5 @@ World.create(
   world.registerSystem(ContainmentSystem);
   world.registerSystem(TraceSystem);
   world.registerSystem(CounterfactualSystem);
+  world.registerSystem(PortableSystem);
 });

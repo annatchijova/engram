@@ -31,4 +31,9 @@ export default defineAssets({
     type: AssetType.UIKitML,
     name: 'Counterfactual Panel',
   },
+  'portable-panel': {
+    url: publicAssetUrl('ui/portable.uikitml'),
+    type: AssetType.UIKitML,
+    name: 'Portable Panel',
+  },
 });

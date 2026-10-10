@@ -13,6 +13,12 @@ const API_BASE = (import.meta.env.VITE_ENGRAM_API_BASE as string | undefined) ??
   'http://localhost:8000';
 const READ_TOKEN = import.meta.env.VITE_ENGRAM_READ_TOKEN as string | undefined;
 
+// Nivel 5 — minimal check, not a hard gate: a real version-negotiation UI
+// is out of scope. Mismatches are logged so a client/server skew is at
+// least visible, matching the doc's "can an old client read a new
+// protocol" adversarial question with an honest partial answer.
+const EXPECTED_PROTOCOL_VERSION = 'engram-query/v1';
+
 export type Envelope<T> = {
   protocol_version: string;
   snapshot_as_of: string;
@@ -28,6 +34,7 @@ export type FieldOverview = {
   authority_ledger_exists: boolean;
   root_actors: string[];
   capability_vocabulary: string[];
+  field_version: number;
 };
 
 export type MemorySummary = {
@@ -124,6 +131,18 @@ export type QuarantinePreview = {
   already_quarantined: boolean;
   would_flag_memory_ids: string[];
   count: number;
+  field_version: number;
+};
+
+export type BundleExport = {
+  bundle_json: string;
+  bundle_sha256: string;
+  memory_count: number;
+  verifier: {
+    verified: boolean;
+    exit_code: number;
+    output_lines: string[];
+  };
 };
 
 export type QuarantineResult = {
@@ -163,6 +182,13 @@ async function request<T>(
     );
   }
   const envelope = (await res.json()) as Envelope<T>;
+  if (envelope.protocol_version !== EXPECTED_PROTOCOL_VERSION) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[ENGRAM] protocol version mismatch: client expects ` +
+      `${EXPECTED_PROTOCOL_VERSION}, server sent ${envelope.protocol_version}.`,
+    );
+  }
   return envelope.data;
 }
 
@@ -202,11 +228,15 @@ export const EngramApi = {
     sessionToken: string,
     reason: string,
     idempotencyKey: string,
+    expectedFieldVersion: number,
   ) =>
     request<QuarantineResult>(`/api/v1/actors/${encodeURIComponent(actorId)}/quarantine`, {
       method: 'POST',
       token: sessionToken,
-      body: { reason, idempotency_key: idempotencyKey },
+      body: {
+        reason, idempotency_key: idempotencyKey,
+        expected_field_version: expectedFieldVersion,
+      },
     }),
   exclusionEffect: () =>
     request<CounterfactualDelta>('/api/v1/counterfactual/exclusion-effect'),
@@ -214,4 +244,5 @@ export const EngramApi = {
     request<CounterfactualDelta>('/api/v1/counterfactual/containment-effect', {
       token: sessionToken,
     }),
+  exportBundle: () => request<BundleExport>('/api/v1/bundle/export'),
 };
