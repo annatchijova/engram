@@ -9,17 +9,6 @@ import { AssetType, defineAssets } from '@iwsdk/core';
 
 const publicAssetUrl = (filePath: string): string =>
   `${import.meta.env.BASE_URL}${filePath.replace(/^\/+/u, '')}`;
-const DEFAULT_STOCK_ASSET_BASE =
-  'https://cdn.jsdelivr.net/npm/@iwsdk/example-assets@0.4.2/assets';
-const configuredStockAssetBase =
-  import.meta.env.VITE_IWSDK_EXAMPLE_ASSET_BASE_URL?.trim();
-const stockAssetBase = (
-  configuredStockAssetBase || DEFAULT_STOCK_ASSET_BASE
-).replace(/\/+$/u, '');
-
-function stockAssetUrl(assetId: string, fileName: string): string {
-  return `${stockAssetBase}/${assetId}/${fileName}`;
-}
 
 export default defineAssets({
   'legend-panel': {
@@ -31,5 +20,10 @@ export default defineAssets({
     url: publicAssetUrl('ui/detail.uikitml'),
     type: AssetType.UIKitML,
     name: 'Detail Panel',
+  },
+  'containment-panel': {
+    url: publicAssetUrl('ui/containment.uikitml'),
+    type: AssetType.UIKitML,
+    name: 'Containment Panel',
   },
 });

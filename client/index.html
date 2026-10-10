@@ -8,9 +8,66 @@
     />
     <link rel="icon" href="data:," />
     <title>client</title>
+    <style>
+      #engram-login {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        z-index: 10;
+        background: #14161a;
+        border: 1px solid #3a3f47;
+        border-radius: 8px;
+        padding: 12px 14px;
+        font-family: system-ui, sans-serif;
+        color: #e8e8e8;
+        width: 220px;
+      }
+      #engram-login h3 {
+        margin: 0 0 8px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      #engram-login input {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        margin-bottom: 6px;
+        padding: 6px 8px;
+        background: #0e1013;
+        border: 1px solid #3a3f47;
+        border-radius: 4px;
+        color: #e8e8e8;
+        font-size: 12px;
+      }
+      #engram-login button {
+        width: 100%;
+        padding: 6px 8px;
+        background: #3a6ea5;
+        border: none;
+        border-radius: 4px;
+        color: white;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      #engram-login .status {
+        margin-top: 8px;
+        font-size: 11px;
+        color: #9fb79f;
+      }
+      #engram-login .status.error {
+        color: #e07070;
+      }
+    </style>
   </head>
   <body style="margin: 0">
     <div id="scene-container"></div>
+    <div id="engram-login">
+      <h3>Operator login</h3>
+      <input id="engram-login-user" placeholder="username" autocomplete="username" />
+      <input id="engram-login-pass" type="password" placeholder="password" autocomplete="current-password" />
+      <button id="engram-login-submit" type="button">Log in</button>
+      <div id="engram-login-status" class="status"></div>
+    </div>
     <script type="module" src="/src/index.ts"></script>
   </body>
 </html>

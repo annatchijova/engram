@@ -47,6 +47,22 @@
       "components": {
         "RayInteractable": {}
       }
+    },
+    {
+      "id": "containment-panel",
+      "name": "Containment Panel",
+      "content": {
+        "type": "asset",
+        "asset": "containment-panel"
+      },
+      "transform": {
+        "position": [0.5, 1.0, -1.45],
+        "rotationDeg": [0, -10, 0],
+        "scale": 1
+      },
+      "components": {
+        "RayInteractable": {}
+      }
     }
   ]
 }

@@ -11,6 +11,7 @@
 import {
   Color,
   createSystem,
+  Entity,
   Mesh,
   MeshStandardMaterial,
   RayInteractable,
@@ -38,12 +39,15 @@ const NODE_RADIUS = 0.055;
 
 export class FieldSystem extends createSystem({}) {
   private geometry = new SphereGeometry(NODE_RADIUS, 24, 16);
+  private nodeEntities: Entity[] = [];
 
   init(): void {
-    void this.load();
+    void this.refresh();
   }
 
-  private async load(): Promise<void> {
+  /** Re-fetches the field and rebuilds the memory nodes. Public so
+   * ContainmentSystem can call it after a commit changes custody_status. */
+  async refresh(): Promise<void> {
     const legend = this.world.getSceneObject<UIKitMLAsset>('legend-panel');
 
     let overview;
@@ -62,6 +66,9 @@ export class FieldSystem extends createSystem({}) {
       this.reportLoadError(legend, err);
       return;
     }
+
+    for (const entity of this.nodeEntities) entity.dispose();
+    this.nodeEntities = [];
 
     const count = memories.length;
     const startDeg = -ARC_SPAN_DEG / 2;
@@ -82,6 +89,7 @@ export class FieldSystem extends createSystem({}) {
         memoryId: m.memory_id,
         custodyStatus: m.custody_status,
       });
+      this.nodeEntities.push(entity);
     });
   }
 

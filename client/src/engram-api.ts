@@ -72,8 +72,43 @@ export type CustodyChain = {
   entries: CustodyEntry[];
 };
 
-async function get<T>(path: string): Promise<T> {
-  if (!READ_TOKEN) {
+export type ActorSummary = {
+  actor_id: string;
+  display_name: string;
+  kind: string;
+  status: string;
+};
+
+export type LoginResult = {
+  session_token: string;
+  actor_id: string;
+  display_name: string;
+  effective_capabilities: string[];
+  expires_in_seconds: number;
+};
+
+export type QuarantinePreview = {
+  actor_id: string;
+  already_quarantined: boolean;
+  would_flag_memory_ids: string[];
+  count: number;
+};
+
+export type QuarantineResult = {
+  sweep_id: string;
+  quarantined_actor: string;
+  initiated_by: string;
+  flagged_memory_ids: string[];
+  flagged_count: number;
+  advisory_resonant_neighbours: string[];
+};
+
+async function request<T>(
+  path: string,
+  opts: { method?: string; token?: string; body?: unknown } = {},
+): Promise<T> {
+  const token = opts.token ?? READ_TOKEN;
+  if (!token) {
     throw new Error(
       'VITE_ENGRAM_READ_TOKEN is not set. Copy client/.env.example to ' +
       'client/.env and fill it in with the same token the adapter was ' +
@@ -81,20 +116,62 @@ async function get<T>(path: string): Promise<T> {
     );
   }
   const res = await fetch(`${API_BASE}${path}`, {
-    headers: { Authorization: `Bearer ${READ_TOKEN}` },
+    method: opts.method ?? 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...(opts.body ? { 'Content-Type': 'application/json' } : {}),
+    },
+    body: opts.body ? JSON.stringify(opts.body) : undefined,
   });
   if (!res.ok) {
-    throw new Error(`ENGRAM adapter ${path} -> HTTP ${res.status}`);
+    const detail = await res.json().catch(() => null);
+    throw new Error(
+      `ENGRAM adapter ${path} -> HTTP ${res.status}` +
+      (detail?.detail ? `: ${detail.detail}` : ''),
+    );
   }
   const envelope = (await res.json()) as Envelope<T>;
   return envelope.data;
 }
 
+// login() posts credentials with no bearer token at all — it IS the
+// token-issuing endpoint, so request() is called with token:'unused'
+// to satisfy the helper's "a token is present" check without sending
+// anything the server actually reads as a bearer credential.
+async function login(username: string, password: string): Promise<LoginResult> {
+  const res = await fetch(`${API_BASE}/api/v1/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
+  if (!res.ok) {
+    const detail = await res.json().catch(() => null);
+    throw new Error(detail?.detail ?? `login failed: HTTP ${res.status}`);
+  }
+  const envelope = (await res.json()) as Envelope<LoginResult>;
+  return envelope.data;
+}
+
 export const EngramApi = {
-  overview: () => get<FieldOverview>('/api/v1/field/overview'),
+  overview: () => request<FieldOverview>('/api/v1/field/overview'),
   listMemories: () =>
-    get<{ total: number; memories: MemorySummary[] }>('/api/v1/memories?limit=200'),
-  getMemory: (id: string) => get<MemoryDetail>(`/api/v1/memories/${encodeURIComponent(id)}`),
+    request<{ total: number; memories: MemorySummary[] }>('/api/v1/memories?limit=200'),
+  getMemory: (id: string) => request<MemoryDetail>(`/api/v1/memories/${encodeURIComponent(id)}`),
   getCustody: (id: string) =>
-    get<CustodyChain>(`/api/v1/memories/${encodeURIComponent(id)}/custody`),
+    request<CustodyChain>(`/api/v1/memories/${encodeURIComponent(id)}/custody`),
+  listActors: () => request<{ actors: ActorSummary[] }>('/api/v1/actors'),
+  previewQuarantine: (actorId: string) =>
+    request<QuarantinePreview>(`/api/v1/actors/${encodeURIComponent(actorId)}/quarantine-preview`),
+  login,
+  commitQuarantine: (
+    actorId: string,
+    sessionToken: string,
+    reason: string,
+    idempotencyKey: string,
+  ) =>
+    request<QuarantineResult>(`/api/v1/actors/${encodeURIComponent(actorId)}/quarantine`, {
+      method: 'POST',
+      token: sessionToken,
+      body: { reason, idempotency_key: idempotencyKey },
+    }),
 };

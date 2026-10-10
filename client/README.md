@@ -1,7 +1,8 @@
-# ENGRAM client — Nivel 1 Provenance Field
+# ENGRAM client — Nivel 1 Provenance Field + Nivel 2 Audited Containment
 
 Seated WebXR/IWSDK client. Fetches a real MNEME field from `server/app.py`
-and renders it; no mutation path exists anywhere in this app.
+and renders it. One real mutation path exists: log in, stage a quarantine,
+see the exact preview, commit — see `src/containment-system.ts`.
 
 This project uses `iwsdk.config.json` for declarative scene, asset, component,
 XR, and emulator configuration. Application systems remain explicit in
@@ -33,7 +34,15 @@ input, not a Quest hand-tracking claim.
   `/api/v1/memories/{id}` and `/api/v1/memories/{id}/custody` and fills the
   detail panel.
 - `src/engram-api.ts` — the only module that talks to the adapter.
-- `public/ui/legend.uikitml`, `public/ui/detail.uikitml` — the two panels.
+- `public/ui/legend.uikitml`, `public/ui/detail.uikitml` — the Nivel 1 panels.
+- `src/login-overlay.ts` + `index.html`'s `#engram-login` — plain DOM login
+  (not UIKitML — unverified input-widget support), fills `src/session.ts`
+  (in-memory only, lost on reload by design).
+- `src/containment-system.ts` + `public/ui/containment.uikitml` — Stage
+  (calls the read-only preview endpoint, never mutates) and Commit (the
+  one mutating call in the whole app) for the single demo target actor
+  `pipeline-logs`. On commit, calls `FieldSystem.refresh()` so the field
+  re-renders with the new `custody_status` colors immediately.
 
 - Minimal scene walkthrough: https://iwsdk.dev/guides/01b-minimal-scene.html
 - XR-enabled projects — IWER emulator controls: https://iwsdk.dev/guides/02-testing-experience.html#iwer-controls

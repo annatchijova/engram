@@ -23,20 +23,22 @@ nothing else.
 from __future__ import annotations
 
 import os
+import secrets
 import sqlite3
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import Body, Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 MNEME_REPO_PATH = os.environ.get("MNEME_REPO_PATH", "/home/labestiadevigia/mneme")
 sys.path.insert(0, MNEME_REPO_PATH)
 
-from mneme import authority  # noqa: E402
+from mneme import authority, trust  # noqa: E402
 
 PROTOCOL_VERSION = "engram-query/v1"
 DB_PATH = Path(os.environ.get("MNEME_DB_PATH", Path(__file__).parent / "data" / "demo_field.db"))
@@ -47,7 +49,7 @@ app = FastAPI(title="ENGRAM MNEME read adapter", version=PROTOCOL_VERSION)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[DEV_ORIGIN],
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST"],
     allow_headers=["Authorization"],
 )
 
@@ -193,3 +195,171 @@ def get_authority(actor_id: str) -> dict[str, Any]:
         "effective_capabilities": caps,
         "chain": rows,
     })
+
+
+@app.get("/api/v1/actors", dependencies=[Depends(require_token)])
+def list_actors() -> dict[str, Any]:
+    conn = _conn()
+    cur = conn.cursor()
+    cur.execute("SELECT actor_id, display_name, kind, status FROM actors ORDER BY actor_id ASC")
+    cols = ["actor_id", "display_name", "kind", "status"]
+    rows = [dict(zip(cols, r)) for r in cur.fetchall()]
+    conn.close()
+    return _envelope({"actors": rows})
+
+
+# ---------------------------------------------------------------------------
+# MUTATING SECTION — everything above this line is read-only (_conn() opens
+# with PRAGMA query_only = ON). Everything below writes to MNEME, through
+# MNEME's own authorized API only, and is the ONLY part of ENGRAM, client or
+# server, that does. See the module docstring's AUTH PLACEHOLDER note: the
+# session model below is a real server-issued identity (not client-asserted)
+# but a hackathon-scope one — in-memory, process-lifetime, one shared demo
+# password. It answers the investigation doc's P1.5 just enough to be
+# honest about what it is, not as a production auth system.
+# ---------------------------------------------------------------------------
+
+DEMO_USERS: dict[str, dict[str, str]] = {
+    "omar": {"actor_id": "analyst-omar", "display_name": "Analyst Omar"},
+}
+DEMO_PASSWORD = os.environ.get("ENGRAM_DEMO_PASSWORD", "demo-password")
+SESSION_TTL_SECONDS = 3600
+
+SESSIONS: dict[str, dict[str, Any]] = {}
+IDEMPOTENCY: dict[str, dict[str, Any]] = {}
+
+
+def _rw_conn() -> sqlite3.Connection:
+    """Read-write connection. Used ONLY by the quarantine endpoint below —
+    every other endpoint in this file uses _conn(), which is query-only."""
+    if not DB_PATH.exists():
+        raise HTTPException(
+            503, f"No field at {DB_PATH}. Run seed_demo_field.py first.")
+    return sqlite3.connect(str(DB_PATH))
+
+
+def require_session(
+    creds: HTTPAuthorizationCredentials | None = Depends(_bearer),
+) -> dict[str, Any]:
+    if creds is None:
+        raise HTTPException(401, "Missing session token.")
+    session = SESSIONS.get(creds.credentials)
+    if session is None:
+        raise HTTPException(401, "Invalid or expired session token.")
+    if session["expires_at"] < time.time():
+        del SESSIONS[creds.credentials]
+        raise HTTPException(401, "Session expired — log in again.")
+    return session
+
+
+@app.post("/api/v1/auth/login")
+def login(payload: dict[str, str] = Body(...)) -> dict[str, Any]:
+    username = payload.get("username", "")
+    password = payload.get("password", "")
+    user = DEMO_USERS.get(username)
+    if user is None or not secrets.compare_digest(password, DEMO_PASSWORD):
+        raise HTTPException(401, "Invalid username or password.")
+
+    conn = _conn()
+    cur = conn.cursor()
+    caps = sorted(authority.effective_capabilities(cur, user["actor_id"]))
+    conn.close()
+
+    token = secrets.token_urlsafe(32)
+    SESSIONS[token] = {
+        "actor_id": user["actor_id"],
+        "display_name": user["display_name"],
+        "expires_at": time.time() + SESSION_TTL_SECONDS,
+    }
+    return _envelope({
+        "session_token": token,
+        "actor_id": user["actor_id"],
+        "display_name": user["display_name"],
+        "effective_capabilities": caps,
+        "expires_in_seconds": SESSION_TTL_SECONDS,
+    })
+
+
+@app.get("/api/v1/actors/{actor_id}/quarantine-preview", dependencies=[Depends(require_token)])
+def quarantine_preview(actor_id: str) -> dict[str, Any]:
+    conn = _conn()
+    cur = conn.cursor()
+    cur.execute("SELECT status FROM actors WHERE actor_id = ?", (actor_id,))
+    row = cur.fetchone()
+    if row is None:
+        conn.close()
+        raise HTTPException(404, f"No actor {actor_id!r}.")
+    already_quarantined = row[0] == "QUARANTINED"
+
+    # The EXACT query trust.quarantine_actor() uses to compute its flagged
+    # set (mneme/trust.py) — imported NON_INFLUENCE_EVENTS, not re-declared,
+    # so this preview cannot silently drift from what a real commit does.
+    placeholders = ",".join("?" for _ in trust.NON_INFLUENCE_EVENTS)
+    cur.execute(
+        f"SELECT DISTINCT memory_id FROM custody_chain WHERE actor_id = ? "
+        f"AND event_type NOT IN ({placeholders}) ORDER BY memory_id ASC",
+        (actor_id, *trust.NON_INFLUENCE_EVENTS),
+    )
+    would_flag = [r[0] for r in cur.fetchall()]
+    conn.close()
+    return _envelope({
+        "actor_id": actor_id,
+        "already_quarantined": already_quarantined,
+        "would_flag_memory_ids": would_flag,
+        "count": len(would_flag),
+    })
+
+
+def _map_mneme_error(err: ValueError) -> HTTPException:
+    msg = str(err)
+    if "already QUARANTINED" in msg:
+        return HTTPException(409, msg)
+    if "Unknown actor" in msg or "Unknown initiator" in msg:
+        return HTTPException(404, msg)
+    if "holds no" in msg or "no authority chain" in msg or "refused" in msg:
+        return HTTPException(403, msg)
+    return HTTPException(400, msg)
+
+
+@app.post("/api/v1/actors/{actor_id}/quarantine")
+def quarantine_actor(
+    actor_id: str,
+    payload: dict[str, str] = Body(...),
+    session: dict[str, Any] = Depends(require_session),
+) -> dict[str, Any]:
+    reason = payload.get("reason", "")
+    idempotency_key = payload.get("idempotency_key", "")
+    if not reason.strip():
+        raise HTTPException(400, "reason must be non-empty.")
+    if not idempotency_key.strip():
+        raise HTTPException(400, "idempotency_key is required.")
+
+    cache_key = f"quarantine:{session['actor_id']}:{idempotency_key}"
+    cached = IDEMPOTENCY.get(cache_key)
+    if cached is not None:
+        return cached
+
+    conn = _rw_conn()
+    try:
+        cur = conn.cursor()
+        sweep = trust.quarantine_actor(
+            cur, actor_id=actor_id, initiated_by=session["actor_id"],
+            reason=reason,
+        )
+        conn.commit()
+    except ValueError as err:
+        conn.rollback()
+        raise _map_mneme_error(err) from err
+    finally:
+        conn.close()
+
+    result = _envelope({
+        "sweep_id": sweep.sweep_id,
+        "quarantined_actor": sweep.quarantined_actor,
+        "initiated_by": sweep.initiated_by,
+        "flagged_memory_ids": list(sweep.flagged_memory_ids),
+        "flagged_count": len(sweep.flagged_memory_ids),
+        "advisory_resonant_neighbours": list(sweep.advisory_resonant_neighbours),
+    })
+    IDEMPOTENCY[cache_key] = result
+    return result

@@ -56,6 +56,7 @@ def seed(conn: sqlite3.Connection) -> None:
         ("agent-ada", "AGENT", ["STORE", "REINFORCE", "DECIDE"],
          "runbook ingestion and on-call answers"),
         ("pipeline-feeds", "PIPELINE", ["STORE", "REINFORCE"], "feed sync duty"),
+        ("pipeline-logs", "PIPELINE", ["STORE"], "log ingestion duty"),
         ("analyst-omar", "HUMAN",
          ["STORE", "SUPERSEDE", "REINFORCE", "QUARANTINE_ACTOR",
           "QUARANTINE_MEMORY", "REHABILITATE", "COUNTERFACTUAL"],
@@ -102,6 +103,13 @@ def seed(conn: sqlite3.Connection) -> None:
         reason="feed sync", content="Hotfix 4.2 passed the staging gate.",
         embedding=e([0.5, 0.5, 0.5]), embedding_model="demo")
     print("stored mem-forged-report by pipeline-feeds  <- will be directly quarantined")
+
+    field.store(
+        cur, memory_id="mem-log-ingest", actor_id="pipeline-logs",
+        reason="log ingestion", content="Nightly log ingestion completed: 4.2M events.",
+        embedding=e([0.2, 0.3, 0.9]), embedding_model="demo")
+    print("stored mem-log-ingest by pipeline-logs  <- stays CLEAN; this is the "
+          "Nivel 2 live-demo quarantine target, not swept below")
 
     for _ in range(3):
         field.reinforce(cur, memory_id="mem-gate", actor_id="analyst-omar",

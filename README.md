@@ -42,23 +42,32 @@ Proximity does not automatically mean causality. Size does not mean authority. B
 
 The architectural destination and investigation are documented in [ENGRAM-ARCHITECTURAL-INVESTIGATION.md](ENGRAM-ARCHITECTURAL-INVESTIGATION.md).
 
-**Nivel 1 — Provenance Field is in progress.** Read-only inspection of a real
-MNEME field: custody chains, authority grants, and custody status, with no
-mutation path anywhere in the client.
+**Nivel 1 — Provenance Field** and **Nivel 2 — Audited Containment** are
+both live. Nivel 1 is read-only inspection of a real MNEME field: custody
+chains, authority grants, custody status. Nivel 2 adds the first real
+mutation path: an operator logs in as a real MNEME actor, stages a
+`QUARANTINE_ACTOR` sweep (sees exactly which memories would be tainted
+first), and only then commits — the field re-renders live with the result.
 
-- `server/` — a read-only FastAPI adapter (`app.py`) over the sibling MNEME
-  repository, plus `seed_demo_field.py`, which seeds a demo field using only
-  MNEME's own authorized API (store/reinforce/supersede/quarantine — never a
-  raw SQL insert). MNEME stays a separate service; the browser never touches
-  SQLite directly.
+- `server/` — a FastAPI adapter (`app.py`) over the sibling MNEME
+  repository. Almost every endpoint is read-only; the one exception
+  (`POST /api/v1/actors/{id}/quarantine`) is clearly bannered in the file
+  and is the only place in all of ENGRAM that writes to MNEME, through
+  MNEME's own `trust.quarantine_actor` — never a raw SQL write.
+  `seed_demo_field.py` seeds a demo field the same way, using only MNEME's
+  own authorized API. MNEME stays a separate service; the browser never
+  touches SQLite directly.
 - `client/` — a seated WebXR/IWSDK experience. Memories render as an arc of
   nodes colored by `custody_status` against a fixed, legended map; selecting
-  one (ray/pinch in XR, mouse-click on desktop) opens a panel with its real
-  content, hash, and custody chain.
-- **Known limitation, not hidden:** the adapter's auth is a single shared
-  bearer token (`ENGRAM_READ_TOKEN`), not the externally-authenticated XR
-  actor identity the architecture calls for. Acceptable for now only because
-  Nivel 1 exposes zero mutating endpoint — see `server/app.py`'s docstring.
+  one opens a panel with its real content, hash, and custody chain. A
+  containment console lets a logged-in operator stage and commit a
+  quarantine, Stage never mutating and Commit being the one explicit,
+  separate gesture that does (ray/pinch in XR, mouse-click on desktop).
+- **Known limitations, not hidden:** read access is a single shared bearer
+  token (`ENGRAM_READ_TOKEN`); the Nivel 2 login is one demo credential
+  with an in-memory, process-lifetime session — a real externally-bound XR
+  actor identity is still open. Both are named in `server/app.py`'s and
+  `server/README.md`'s own words, not glossed over.
 
 The target device is a hands-first, seated WebXR/IWSDK experience for the Meta VR Start Developer Competition 2026.
 
