@@ -63,6 +63,21 @@
       "components": {
         "RayInteractable": {}
       }
+    },
+    {
+      "id": "counterfactual-panel",
+      "name": "Counterfactual Panel",
+      "content": {
+        "type": "asset",
+        "asset": "counterfactual-panel"
+      },
+      "transform": {
+        "position": [0.15, 0.85, -1.3],
+        "scale": 1
+      },
+      "components": {
+        "RayInteractable": {}
+      }
     }
   ]
 }

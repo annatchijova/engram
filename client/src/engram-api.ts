@@ -83,6 +83,27 @@ export type ImpactReport = {
   impact_sha256: string;
 };
 
+export type CounterfactualDelta = {
+  query_sha256: string;
+  top_k: number;
+  hops: number;
+  world_a_override: [string, string][];
+  world_b_override: [string, string][];
+  served_a: string[];
+  served_b: string[];
+  receipt_a_sha256: string;
+  receipt_b_sha256: string;
+  removed_from_serving: string[];
+  entered_top_k: string[];
+  rank_changed: [string, number, number][];
+  score_changed: [string, string, string][];
+  claim_outcome_changed: [string, string, string][];
+  decision_dependency_changed: string[];
+  interference: boolean;
+  summary: string;
+  delta_sha256: string;
+};
+
 export type ActorSummary = {
   actor_id: string;
   display_name: string;
@@ -186,5 +207,11 @@ export const EngramApi = {
       method: 'POST',
       token: sessionToken,
       body: { reason, idempotency_key: idempotencyKey },
+    }),
+  exclusionEffect: () =>
+    request<CounterfactualDelta>('/api/v1/counterfactual/exclusion-effect'),
+  containmentEffect: (sessionToken: string) =>
+    request<CounterfactualDelta>('/api/v1/counterfactual/containment-effect', {
+      token: sessionToken,
     }),
 };

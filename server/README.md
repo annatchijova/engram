@@ -1,4 +1,4 @@
-# ENGRAM server — Nivel 1 + Nivel 2 + Nivel 3 adapter
+# ENGRAM server — Nivel 1 + Nivel 2 + Nivel 3 + Nivel 4 adapter
 
 FastAPI gateway over MNEME (`/home/labestiadevigia/mneme` by default).
 Nearly every endpoint is read-only — see `app.py`'s module docstring. The
@@ -67,3 +67,32 @@ refresh, concurrent-operator conflict handling.
 Out of scope this slice: `/api/v1/receipts/{sha}` and
 `/api/v1/decisions/{id}` detail endpoints (markers are visual-only for
 now), claims/standing (no claims exist in the seed field yet).
+
+## Nivel 4 — Counterfactual Chambers
+
+MNEME's `counterfactual.compare_worlds()` runs `field.recall` twice
+(explicitly read-only) and diffs the results — neither endpoint below
+writes, and both use the same query-only `_conn()` every other GET uses.
+
+- `GET /api/v1/counterfactual/exclusion-effect` — bearer `ENGRAM_READ_TOKEN`
+  only. Narrowing-only override (`mem-gate` forced `QUARANTINED`) against
+  the near-TRUE-policy query — MNEME's own design needs no capability for
+  this: it can only ever show the caller less than it could already see.
+- `GET /api/v1/counterfactual/containment-effect` — session-token
+  authenticated (same `require_session` dependency Nivel 2 already uses).
+  Widening override (`mem-poison` forced `CLEAN`) against the near-poison
+  query — MNEME's own `authority.gate`, inside `field.recall`, is what
+  actually rejects a session actor lacking `COUNTERFACTUAL`; this adapter
+  only supplies the `actor_id` the check needs.
+
+Both demo queries are the same literals the seed script already uses, so
+their query hashes match the persisted Nivel 3 receipt exactly — not
+arbitrary inputs. Both responses include the full sealed delta: served
+sets for both worlds, removed/entered/reranked/rescored/claim-flip lists,
+`decision_dependency_changed` (reported separately — a field-wide fact,
+never folded into the query-scoped interference verdict, per
+`CounterfactualDelta.summary()`'s own discipline), and `delta_sha256`.
+
+Out of scope this slice: arbitrary query/target input (no embedding-input
+UI), a full dual-world field renderer (the client renders the delta as a
+spatially distinct "ghost" cluster, not two complete independent fields).

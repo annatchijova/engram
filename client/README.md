@@ -1,9 +1,10 @@
-# ENGRAM client — Nivel 1 Provenance Field + Nivel 2 Containment + Nivel 3 Causal Field
+# ENGRAM client — Nivel 1-4: Provenance, Containment, Causal Field, Counterfactual
 
 Seated WebXR/IWSDK client. Fetches a real MNEME field from `server/app.py`
 and renders it. One real mutation path exists: log in, stage a quarantine,
 see the exact preview, commit — see `src/containment-system.ts`. Nivel 3
-adds "Trace impact": fully read-only, fully reversible.
+adds "Trace impact" and Nivel 4 adds the Counterfactual Chamber: both
+fully read-only, fully reversible.
 
 This project uses `iwsdk.config.json` for declarative scene, asset, component,
 XR, and emulator configuration. Application systems remain explicit in
@@ -53,6 +54,16 @@ input, not a Quest hand-tracking claim.
   POSSIBLE lines that never visually compete with the causal ones.
   Selecting a different memory or closing the panel clears every traced
   entity (`entity.dispose()`), so Trace stays fully reversible.
+- `src/counterfactual-system.ts` + `public/ui/counterfactual.uikitml` —
+  two buttons: "Exclusion forecast" (no login, narrowing only — MNEME
+  needs no capability for this) and "Containment effect" (needs the
+  Nivel 2 session — widening discloses what custody withheld, and
+  MNEME's own `authority.gate` enforces that, not this file). Renders the
+  delta as a translucent violet "ghost" cluster in its own offset
+  region — never a recolor of the real field, which the investigation
+  doc calls insufficient — tied back to real nodes by thin lines.
+  "Collapse chamber" disposes every chamber entity; the factual field is
+  never touched by any of it.
 
 - Minimal scene walkthrough: https://iwsdk.dev/guides/01b-minimal-scene.html
 - XR-enabled projects — IWER emulator controls: https://iwsdk.dev/guides/02-testing-experience.html#iwer-controls

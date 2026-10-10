@@ -38,7 +38,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 MNEME_REPO_PATH = os.environ.get("MNEME_REPO_PATH", "/home/labestiadevigia/mneme")
 sys.path.insert(0, MNEME_REPO_PATH)
 
-from mneme import authority, causality, trust  # noqa: E402
+from mneme import authority, causality, counterfactual, field, trust  # noqa: E402
 
 PROTOCOL_VERSION = "engram-query/v1"
 DB_PATH = Path(os.environ.get("MNEME_DB_PATH", Path(__file__).parent / "data" / "demo_field.db"))
@@ -387,3 +387,78 @@ def quarantine_actor(
     })
     IDEMPOTENCY[cache_key] = result
     return result
+
+
+# ---------------------------------------------------------------------------
+# COUNTERFACTUAL SECTION — read-only (compare_worlds only ever calls the
+# read-only field.recall() twice and diffs the results; _conn() stays
+# query-only for both endpoints below, same as every other GET in this
+# file). containment-effect is session-gated anyway, not because it writes,
+# but because WIDENING a custody override discloses what the gate withheld
+# — field.recall()'s own authority check (mneme/field.py) is what actually
+# enforces this; this adapter only supplies the actor_id the check needs.
+# ---------------------------------------------------------------------------
+
+# Same literals the seed script already uses (server/seed_demo_field.py's
+# `e([...])` calls) so the query hashes below match the persisted Nivel 3
+# receipt exactly — these are not arbitrary demo inputs, they're the two
+# queries that already have real meaning in the seeded incident.
+DEMO_NEAR_POISON_QUERY = [0.97, 0.02, 0.0]
+DEMO_NEAR_TRUE_POLICY_QUERY = [1.0, 0.2, 0.0]
+
+
+def _delta_envelope(delta) -> dict[str, Any]:
+    return _envelope({
+        "query_sha256": delta.query_sha256,
+        "top_k": delta.top_k,
+        "hops": delta.hops,
+        "world_a_override": [list(p) for p in delta.world_a_override],
+        "world_b_override": [list(p) for p in delta.world_b_override],
+        "served_a": list(delta.served_a),
+        "served_b": list(delta.served_b),
+        "receipt_a_sha256": delta.receipt_a_sha256,
+        "receipt_b_sha256": delta.receipt_b_sha256,
+        "removed_from_serving": list(delta.removed_from_serving),
+        "entered_top_k": list(delta.entered_top_k),
+        "rank_changed": [list(x) for x in delta.rank_changed],
+        "score_changed": [list(x) for x in delta.score_changed],
+        "claim_outcome_changed": [list(x) for x in delta.claim_outcome_changed],
+        "decision_dependency_changed": list(delta.decision_dependency_changed),
+        "interference": delta.interference,
+        "summary": delta.summary(),
+        "delta_sha256": delta.delta_sha256,
+    })
+
+
+@app.get("/api/v1/counterfactual/exclusion-effect", dependencies=[Depends(require_token)])
+def exclusion_effect() -> dict[str, Any]:
+    """Narrowing only — no COUNTERFACTUAL capability needed, by MNEME's
+    own design: this can only ever show the caller less than it could
+    already see."""
+    conn = _conn()
+    cur = conn.cursor()
+    delta = counterfactual.exclusion_effect(
+        cur, query_embedding=field.quantize_embedding(DEMO_NEAR_TRUE_POLICY_QUERY),
+        excluded=["mem-gate"],
+    )
+    conn.close()
+    return _delta_envelope(delta)
+
+
+@app.get("/api/v1/counterfactual/containment-effect")
+def containment_effect(session: dict[str, Any] = Depends(require_session)) -> dict[str, Any]:
+    """Widening — forces mem-poison back to CLEAN to see what it would
+    have shown. MNEME's authority.gate rejects a session actor lacking
+    COUNTERFACTUAL; this adapter does not duplicate that check."""
+    conn = _conn()
+    cur = conn.cursor()
+    try:
+        delta = counterfactual.containment_effect(
+            cur, query_embedding=field.quantize_embedding(DEMO_NEAR_POISON_QUERY),
+            contained=["mem-poison"], actor_id=session["actor_id"],
+        )
+    except ValueError as err:
+        conn.close()
+        raise _map_mneme_error(err) from err
+    conn.close()
+    return _delta_envelope(delta)

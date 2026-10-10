@@ -26,4 +26,9 @@ export default defineAssets({
     type: AssetType.UIKitML,
     name: 'Containment Panel',
   },
+  'counterfactual-panel': {
+    url: publicAssetUrl('ui/counterfactual.uikitml'),
+    type: AssetType.UIKitML,
+    name: 'Counterfactual Panel',
+  },
 });
