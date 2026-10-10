@@ -42,12 +42,17 @@ Proximity does not automatically mean causality. Size does not mean authority. B
 
 The architectural destination and investigation are documented in [ENGRAM-ARCHITECTURAL-INVESTIGATION.md](ENGRAM-ARCHITECTURAL-INVESTIGATION.md).
 
-**Nivel 1 — Provenance Field** and **Nivel 2 — Audited Containment** are
-both live. Nivel 1 is read-only inspection of a real MNEME field: custody
-chains, authority grants, custody status. Nivel 2 adds the first real
-mutation path: an operator logs in as a real MNEME actor, stages a
-`QUARANTINE_ACTOR` sweep (sees exactly which memories would be tainted
-first), and only then commits — the field re-renders live with the result.
+**Nivel 1 — Provenance Field**, **Nivel 2 — Audited Containment**, and
+**Nivel 3 — Causal Field** are all live. Nivel 1 is read-only inspection of
+a real MNEME field: custody chains, authority grants, custody status.
+Nivel 2 adds the first real mutation path: an operator logs in as a real
+MNEME actor, stages a `QUARANTINE_ACTOR` sweep (sees exactly which
+memories would be tainted first), and only then commits — the field
+re-renders live with the result. Nivel 3 adds Trace: pulling on a memory's
+real causal history (`recall → receipt → decision → impact`, via MNEME's
+own `causality.impact()`) and rendering DIRECT, DERIVED, and POSSIBLE as
+genuinely distinct — different geometry, different line style, never
+different distances of the same thing. Fully read-only, fully reversible.
 
 - `server/` — a FastAPI adapter (`app.py`) over the sibling MNEME
   repository. Almost every endpoint is read-only; the one exception

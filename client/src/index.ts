@@ -11,6 +11,7 @@ import { ContainmentSystem } from './containment-system.js';
 import { FieldSystem } from './field-system.js';
 import { initLoginOverlay } from './login-overlay.js';
 import { SelectionSystem } from './selection-system.js';
+import { TraceSystem } from './trace-system.js';
 
 initLoginOverlay();
 
@@ -21,4 +22,5 @@ World.create(
   world.registerSystem(FieldSystem);
   world.registerSystem(SelectionSystem);
   world.registerSystem(ContainmentSystem);
+  world.registerSystem(TraceSystem);
 });

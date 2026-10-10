@@ -8,6 +8,7 @@
 import { createSystem, Pressed, UIKitMLAsset } from '@iwsdk/core';
 import { EngramApi } from './engram-api.js';
 import { MemoryNode } from './memory-node-component.js';
+import { SelectedMemory } from './selected-memory.js';
 
 export class SelectionSystem extends createSystem({
   selected: { required: [MemoryNode, Pressed] },
@@ -22,7 +23,10 @@ export class SelectionSystem extends createSystem({
 
     const panel = this.world.getSceneObject<UIKitMLAsset>('detail-panel');
     const close = panel?.getElementById('detail-close');
-    const hide = () => panel?.getElementById('detail-root')?.setProperties({ display: 'none' });
+    const hide = () => {
+      panel?.getElementById('detail-root')?.setProperties({ display: 'none' });
+      SelectedMemory.set(null);
+    };
     close?.addEventListener('click', hide);
     this.cleanupFuncs.push(() => close?.removeEventListener('click', hide));
   }
@@ -30,6 +34,7 @@ export class SelectionSystem extends createSystem({
   private async showDetail(memoryId: string): Promise<void> {
     if (this.busy) return;
     this.busy = true;
+    SelectedMemory.set(memoryId);
     const panel = this.world.getSceneObject<UIKitMLAsset>('detail-panel');
     try {
       const [memory, custody] = await Promise.all([

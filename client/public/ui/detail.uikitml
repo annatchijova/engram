@@ -48,6 +48,23 @@
     font-size: 1;
     color: #a8d8a8;
   }
+  .trace-btn {
+    width: 12;
+    height: 1.8;
+    margin-top: 1;
+    margin-bottom: 0.8;
+    background-color: #3a5a7a;
+    border-radius: 0.3;
+    justify-content: center;
+    align-items: center;
+    color: #e8e8e8;
+    font-size: 1;
+    cursor: pointer;
+  }
+  .impact {
+    font-size: 1;
+    color: #d8c8a8;
+  }
 </style>
 <div class="panel-root" id="detail-root" style="display: none">
   <div class="header-row">
@@ -58,4 +75,6 @@
   <span class="hash" id="detail-hash"></span>
   <span class="field" id="detail-confidence"></span>
   <span class="chain" id="detail-chain"></span>
+  <button class="trace-btn" id="detail-trace">Trace impact</button>
+  <span class="impact" id="detail-impact"></span>
 </div>

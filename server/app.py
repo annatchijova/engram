@@ -38,7 +38,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 MNEME_REPO_PATH = os.environ.get("MNEME_REPO_PATH", "/home/labestiadevigia/mneme")
 sys.path.insert(0, MNEME_REPO_PATH)
 
-from mneme import authority, trust  # noqa: E402
+from mneme import authority, causality, trust  # noqa: E402
 
 PROTOCOL_VERSION = "engram-query/v1"
 DB_PATH = Path(os.environ.get("MNEME_DB_PATH", Path(__file__).parent / "data" / "demo_field.db"))
@@ -176,6 +176,30 @@ def get_custody_chain(memory_id: str) -> dict[str, Any]:
         "chain_length": len(entries),
         "head_hash": entries[-1]["entry_hash"],
         "entries": entries,
+    })
+
+
+@app.get("/api/v1/memories/{memory_id}/impact", dependencies=[Depends(require_token)])
+def get_impact(memory_id: str) -> dict[str, Any]:
+    """Nivel 3 — wraps MNEME's causality.impact() verbatim. Read-only: its
+    own docstring says it 'deliberately does NOT quarantine anything'."""
+    conn = _conn()
+    cur = conn.cursor()
+    cur.execute("SELECT 1 FROM memories WHERE memory_id = ?", (memory_id,))
+    if cur.fetchone() is None:
+        conn.close()
+        raise HTTPException(404, f"No memory {memory_id!r}.")
+    report = causality.impact(cur, memory_id)
+    conn.close()
+    return _envelope({
+        "memory_id": report.memory_id,
+        "direct_receipts": list(report.direct_receipts),
+        "direct_decisions": list(report.direct_decisions),
+        "derived_memories": list(report.derived_memories),
+        "derived_unattested": list(report.derived_unattested),
+        "derived_decisions": list(report.derived_decisions),
+        "possible_memories": list(report.possible_memories),
+        "impact_sha256": report.impact_sha256,
     })
 
 

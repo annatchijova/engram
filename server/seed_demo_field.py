@@ -9,9 +9,11 @@ every row this script produces is custody- and authority-correct exactly
 the way an operator's MNEME would produce it, which is the whole point:
 ENGRAM inspects a genuinely verifiable field, not a mock.
 
-The story (steps 0-3) is the same poisoned-RAG incident narrated end to
-end in /home/labestiadevigia/mneme/demo.py, extended with a supersession
-and a direct memory quarantine so Nivel 1 has a real example of every
+The story (steps 0-4) is the same poisoned-RAG incident narrated end to
+end in /home/labestiadevigia/mneme/demo.py: a persisted recall receipt and
+a decision citing mem-poison (step 2) give Nivel 3's causality.impact() a
+real DIRECT/DERIVED chain to trace, and a supersession plus a direct
+memory quarantine (steps 3-4) give Nivel 1 a real example of every
 custody_status in the ontology table: CLEAN, TAINT_FLAGGED, QUARANTINED,
 SUPERSEDED, plus REINFORCED field_state.
 
@@ -30,7 +32,7 @@ from pathlib import Path
 MNEME_REPO_PATH = os.environ.get("MNEME_REPO_PATH", "/home/labestiadevigia/mneme")
 sys.path.insert(0, MNEME_REPO_PATH)
 
-from mneme import authority, field, trust  # noqa: E402
+from mneme import authority, causality, field, trust  # noqa: E402
 
 HERE = Path(__file__).parent
 DB_PATH = Path(os.environ.get("MNEME_DB_PATH", HERE / "data" / "demo_field.db"))
@@ -121,7 +123,33 @@ def seed(conn: sqlite3.Connection) -> None:
     print("mem-rollback reinforced by pipeline-feeds  <- inflated by the bad actor")
     conn.commit()
 
-    section("2. A policy gets superseded through the real lineage path")
+    section("2. Recall, receipt, decision - the causal chain Nivel 3 traces")
+    _, served_receipt = field.recall(
+        cur, query_embedding=e([0.97, 0.02, 0.0]), top_k=5)
+    field.persist_receipt(cur, served_receipt)
+    print(f"receipt {served_receipt.receipt_sha256[:16]}...  served: "
+          f"{list(served_receipt.served)}")
+
+    decision = causality.record_decision(
+        cur, receipt=served_receipt, used_memory_ids=["mem-poison"],
+        decision_sha256=causality.decision_hash(
+            "Hotfix 4.2 may ship without the staging gate."),
+        policy_version="deploy-policy@3", actor_id="agent-ada",
+        reason="answered the on-call operator's deploy question")
+    print(f"decision {decision.decision_id}  used: {list(decision.used_memory_ids)}"
+          f"  <- cites mem-poison, the DIRECT edge impact() will find")
+
+    field.store(
+        cur, memory_id="mem-note", actor_id="agent-ada",
+        reason="recording what was told to the operator",
+        content="Told on-call: hotfix 4.2 may skip the staging gate.",
+        embedding=e([0.95, 0.06, 0.0]), embedding_model="demo",
+        derived_from_decision=decision.decision_id)
+    print("stored mem-note by agent-ada, derived_from_decision="
+          f"{decision.decision_id}  <- the DERIVED edge impact() will find")
+    conn.commit()
+
+    section("3. A policy gets superseded through the real lineage path")
     field.supersede(
         cur, old_memory_id="mem-draft-policy", memory_id="mem-policy-v2",
         content="Deploy policy v2: staging gate required; documented emergency "
@@ -131,7 +159,7 @@ def seed(conn: sqlite3.Connection) -> None:
     print("mem-draft-policy SUPERSEDED by mem-policy-v2")
     conn.commit()
 
-    section("3. Containment: actor quarantine (sweep) and direct memory quarantine")
+    section("4. Containment: actor quarantine (sweep) and direct memory quarantine")
     sweep = trust.quarantine_actor(
         cur, actor_id="pipeline-feeds", initiated_by="analyst-omar",
         reason="compromised feed credentials (INC-1207)")

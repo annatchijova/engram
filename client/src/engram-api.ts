@@ -72,6 +72,17 @@ export type CustodyChain = {
   entries: CustodyEntry[];
 };
 
+export type ImpactReport = {
+  memory_id: string;
+  direct_receipts: string[];
+  direct_decisions: string[];
+  derived_memories: string[];
+  derived_unattested: string[];
+  derived_decisions: string[];
+  possible_memories: string[];
+  impact_sha256: string;
+};
+
 export type ActorSummary = {
   actor_id: string;
   display_name: string;
@@ -159,6 +170,8 @@ export const EngramApi = {
   getMemory: (id: string) => request<MemoryDetail>(`/api/v1/memories/${encodeURIComponent(id)}`),
   getCustody: (id: string) =>
     request<CustodyChain>(`/api/v1/memories/${encodeURIComponent(id)}/custody`),
+  getImpact: (id: string) =>
+    request<ImpactReport>(`/api/v1/memories/${encodeURIComponent(id)}/impact`),
   listActors: () => request<{ actors: ActorSummary[] }>('/api/v1/actors'),
   previewQuarantine: (actorId: string) =>
     request<QuarantinePreview>(`/api/v1/actors/${encodeURIComponent(actorId)}/quarantine-preview`),

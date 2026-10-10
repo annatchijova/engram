@@ -1,4 +1,4 @@
-# ENGRAM server — Nivel 1 + Nivel 2 adapter
+# ENGRAM server — Nivel 1 + Nivel 2 + Nivel 3 adapter
 
 FastAPI gateway over MNEME (`/home/labestiadevigia/mneme` by default).
 Nearly every endpoint is read-only — see `app.py`'s module docstring. The
@@ -50,3 +50,20 @@ live-demo quarantine target.
 
 Out of scope this slice: rehabilitate, direct memory quarantine, session
 refresh, concurrent-operator conflict handling.
+
+## Nivel 3 — Causal Field
+
+- `GET /api/v1/memories/{id}/impact` — read-only, wraps MNEME's
+  `causality.impact()` verbatim (its own docstring: "deliberately does NOT
+  quarantine anything"). Returns `direct_receipts`, `direct_decisions`,
+  `derived_memories`, `derived_unattested`, `derived_decisions`,
+  `possible_memories`, `impact_sha256`.
+- The seed script now also persists one recall receipt and records one
+  decision citing `mem-poison` (mirrors `mneme/demo.py`'s own narration),
+  plus a `mem-note` memory declaring `derived_from_decision` — without
+  this, `impact()` would have nothing DIRECT or DERIVED to show except the
+  one supersession already in the field.
+
+Out of scope this slice: `/api/v1/receipts/{sha}` and
+`/api/v1/decisions/{id}` detail endpoints (markers are visual-only for
+now), claims/standing (no claims exist in the seed field yet).

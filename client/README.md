@@ -1,8 +1,9 @@
-# ENGRAM client — Nivel 1 Provenance Field + Nivel 2 Audited Containment
+# ENGRAM client — Nivel 1 Provenance Field + Nivel 2 Containment + Nivel 3 Causal Field
 
 Seated WebXR/IWSDK client. Fetches a real MNEME field from `server/app.py`
 and renders it. One real mutation path exists: log in, stage a quarantine,
-see the exact preview, commit — see `src/containment-system.ts`.
+see the exact preview, commit — see `src/containment-system.ts`. Nivel 3
+adds "Trace impact": fully read-only, fully reversible.
 
 This project uses `iwsdk.config.json` for declarative scene, asset, component,
 XR, and emulator configuration. Application systems remain explicit in
@@ -43,6 +44,15 @@ input, not a Quest hand-tracking claim.
   one mutating call in the whole app) for the single demo target actor
   `pipeline-logs`. On commit, calls `FieldSystem.refresh()` so the field
   re-renders with the new `custody_status` colors immediately.
+- `src/trace-system.ts` + `src/selected-memory.ts` — "Trace impact" button
+  on the detail panel calls `GET /api/v1/memories/{id}/impact` (MNEME's
+  real `causality.impact()`) and draws lines from the traced node: solid
+  bright DIRECT lines to new receipt/decision markers (octahedron/box —
+  deliberately not spheres, so they never read as memory nodes), dashed
+  amber DERIVED lines to other memory nodes, thin low-opacity gray
+  POSSIBLE lines that never visually compete with the causal ones.
+  Selecting a different memory or closing the panel clears every traced
+  entity (`entity.dispose()`), so Trace stays fully reversible.
 
 - Minimal scene walkthrough: https://iwsdk.dev/guides/01b-minimal-scene.html
 - XR-enabled projects — IWER emulator controls: https://iwsdk.dev/guides/02-testing-experience.html#iwer-controls

@@ -57,5 +57,22 @@
     <div class="swatch" id="swatch-SUPERSEDED"></div>
     <span class="label" id="text-SUPERSEDED">SUPERSEDED</span>
   </div>
+  <div class="heading" style="margin-top: 1.5">trace edges</div>
+  <div class="row">
+    <div class="swatch" id="swatch-DIRECT"></div>
+    <span class="label" id="text-DIRECT">DIRECT</span>
+  </div>
+  <div class="row">
+    <div class="swatch" id="swatch-DERIVED"></div>
+    <span class="label" id="text-DERIVED">DERIVED</span>
+  </div>
+  <div class="row">
+    <div class="swatch" id="swatch-DERIVED_UNATTESTED"></div>
+    <span class="label" id="text-DERIVED_UNATTESTED">DERIVED (unattested)</span>
+  </div>
+  <div class="row">
+    <div class="swatch" id="swatch-POSSIBLE"></div>
+    <span class="label" id="text-POSSIBLE">POSSIBLE (not causal)</span>
+  </div>
   <span class="status-line" id="legend-status" style="display: none"></span>
 </div>
