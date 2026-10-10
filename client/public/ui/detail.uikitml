@@ -1,0 +1,61 @@
+<style>
+  .panel-root {
+    flex-direction: column;
+    width: 60;
+    height: 48;
+    padding-top: 2;
+    padding-bottom: 2;
+    padding-left: 2.5;
+    padding-right: 2.5;
+    background-color: #14161a;
+    border-color: #3a3f47;
+    border-width: 0.15;
+    border-radius: 0.6;
+  }
+  .header-row {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1;
+  }
+  .title {
+    font-size: 1.8;
+    font-weight: 700;
+    color: #f2f2f2;
+  }
+  .close {
+    width: 2.4;
+    height: 2.4;
+    background-color: #3a3f47;
+    border-radius: 0.4;
+    justify-content: center;
+    align-items: center;
+    color: #f2f2f2;
+    font-size: 1.4;
+    cursor: pointer;
+  }
+  .field {
+    font-size: 1.2;
+    color: #c9c9c9;
+    margin-bottom: 0.8;
+  }
+  .hash {
+    font-size: 1;
+    color: #8a8a8a;
+    margin-bottom: 0.8;
+  }
+  .chain {
+    font-size: 1;
+    color: #a8d8a8;
+  }
+</style>
+<div class="panel-root" id="detail-root" style="display: none">
+  <div class="header-row">
+    <span class="title" id="detail-title">memory</span>
+    <button class="close" id="detail-close">x</button>
+  </div>
+  <span class="field" id="detail-content"></span>
+  <span class="hash" id="detail-hash"></span>
+  <span class="field" id="detail-confidence"></span>
+  <span class="chain" id="detail-chain"></span>
+</div>

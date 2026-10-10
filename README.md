@@ -40,9 +40,27 @@ Proximity does not automatically mean causality. Size does not mean authority. B
 
 ## Project status
 
-The architectural destination and investigation are documented in [ENGRAM-ARCHITECTURAL-INVESTIGATION.md](ENGRAM-ARCHITECTURAL-INVESTIGATION.md). Implementation has not started yet.
+The architectural destination and investigation are documented in [ENGRAM-ARCHITECTURAL-INVESTIGATION.md](ENGRAM-ARCHITECTURAL-INVESTIGATION.md).
 
-The initial target is a hands-first, seated WebXR/IWSDK experience for the Meta VR Start Developer Competition 2026.
+**Nivel 1 — Provenance Field is in progress.** Read-only inspection of a real
+MNEME field: custody chains, authority grants, and custody status, with no
+mutation path anywhere in the client.
+
+- `server/` — a read-only FastAPI adapter (`app.py`) over the sibling MNEME
+  repository, plus `seed_demo_field.py`, which seeds a demo field using only
+  MNEME's own authorized API (store/reinforce/supersede/quarantine — never a
+  raw SQL insert). MNEME stays a separate service; the browser never touches
+  SQLite directly.
+- `client/` — a seated WebXR/IWSDK experience. Memories render as an arc of
+  nodes colored by `custody_status` against a fixed, legended map; selecting
+  one (ray/pinch in XR, mouse-click on desktop) opens a panel with its real
+  content, hash, and custody chain.
+- **Known limitation, not hidden:** the adapter's auth is a single shared
+  bearer token (`ENGRAM_READ_TOKEN`), not the externally-authenticated XR
+  actor identity the architecture calls for. Acceptable for now only because
+  Nivel 1 exposes zero mutating endpoint — see `server/app.py`'s docstring.
+
+The target device is a hands-first, seated WebXR/IWSDK experience for the Meta VR Start Developer Competition 2026.
 
 ## License
 

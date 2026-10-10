@@ -1,0 +1,52 @@
+{
+  "version": "iwsdk.scene.v1",
+  "units": "meters",
+  "components": {
+    "com.iwsdk.components.DomeGradient": {
+      "sky": [0.0906, 0.1036, 0.1216, 1],
+      "equator": [0.1304, 0.1402, 0.1557, 1],
+      "ground": [0.0486, 0.0486, 0.0486, 1],
+      "intensity": 1
+    },
+    "com.iwsdk.components.IBLGradient": {
+      "sky": [0.2, 0.2156, 0.2352, 1],
+      "equator": [0.1304, 0.1402, 0.1557, 1],
+      "ground": [0.0486, 0.0486, 0.0486, 1],
+      "intensity": 1
+    }
+  },
+  "resources": {},
+  "nodes": [
+    {
+      "id": "legend-panel",
+      "name": "Legend Panel",
+      "content": {
+        "type": "asset",
+        "asset": "legend-panel"
+      },
+      "transform": {
+        "position": [-0.55, 0.75, -1.5],
+        "rotationDeg": [0, 15, 0],
+        "scale": 1
+      },
+      "components": {
+        "RayInteractable": {}
+      }
+    },
+    {
+      "id": "detail-panel",
+      "name": "Detail Panel",
+      "content": {
+        "type": "asset",
+        "asset": "detail-panel"
+      },
+      "transform": {
+        "position": [0, 0.75, -1.1],
+        "scale": 1
+      },
+      "components": {
+        "RayInteractable": {}
+      }
+    }
+  ]
+}

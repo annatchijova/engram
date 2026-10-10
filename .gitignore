@@ -51,6 +51,9 @@ DerivedDataCache/
 Intermediate/
 Saved/
 
+# ENGRAM — generated/local MNEME demo field
+server/data/
+
 # Local archives and generated artifacts
 *.log
 *.tmp
