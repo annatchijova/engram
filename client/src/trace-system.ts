@@ -46,6 +46,11 @@ export class TraceSystem extends createSystem({
 }) {
   private traceEntities: Entity[] = [];
   private lineMaterials: Record<EdgeClass, LineBasicMaterial> = {} as never;
+  // Shared across all receipt/decision markers — allocating one per marker
+  // per trace leaks GPU materials on every re-run.
+  private markerMaterial = new MeshStandardMaterial({
+    color: new Color(TRACE_STYLE.DIRECT.color),
+  });
 
   init(): void {
     for (const [key, style] of Object.entries(TRACE_STYLE) as [EdgeClass, typeof TRACE_STYLE[EdgeClass]][]) {
@@ -98,8 +103,7 @@ export class TraceSystem extends createSystem({
 
   private drawMarker(kind: 'receipt' | 'decision', position: Vector3): Entity {
     const geometry = kind === 'receipt' ? new OctahedronGeometry(0.045) : new BoxGeometry(0.07, 0.07, 0.07);
-    const material = new MeshStandardMaterial({ color: new Color(TRACE_STYLE.DIRECT.color) });
-    const mesh = new Mesh(geometry, material);
+    const mesh = new Mesh(geometry, this.markerMaterial);
     mesh.position.copy(position);
     const entity = this.world.createTransformEntity(mesh);
     this.traceEntities.push(entity);

@@ -98,6 +98,12 @@ export class ContainmentSystem extends createSystem({}) {
             text: `committed: sweep ${result.sweep_id} flagged ` +
               `${result.flagged_count} memories.`,
           });
+          // Clear the staged state: the field_version this commit was
+          // staged against is now spent — leaving it armed would let a
+          // second Commit click fire a fresh idempotency key against a
+          // stale version (honest 409, but a confusing one).
+          this.stagedCount = 0;
+          previewSection?.setProperties({ display: 'none' });
           const field = this.world.getSystem(FieldSystem);
           await field?.refresh();
         } catch (err) {

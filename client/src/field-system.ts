@@ -40,8 +40,19 @@ const NODE_RADIUS = 0.055;
 export class FieldSystem extends createSystem({}) {
   private geometry = new SphereGeometry(NODE_RADIUS, 24, 16);
   private nodeEntities: Entity[] = [];
+  // One shared material per custody_status: N nodes × M refreshes must not
+  // mint a new MeshStandardMaterial each — the custody→appearance mapping
+  // is CUSTODY_COLOR, and sharing enforces that literally (mutating a
+  // shared material would recolor every node of that status at once).
+  private statusMaterials: Record<string, MeshStandardMaterial> = {};
+  private fallbackMaterial = new MeshStandardMaterial({ color: new Color('#999999') });
 
   init(): void {
+    for (const [status, hex] of Object.entries(CUSTODY_COLOR)) {
+      this.statusMaterials[status] = new MeshStandardMaterial({
+        color: new Color(hex),
+      });
+    }
     void this.refresh();
   }
 
@@ -78,8 +89,10 @@ export class FieldSystem extends createSystem({}) {
       const x = ARC_CENTER.x + ARC_RADIUS * Math.sin(angle);
       const z = ARC_CENTER.z - ARC_RADIUS * Math.cos(angle);
 
-      const colorHex = CUSTODY_COLOR[m.custody_status] ?? '#999999';
-      const material = new MeshStandardMaterial({ color: new Color(colorHex) });
+      // Unknown status (server-side vocabulary newer than this client)
+      // gets the neutral fallback material — visible as "unmapped", never
+      // silently painted as a known status.
+      const material = this.statusMaterials[m.custody_status] ?? this.fallbackMaterial;
       const mesh = new Mesh(this.geometry, material);
       mesh.position.set(x, ARC_CENTER.y, z);
 
