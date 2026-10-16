@@ -33,16 +33,24 @@ live-demo quarantine target.
 
 ## Nivel 2 — Audited Containment
 
-- `POST /api/v1/auth/login` — demo credentials only: username `omar`,
-  password `ENGRAM_DEMO_PASSWORD`. Issues a session token bound to the
-  real MNEME actor `analyst-omar`, separate from `ENGRAM_READ_TOKEN`.
-  If `ENGRAM_DEMO_PASSWORD` is unset, login refuses with 503 — there is no
-  default credential. **Known limitation, not hidden**: in-memory sessions
-  (bounded, TTL-swept), one shared demo password, no refresh UX — a real
-  external-identity binding is still open (investigation doc, P1.5).
+- `POST /api/v1/auth/login` — demo credentials only: `omar` or `ada`,
+  shared password `ENGRAM_DEMO_PASSWORD`. Issues a session token bound to
+  a real MNEME actor — `omar` → `analyst-omar` (full IR capabilities),
+  `ada` → `agent-ada` (STORE/REINFORCE/DECIDE only, so her quarantine
+  commits and counterfactual widening are refused 403 by MNEME's own
+  authority.gate — that is the point: two actors prove the gate is real,
+  one cannot). If `ENGRAM_DEMO_PASSWORD` is unset, login refuses with 503 —
+  there is no default credential. **Known limitation, not hidden**:
+  in-memory sessions (bounded, TTL-swept), one shared demo password, no
+  refresh UX — a real external-identity binding is still open
+  (investigation doc, P1.5).
 - `GET /health` — unauthenticated liveness/degradation report: whether the
-  field DB exists, the read token and demo password are configured, and the
-  persisted `field_version`. No secrets, no field content.
+  field DB exists, the read token and demo password are configured, and
+  the persisted `field_version`. No secrets, no field content.
+- `field_epoch` — a per-boot token carried in every response envelope and
+  `/health`. On this volume-less deployment each restart reseeds the
+  field; the epoch change is how a client tells "the world reset under
+  me" from "the field is empty". The client shows a badge on change.
 - `GET /api/v1/actors/{id}/quarantine-preview` — read-only; runs the exact
   query MNEME's `trust.quarantine_actor` uses, so the preview can never
   drift from what a commit actually does.
@@ -87,7 +95,11 @@ writes, and both use the same query-only `_conn()` every other GET uses.
   Widening override (`mem-poison` forced `CLEAN`) against the near-poison
   query — MNEME's own `authority.gate`, inside `field.recall`, is what
   actually rejects a session actor lacking `COUNTERFACTUAL`; this adapter
-  only supplies the `actor_id` the check needs.
+  only supplies the `actor_id` the check needs. As the one read that
+  *discloses* what custody withheld, each call appends a record to
+  `data/read_audit.jsonl` (`actor_id`, `served_at`, `field_epoch`,
+  `query_sha256`, `delta_sha256`) and reports `read_audit` in the
+  response — an adapter-local claim, not sealed evidence.
 
 Both demo queries are the same literals the seed script already uses, so
 their query hashes match the persisted Nivel 3 receipt exactly — not

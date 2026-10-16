@@ -24,6 +24,10 @@ export type Envelope<T> = {
   // Wall-clock response time (server-named served_at), not a snapshot
   // boundary. The real ordering value to stage against is field_version.
   served_at: string;
+  // Per-boot token: changes when the backend restarts (and the field
+  // reseeds on the volume-less deployment). A client that sees it change
+  // knows the world reset under it rather than quietly serving new state.
+  field_epoch: string;
   data: T;
 };
 
@@ -111,6 +115,9 @@ export type CounterfactualDelta = {
   interference: boolean;
   summary: string;
   delta_sha256: string;
+  // Present on the widening endpoint only: whether the adapter's local
+  // read-audit JSONL recorded this disclosure (RECORDED | WRITE_FAILED).
+  read_audit?: string;
 };
 
 export type ActorSummary = {
@@ -184,18 +191,40 @@ async function fetchWithTimeout(
 // Protocol skew is a real condition, not a devtools footnote: surface one
 // non-blocking badge (once) so an operator in the headset can see it.
 let protocolWarningShown = false;
-function showProtocolWarning(serverVersion: string): void {
-  if (protocolWarningShown) return;
-  protocolWarningShown = true;
+let epochWarningShown = false;
+function showBadge(text: string): void {
   const el = document.createElement('div');
   el.style.cssText =
     'position:fixed;bottom:16px;right:16px;z-index:20;max-width:360px;' +
     'background:#2a230e;border:1px solid #a58a3a;border-radius:8px;' +
     'padding:10px 12px;color:#ffe9b8;font:12px monospace;white-space:pre-wrap;';
-  el.textContent =
-    `ENGRAM: protocol skew — client expects ${EXPECTED_PROTOCOL_VERSION}, ` +
-    `server sent ${serverVersion}. Results may be stale.`;
+  el.textContent = text;
   document.body.appendChild(el);
+}
+function showProtocolWarning(serverVersion: string): void {
+  if (protocolWarningShown) return;
+  protocolWarningShown = true;
+  showBadge(
+    `ENGRAM: protocol skew — client expects ${EXPECTED_PROTOCOL_VERSION}, ` +
+    `server sent ${serverVersion}. Results may be stale.`,
+  );
+}
+
+// First observed epoch is remembered; a change means the backend restarted
+// and (on the volume-less deployment) reseeded — staged state is gone.
+let knownEpoch: string | null = null;
+function checkFieldEpoch(epoch: string): void {
+  if (knownEpoch === null) {
+    knownEpoch = epoch;
+    return;
+  }
+  if (epoch !== knownEpoch && !epochWarningShown) {
+    epochWarningShown = true;
+    showBadge(
+      'ENGRAM: field epoch changed — the backend restarted and the field ' +
+      'was reseeded. Staged work and earlier snapshots no longer apply.',
+    );
+  }
 }
 
 async function request<T>(
@@ -234,6 +263,7 @@ async function request<T>(
     );
     showProtocolWarning(envelope.protocol_version);
   }
+  checkFieldEpoch(envelope.field_epoch);
   return envelope.data;
 }
 
@@ -252,6 +282,7 @@ async function login(username: string, password: string): Promise<LoginResult> {
     throw new Error(detail?.detail ?? `login failed: HTTP ${res.status}`);
   }
   const envelope = (await res.json()) as Envelope<LoginResult>;
+  checkFieldEpoch(envelope.field_epoch);
   return envelope.data;
 }
 

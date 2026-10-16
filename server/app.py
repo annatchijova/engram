@@ -88,6 +88,13 @@ def _conn() -> sqlite3.Connection:
     return conn
 
 
+# C2 — the deployed backend has no persistent volume: every restart reseeds
+# a fresh field. Rather than hide that, each boot mints a field_epoch token
+# carried in every envelope and /health, so a client can tell "the field
+# reset under me" from "the field is empty."
+FIELD_EPOCH = secrets.token_hex(8)
+
+
 def _envelope(data: Any) -> dict[str, Any]:
     return {
         "protocol_version": PROTOCOL_VERSION,
@@ -95,6 +102,7 @@ def _envelope(data: Any) -> dict[str, Any]:
         # so it is never mistaken for a verified "as-of" marker. The real
         # ordering value a client can stage against is field_version.
         "served_at": datetime.now(timezone.utc).isoformat(),
+        "field_epoch": FIELD_EPOCH,
         "data": data,
     }
 
@@ -128,6 +136,7 @@ def health() -> dict[str, Any]:
     return {
         "status": "ok" if (db_present and READ_TOKEN) else "degraded",
         "protocol_version": PROTOCOL_VERSION,
+        "field_epoch": FIELD_EPOCH,
         "field_db_present": db_present,
         "read_token_configured": bool(READ_TOKEN),
         "demo_password_configured": DEMO_PASSWORD is not None,
@@ -292,8 +301,14 @@ def list_actors() -> dict[str, Any]:
 # honest about what it is, not as a production auth system.
 # ---------------------------------------------------------------------------
 
+# Multiple demo users map to seeded MNEME actors with DIFFERENT capability
+# sets — the point is exercising the authority gate for real: `ada` holds
+# STORE/REINFORCE/DECIDE only, so her quarantine commits and counterfactual
+# widening are refused by MNEME's own authority.gate (403), not by this
+# adapter.
 DEMO_USERS: dict[str, dict[str, str]] = {
     "omar": {"actor_id": "analyst-omar", "display_name": "Analyst Omar"},
+    "ada": {"actor_id": "agent-ada", "display_name": "Agent Ada"},
 }
 # Fail-closed: no default password. If the variable is unset, login refuses
 # with 503 instead of authenticating against a value published in the README.
@@ -549,11 +564,41 @@ def exclusion_effect() -> dict[str, Any]:
     return _delta_envelope(delta)
 
 
+def _audit_read(actor_id: str, endpoint: str, delta) -> str:
+    """Append a local read-audit record for a custody-widening read.
+
+    Honest scope: this JSONL is the adapter's own claim that the read
+    happened — not sealed evidence, not written into MNEME. If a future
+    MNEME capability can attest reads, this migrates there; until then an
+    append-only file answers the investigation doc's "read audit gap" with
+    the smallest artifact that does not pretend to be more than it is.
+    A failed write degrades to a marker in the response, never hides the
+    result.
+    """
+    record = json.dumps({
+        "actor_id": actor_id,
+        "endpoint": endpoint,
+        "served_at": datetime.now(timezone.utc).isoformat(),
+        "field_epoch": FIELD_EPOCH,
+        "query_sha256": delta.query_sha256,
+        "delta_sha256": delta.delta_sha256,
+    }, sort_keys=True)
+    audit_path = DB_PATH.parent / "read_audit.jsonl"
+    try:
+        with open(audit_path, "a", encoding="utf-8") as f:
+            f.write(record + "\n")
+        return "RECORDED"
+    except OSError:
+        return "WRITE_FAILED"
+
+
 @app.get("/api/v1/counterfactual/containment-effect")
 def containment_effect(session: dict[str, Any] = Depends(require_session)) -> dict[str, Any]:
     """Widening — forces mem-poison back to CLEAN to see what it would
     have shown. MNEME's authority.gate rejects a session actor lacking
-    COUNTERFACTUAL; this adapter does not duplicate that check."""
+    COUNTERFACTUAL; this adapter does not duplicate that check. This is
+    the one read that *discloses* what custody withheld, so it is also
+    the one read that is audited (see _audit_read)."""
     conn = _conn()
     cur = conn.cursor()
     try:
@@ -565,7 +610,10 @@ def containment_effect(session: dict[str, Any] = Depends(require_session)) -> di
         conn.close()
         raise _map_mneme_error(err) from err
     conn.close()
-    return _delta_envelope(delta)
+    audit = _audit_read(session["actor_id"], "containment-effect", delta)
+    result = _delta_envelope(delta)
+    result["data"]["read_audit"] = audit
+    return result
 
 
 # ---------------------------------------------------------------------------
