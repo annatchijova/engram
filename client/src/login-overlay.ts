@@ -24,13 +24,19 @@ export function initLoginOverlay(): void {
       setStatus('logging in...', false);
       try {
         const result = await EngramApi.login(user.value, pass.value);
+        const expiresAt = Date.now() + result.expires_in_seconds * 1000;
         SessionStore.set({
           sessionToken: result.session_token,
           actorId: result.actor_id,
           displayName: result.display_name,
           effectiveCapabilities: result.effective_capabilities,
+          expiresAt,
         });
-        setStatus(`logged in as ${result.display_name}`, false);
+        setStatus(
+          `logged in as ${result.display_name} — ` +
+          `session until ${new Date(expiresAt).toLocaleTimeString()}`,
+          false,
+        );
         pass.value = '';
       } catch (err) {
         SessionStore.set(null);

@@ -36,9 +36,13 @@ live-demo quarantine target.
 - `POST /api/v1/auth/login` — demo credentials only: username `omar`,
   password `ENGRAM_DEMO_PASSWORD`. Issues a session token bound to the
   real MNEME actor `analyst-omar`, separate from `ENGRAM_READ_TOKEN`.
-  **Known limitation, not hidden**: in-memory sessions, one shared demo
-  password, no refresh/expiry UX — a real external-identity binding is
-  still open (investigation doc, P1.5).
+  If `ENGRAM_DEMO_PASSWORD` is unset, login refuses with 503 — there is no
+  default credential. **Known limitation, not hidden**: in-memory sessions
+  (bounded, TTL-swept), one shared demo password, no refresh UX — a real
+  external-identity binding is still open (investigation doc, P1.5).
+- `GET /health` — unauthenticated liveness/degradation report: whether the
+  field DB exists, the read token and demo password are configured, and the
+  persisted `field_version`. No secrets, no field content.
 - `GET /api/v1/actors/{id}/quarantine-preview` — read-only; runs the exact
   query MNEME's `trust.quarantine_actor` uses, so the preview can never
   drift from what a commit actually does.
@@ -110,13 +114,13 @@ offline verification, device integration):
   call, because a bundle's writer must never also be its only checker.
   Returns the bundle JSON, its own declared `bundle_sha256`, and the
   verifier's real stdout/exit code.
-- **Stale-snapshot rejection**: a process-lifetime `FIELD_VERSION` counter
-  (named honestly as single-process, not durable — a real multi-instance
-  deployment needs this in the DB) is now in `field/overview` and
-  `quarantine-preview`'s responses. `POST .../quarantine` requires
-  `expected_field_version` and rejects a stale one with 409, worded
-  distinctly from "already QUARANTINED" — checked before MNEME is ever
-  called.
+- **Stale-snapshot rejection**: `field_version` is derived from persisted
+  state (the custody-chain entry count — every mutation appends events, so
+  it grows strictly with each write and survives process restarts) and is
+  reported in `field/overview`, `quarantine-preview`, and `/health`.
+  `POST .../quarantine` requires `expected_field_version` and rejects a
+  stale one with 409 inside the same transaction as the mutation, worded
+  distinctly from "already QUARANTINED".
 
 **Already true, not rebuilt for this slice**: the existing
 `_rw_conn()` + `commit()`/`rollback()` transaction already answers "what

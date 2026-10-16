@@ -30,7 +30,8 @@ export class PortableSystem extends createSystem({}) {
             text:
               `${bundle.memory_count} memories  ·  bundle ` +
               `${bundle.bundle_sha256.slice(0, 16)}...\n` +
-              `verifier (independent subprocess): exit ${bundle.verifier.exit_code}\n` +
+              `verifier (independent subprocess): ${bundle.verifier.status}` +
+              `${bundle.verifier.exit_code === null ? '' : ` exit ${bundle.verifier.exit_code}`}\n` +
               bundle.verifier.output_lines.slice(0, 4).join('\n'),
           });
         } catch (err) {

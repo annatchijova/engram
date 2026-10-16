@@ -21,7 +21,9 @@ const EXPECTED_PROTOCOL_VERSION = 'engram-query/v1';
 
 export type Envelope<T> = {
   protocol_version: string;
-  snapshot_as_of: string;
+  // Wall-clock response time (server-named served_at), not a snapshot
+  // boundary. The real ordering value to stage against is field_version.
+  served_at: string;
   data: T;
 };
 
@@ -140,7 +142,11 @@ export type BundleExport = {
   memory_count: number;
   verifier: {
     verified: boolean;
-    exit_code: number;
+    // null when the verifier subprocess never ran (status distinguishes
+    // VERIFIED / REJECTED / VERIFIER_UNAVAILABLE — a failed launch is not
+    // a failed bundle).
+    exit_code: number | null;
+    status: string;
     output_lines: string[];
   };
 };
@@ -154,6 +160,44 @@ export type QuarantineResult = {
   advisory_resonant_neighbours: string[];
 };
 
+// A hung fetch in XR has no visible console — bound every request and name
+// the failure, same lesson index.ts learned about invisible rejections.
+const REQUEST_TIMEOUT_MS = 15_000;
+
+async function fetchWithTimeout(
+  path: string,
+  init: RequestInit,
+): Promise<Response> {
+  try {
+    return await fetch(`${API_BASE}${path}`, {
+      ...init,
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+  } catch (err) {
+    throw new Error(
+      `ENGRAM adapter ${path} unreachable or timed out: ` +
+      `${(err as Error).name === 'TimeoutError' ? `>${REQUEST_TIMEOUT_MS}ms` : String(err)}`,
+    );
+  }
+}
+
+// Protocol skew is a real condition, not a devtools footnote: surface one
+// non-blocking badge (once) so an operator in the headset can see it.
+let protocolWarningShown = false;
+function showProtocolWarning(serverVersion: string): void {
+  if (protocolWarningShown) return;
+  protocolWarningShown = true;
+  const el = document.createElement('div');
+  el.style.cssText =
+    'position:fixed;bottom:16px;right:16px;z-index:20;max-width:360px;' +
+    'background:#2a230e;border:1px solid #a58a3a;border-radius:8px;' +
+    'padding:10px 12px;color:#ffe9b8;font:12px monospace;white-space:pre-wrap;';
+  el.textContent =
+    `ENGRAM: protocol skew — client expects ${EXPECTED_PROTOCOL_VERSION}, ` +
+    `server sent ${serverVersion}. Results may be stale.`;
+  document.body.appendChild(el);
+}
+
 async function request<T>(
   path: string,
   opts: { method?: string; token?: string; body?: unknown } = {},
@@ -166,7 +210,7 @@ async function request<T>(
       'started with (ENGRAM_READ_TOKEN).',
     );
   }
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetchWithTimeout(path, {
     method: opts.method ?? 'GET',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -188,6 +232,7 @@ async function request<T>(
       `[ENGRAM] protocol version mismatch: client expects ` +
       `${EXPECTED_PROTOCOL_VERSION}, server sent ${envelope.protocol_version}.`,
     );
+    showProtocolWarning(envelope.protocol_version);
   }
   return envelope.data;
 }
@@ -197,7 +242,7 @@ async function request<T>(
 // to satisfy the helper's "a token is present" check without sending
 // anything the server actually reads as a bearer credential.
 async function login(username: string, password: string): Promise<LoginResult> {
-  const res = await fetch(`${API_BASE}/api/v1/auth/login`, {
+  const res = await fetchWithTimeout('/api/v1/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
