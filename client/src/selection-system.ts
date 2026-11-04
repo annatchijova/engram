@@ -16,9 +16,16 @@ export class SelectionSystem extends createSystem({
 }) {
   private busy = false;
 
+  private lastSelected: { scale: { set: (x: number, y: number, z: number) => void } } | null = null;
+
   init(): void {
     this.queries.selected.subscribe('qualify', (entity) => {
       const memoryId = entity.getValue(MemoryNode, 'memoryId') as string;
+      // Selection feedback beyond color: the selected slab grows; the
+      // previously selected one returns to its recorded size.
+      const obj = (entity as { object3D?: { scale: { set: (x: number, y: number, z: number) => void } } }).object3D;
+      if (this.lastSelected) this.lastSelected.scale.set(1, 1, 1);
+      if (obj) { obj.scale.set(1.3, 1.3, 1.3); this.lastSelected = obj; }
       void this.showDetail(memoryId);
     });
 

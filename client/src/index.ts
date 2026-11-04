@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import { World } from '@iwsdk/core';
+import { Color, FogExp2, World } from '@iwsdk/core';
 import projectOptions from 'virtual:iwsdk-project';
 import { ContainmentSystem } from './containment-system.js';
 import { CounterfactualSystem } from './counterfactual-system.js';
@@ -39,6 +39,13 @@ World.create(
   document.getElementById('scene-container') as HTMLDivElement,
   projectOptions,
 ).then((world) => {
+  // Investigation room atmosphere: deep graphite-blue, restrained fog for
+  // depth. Pure presentation — no evidence meaning rides on it.
+  const scene = (world as { scene?: { background: unknown; fog: unknown } }).scene;
+  if (scene) {
+    scene.background = new Color('#101722');
+    scene.fog = new FogExp2('#101722', 0.045);
+  }
   world.registerSystem(FieldSystem);
   world.registerSystem(LoginSystem);
   world.registerSystem(SelectionSystem);

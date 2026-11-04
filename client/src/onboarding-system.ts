@@ -35,13 +35,13 @@ const STAGE_ORDER = [
 ] as const;
 
 const NEXT_STEP_TEXT: Record<string, string> = {
-  [OnboardingStageValue.WELCOME]: 'These spheres are real memories. Point and select one.',
+  [OnboardingStageValue.WELCOME]: 'ACT I — Discovery. These slabs are real memories. A memory was trusted; should it have been? Point and select the suspicious one.',
   [OnboardingStageValue.SELECT_DONE]:
-    "This is one memory's real custody record. Try 'Trace impact'.",
+    "ACT II — Provenance. This is the record's real custody history. Try 'Trace impact'.",
   [OnboardingStageValue.TRACE_DONE]:
-    'You just saw what this memory actually touches. Now try staging a real quarantine.',
+    'ACT III — Impact. You saw what this memory actually touches; possible links are not proof. Now stage a containment preview (nothing commits yet).',
   [OnboardingStageValue.CONTAINMENT_DONE]:
-    'You just changed the real field. Compare it against a hypothetical one.',
+    'ACT IV — Counterfactual. Compare the recorded field against a sealed hypothetical that was never executed.',
   [OnboardingStageValue.COUNTERFACTUAL_UNLOCKED]:
     "Now export what you've seen as a portable, independently-verifiable record.",
   [OnboardingStageValue.PORTABLE_UNLOCKED]:

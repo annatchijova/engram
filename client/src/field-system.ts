@@ -156,6 +156,15 @@ export class FieldSystem extends createSystem({}) {
         ? new Mesh(this.geometry, new MeshStandardMaterial({ color: new Color(CUSTODY_COLOR[priorStatus!]) }))
         : new Mesh(this.geometry, targetMaterial);
       mesh.position.set(x, ARC_CENTER.y, z);
+      // QUARANTINED gets a containment frame slightly larger than the slab:
+      // a boundary treatment in addition to color, never instead of it.
+      if (m.custody_status === CustodyStatus.QUARANTINED) {
+        const frame = new Mesh(
+          new BoxGeometry(0.19, 0.13, 0.03),
+          new MeshStandardMaterial({ color: new Color('#c13030'), wireframe: true }),
+        );
+        mesh.add(frame);
+      }
 
       if (changed) {
         this.transitions.push({

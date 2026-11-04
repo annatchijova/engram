@@ -34,3 +34,12 @@ selection comfort, tracking-loss recovery, and end-to-end hands-only
 completion of the investigation. Each needs a Quest session or the
 XR Simulator frontend plus the app attached (`xrsim runtime list`
 first, then `runtime status --strict`).
+
+## Investigation Room round (implemented, unverified on device)
+
+Graphite-blue scene background with restrained fog; QUARANTINED slabs
+carry a red wireframe containment frame in addition to color; the
+selected slab scales 1.3x as non-color feedback; guided texts now run
+as Acts I-IV (Discovery, Provenance, Impact, Counterfactual). All of
+it typechecks and builds; none of it has been seen in a headset or
+the simulator, so readability and comfort remain open.
