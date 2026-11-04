@@ -40,14 +40,23 @@ def main() -> int:
         print("FAIL auth: unknown (adapter down)")
         print("FAIL scenario: unknown (adapter down)")
         return 1
+    if health.get("protocol_version") != "engram-query/v1":
+        print(f"FAIL adapter: {BASE} answered /health but it is not the ENGRAM "
+              f"adapter (protocol_version={health.get('protocol_version')!r}). "
+              "Another service holds the port — free it or set ENGRAM_ADAPTER_PORT.")
+        print("FAIL mneme: unknown (foreign service)")
+        print("FAIL auth: unknown (foreign service)")
+        print("FAIL scenario: unknown (foreign service)")
+        return 1
     print(f"PASS adapter: /health {health_status} status={health.get('status')}")
     print(("PASS" if health.get("field_db_present") else "FAIL")
           + f" mneme: field_db_present={health.get('field_db_present')} "
             f"field_version={health.get('field_version')} (seed server/seed_demo_field.py if false)")
     token = os.environ.get("ENGRAM_READ_TOKEN", "devtoken123")
     status, overview = get("/api/v1/field/overview", token)
-    if status == 401:
-        print("FAIL auth: read token rejected — align ENGRAM_READ_TOKEN / VITE_ENGRAM_READ_TOKEN")
+    if status != 200:
+        print(f"FAIL auth: overview HTTP {status} — expected 200 with the read token "
+              "(401 = token mismatch, 503 = field unseeded, 404 = not the ENGRAM adapter)")
         print("FAIL scenario: unknown (auth)")
         return 1
     print(f"PASS auth: overview {status}")
