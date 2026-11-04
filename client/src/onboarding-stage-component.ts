@@ -7,16 +7,9 @@
  * development — nothing here is rendered directly from this component.
  */
 import { createComponent, Types } from '@iwsdk/core';
+import { OnboardingStageValue } from './onboarding-stage-machine.js';
 
-export const OnboardingStageValue = {
-  WELCOME: 'WELCOME',
-  SELECT_DONE: 'SELECT_DONE',
-  TRACE_DONE: 'TRACE_DONE',
-  CONTAINMENT_DONE: 'CONTAINMENT_DONE',
-  COUNTERFACTUAL_UNLOCKED: 'COUNTERFACTUAL_UNLOCKED',
-  PORTABLE_UNLOCKED: 'PORTABLE_UNLOCKED',
-  COMPLETE: 'COMPLETE',
-} as const;
+export { OnboardingStageValue };
 
 export const OnboardingStage = createComponent('OnboardingStage', {
   stage: {

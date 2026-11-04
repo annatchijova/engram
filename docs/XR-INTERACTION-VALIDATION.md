@@ -44,6 +44,31 @@ as Acts I-IV (Discovery, Provenance, Impact, Counterfactual). All of
 it typechecks and builds; none of it has been seen in a headset or
 the simulator, so readability and comfort remain open.
 
+## Guided-tour gating fix (preview unlocks comparison; commit does not gate investigation)
+
+Defect found in `client/src/onboarding-system.ts`: the Counterfactual
+Chamber was revealed only at `CONTAINMENT_DONE`, which required
+'commit-done' — a real actor-quarantine mutation. The staged preview
+event ('stage-done', emitted by `containment-system.ts` after a
+successful preview) advanced nothing. The guided tour therefore pushed
+the operator to commit a real quarantine in order to reach the
+counterfactual comparison. "Show everything" existed as an escape
+hatch and MNEME authorization was never bypassed, so this was a design
+defect, not an authorization vulnerability.
+
+Fix: the stage machine now lives in the pure, testable module
+`client/src/onboarding-stage-machine.ts`. 'stage-done' advances the
+tour to the new `PREVIEW_DONE` stage, and the chamber is revealed from
+`PREVIEW_DONE` on. The 'Contained it' checklist milestone still
+requires 'commit-done', so a preview never claims containment
+happened, and stages remain monotonic (a late commit never drags the
+tour backwards). Regression coverage:
+`client/tests/onboarding-gating.test.mjs` (5 tests; the tour reaches
+the chamber with no commit, the preview does not claim containment,
+the chamber stays hidden before the preview, monotonicity holds, and
+the full loop still completes). Client suite: 28/28, typecheck clean,
+production build ok.
+
 ## Round 8 validation (desktop browser only)
 
 Executed 2026-11-04 in headless Chromium (SwiftShader) against the
