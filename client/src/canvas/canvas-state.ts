@@ -137,8 +137,30 @@ export function fitScale(bounds: { w: number; h: number }, view: { w: number; h:
   return clampZoom(Math.min(view.w / bounds.w, view.h / bounds.h));
 }
 
+/** Escape untrusted memory content before any innerHTML interpolation (malicious-content regression). */
+export function escapeHtml(s: string): string {
+  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+}
+
+/** Structural custody-link check: flags a broken chain as invalid, never as clean. Display aid only; the bundle verifier remains authoritative. */
+export function validateCustodyLinks(chain: CustodyChain | null): boolean {
+  if (!chain || chain.chain_length === 0) return false;
+  let prev: string | null = null;
+  for (const [i, e] of chain.entries.entries()) {
+    if (e.seq !== i) return false;
+    if (prev !== null && e.prev_hash !== prev) return false;
+    prev = e.entry_hash;
+  }
+  return prev === chain.head_hash || chain.entries.length === 0;
+}
+
+/** Advisory session freshness; the server still decides expiry (401) — this only improves the message. */
+export function isSessionValid(expiresAt: number | null, now: number): boolean {
+  return expiresAt !== null && expiresAt > now;
+}
+
 export type ConnectionDiagnosis = {
-  state: 'connected' | 'server-unavailable' | 'auth-required' | 'schema-mismatch' | 'empty-investigation';
+  state: 'connected' | 'server-unavailable' | 'mneme-unavailable' | 'auth-required' | 'schema-mismatch' | 'empty-investigation';
   message: string;
 };
 
@@ -156,6 +178,9 @@ export function diagnoseConnection(opts: {
 }): ConnectionDiagnosis {
   if (!opts.reachable) {
     return { state: 'server-unavailable', message: 'Server unavailable: the adapter did not answer. Start it with ./scripts/dev-local.sh from the repo root, then reload. No data was invented.' };
+  }
+  if (opts.httpStatus === 503) {
+    return { state: 'mneme-unavailable', message: 'MNEME unavailable: the adapter answered but the field database is missing or unseeded (HTTP 503). Seed with python3 seed_demo_field.py in server/, then reload. This is not an empty investigation.' };
   }
   if (opts.httpStatus === 401 || opts.httpStatus === 500) {
     return { state: 'auth-required', message: `Authentication required (HTTP ${opts.httpStatus}): the read token is missing or does not match ENGRAM_READ_TOKEN on the adapter. Align client/.env and restart Vite.` };

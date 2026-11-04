@@ -24,5 +24,6 @@ for i in $(seq 1 30); do
   sleep 1
 done
 echo "Adapter healthy: $(curl -s http://localhost:8000/health)"
+ENGRAM_READ_TOKEN="$ENGRAM_READ_TOKEN" python3 "$ROOT/scripts/readiness.py" || true
 echo "Open https://localhost:8081/canvas.html (accept the local dev certificate once)."
 cd "$ROOT/client" && npm run dev:runtime

@@ -76,6 +76,8 @@ def main() -> int:
         "impact finds the recorded decision on mem-poison":
             sa["impact"]["direct_decisions"] == 1,
         "impact derives mem-note": sa["impact"]["derived_memories"] == ["mem-note"],
+        "impact flags the unattested retelling (different declarant)":
+            sa["impact"]["derived_unattested"] == ["mem-omar-note"],
         "exclusion removes mem-gate from serving":
             sa["exclusion"]["removed"] == ["mem-gate"],
     }

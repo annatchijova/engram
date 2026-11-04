@@ -38,6 +38,19 @@ Spatial form must communicate something true about the underlying state. Direct,
 
 Proximity does not automatically mean causality. Size does not mean authority. Brightness does not mean truth. Weight must not collapse confidence and standing into one signal. A line does not generically mean “related.”
 
+## Local Canvas demo (Round 4)
+
+```sh
+./scripts/dev-local.sh   # adapter :8000 + client https://localhost:8081
+python3 scripts/verify-fixture.py   # synthetic scenario, reproducible
+python3 scripts/test-adapter.py     # adapter regressions on a temp field
+```
+
+Open `https://localhost:8081/canvas.html` for the desktop investigation
+board (the XR view stays at `/index.html`). Guides:
+`docs/DEMO-SCENARIO.md`, `docs/XR-INTERACTION-VALIDATION.md`,
+`docs/SECURITY-ROUND4.md`. Spanish summary: `README.es.md`.
+
 ## Live
 
 - **Client**: https://client-six-mu-93.vercel.app

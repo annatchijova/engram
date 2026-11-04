@@ -21,13 +21,13 @@
       <aside class="rail" aria-labelledby="nav-h">
         <h2 id="nav-h">Investigation</h2>
         <p id="snapshot-line" class="mono">Snapshot: not loaded yet</p>
-        <h3>Guided scenario: The Compromised Memory</h3>
+        <h3>Guided scenario: The Compromised Memory (synthetic demo data)</h3>
         <ol class="guide">
-          <li><strong>Observe:</strong> one memory may be compromised.</li>
-          <li><strong>Investigate:</strong> where did it come from?</li>
-          <li><strong>Understand:</strong> what depends on it?</li>
-          <li><strong>Compare:</strong> what changes if we exclude it?</li>
-          <li><strong>Preserve:</strong> can someone else verify this?</li>
+          <li><button id="step-observe" type="button">1. Observe — one memory may be compromised</button></li>
+          <li><button id="step-trace" type="button">2. Trace — where did it come from?</button></li>
+          <li><button id="step-understand" type="button">3. Understand — what depends on it?</button></li>
+          <li><button id="step-compare" type="button">4. Compare — what changes if we exclude it?</button></li>
+          <li><button id="step-preserve" type="button">5. Preserve — can someone else verify this?</button></li>
         </ol>
         <button id="guide-btn" type="button">Start guided investigation</button>
         <h3><label for="search">Search memories</label></h3>

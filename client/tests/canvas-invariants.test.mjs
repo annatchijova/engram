@@ -123,6 +123,34 @@ test('R3-3. Canvas custody palette matches the XR field-system source (projectio
   assert.equal(cfg.world.features.locomotion, false);
 });
 
+test('R4-1. MNEME-down (503) is never rendered as connected; malicious content is escaped', async () => {
+  const { diagnoseConnection, escapeHtml } = await import('../src/canvas/canvas-state.ts');
+  const base = { reachable: true, httpStatus: null, protocolMatches: true, totalMemories: 8, healthStatus: 'ok' };
+  assert.equal(diagnoseConnection({ ...base, httpStatus: 503 }).state, 'mneme-unavailable');
+  assert.equal(escapeHtml('<img src=x onerror="alert(1)">'), '&lt;img src=x onerror=&quot;alert(1)&quot;&gt;');
+  assert.equal(escapeHtml("a & 'b'"), 'a &amp; &#39;b&#39;');
+});
+
+test('R4-2. unattested derivations stay a distinct class; broken custody links are flagged', async () => {
+  const { buildEdges: be, validateCustodyLinks } = await import('../src/canvas/canvas-state.ts');
+  const e = be(impact({ derived_unattested: ['mem-omar-note'] }));
+  assert.deepEqual(e.map((x) => x.cls), ['DERIVED_UNATTESTED']);
+  const good = { memory_id: 'm', chain_length: 2, head_hash: 'h2', entries: [
+    { memory_id: 'm', seq: 0, event_type: 'STORED', actor_id: 'a', reason: 'r', created_at: 't', payload_json: '{}', prev_hash: 'g', entry_hash: 'h1' },
+    { memory_id: 'm', seq: 1, event_type: 'REINFORCED', actor_id: 'a', reason: 'r', created_at: 't', payload_json: '{}', prev_hash: 'h1', entry_hash: 'h2' }] };
+  assert.equal(validateCustodyLinks(good), true);
+  const bad = structuredClone(good); bad.entries[1].prev_hash = 'tampered';
+  assert.equal(validateCustodyLinks(bad), false);
+});
+
+test('R4-3. expired sessions are flagged client-side; oversized edge sets stay typed', async () => {
+  const { isSessionValid, buildEdges: be } = await import('../src/canvas/canvas-state.ts');
+  assert.equal(isSessionValid(1000, 2000), false);
+  assert.equal(isSessionValid(3000, 2000), true);
+  const many = Array.from({ length: 5000 }, (_, i) => `m${i}`);
+  assert.equal(be(impact({ possible_memories: many })).length, 5000);
+});
+
 test('guided demo target is chosen from server custody status, never hardcoded as fact', () => {
   assert.equal(findCompromised([mem('a'), mem('b', 'TAINT_FLAGGED')])?.memory_id, 'b');
   assert.equal(findCompromised([mem('a')]), null);

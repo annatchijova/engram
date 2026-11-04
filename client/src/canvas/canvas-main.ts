@@ -10,7 +10,7 @@ import { SelectedMemory } from '../selected-memory.js';
 import { SessionStore } from '../session.js';
 import {
   applyDrag, buildEdges, buildJsonCanvas, canCommit, custodyPresentation,
-  custodySummary, diagnoseConnection, findCompromised, fitScale, clampZoom, onCounterfactualError, partitionCounterfactual,
+  custodySummary, diagnoseConnection, escapeHtml, findCompromised, fitScale, clampZoom, onCounterfactualError, partitionCounterfactual, validateCustodyLinks,
   serializeLayout, wideningGuard, type CanvasEdge, type CardLayout, type WorldPartition,
 } from './canvas-state.js';
 
@@ -39,9 +39,7 @@ function pos(id: string, i: number): { x: number; y: number } {
   return layout[id] ?? { x: 24 + (i % 3) * 330, y: 24 + Math.floor(i / 3) * 230 };
 }
 function say(msg: string): void { $<HTMLElement>('status').textContent = msg; }
-function esc(s: string): string {
-  return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
-}
+const esc = escapeHtml;
 
 function renderCards(): void {
   const q = $<HTMLInputElement>('search').value.toLowerCase();
@@ -144,7 +142,7 @@ async function selectMemory(id: string): Promise<void> {
         <tr><th>Content hash</th><td class="mono">${esc(detail.content_sha256)}</td></tr>
         <tr><th>Confidence (server text, never recomputed here)</th><td class="mono">${esc(detail.confidence)}</td></tr>
         <tr><th>Field state / superseded by</th><td>${esc(detail.field_state)} / ${esc(detail.superseded_by ?? '—')}</td></tr>
-        <tr><th>Custody</th><td>${esc(custodySummary(chain))}</td></tr>
+        <tr><th>Custody</th><td>${esc(custodySummary(chain))} Link structure: ${validateCustodyLinks(chain) ? 'consistent (display check only)' : 'BROKEN or unavailable — do not treat as verified; use the bundle verifier'}</td></tr>
         <tr><th>Impact seal</th><td class="mono">${esc(impact.impact_sha256)}</td></tr>
       </table>
       <h4>Relationships (typed, from MNEME impact)</h4>
@@ -290,7 +288,7 @@ $<HTMLButtonElement>('json-btn').addEventListener('click', () => {
   download('engram-canvas.json', out.json);
   say(`JSON Canvas exported. Lost in export: ${out.warnings.join(' ')}`);
 });
-$<HTMLButtonElement>('bundle-btn').addEventListener('click', () => void (async (): Promise<void> => {
+async function preserveBundle(): Promise<void> {
   try {
     const b = await EngramApi.exportBundle();
     const v = b.verifier;
@@ -300,7 +298,21 @@ $<HTMLButtonElement>('bundle-btn').addEventListener('click', () => void (async (
     download('engram-bundle.json', b.bundle_json);
     $<HTMLElement>('cf-detail').innerHTML = `<details><summary>Verifier output (${esc(v.status)})</summary><pre>${esc(v.output_lines.join('\n'))}</pre></details>`;
   } catch (err) { say(`Bundle export failed: ${(err as Error).message}`); }
-})());
+}
+$<HTMLButtonElement>('bundle-btn').addEventListener('click', () => void preserveBundle());
+$<HTMLButtonElement>('step-observe').addEventListener('click', () => $<HTMLButtonElement>('guide-btn').click());
+$<HTMLButtonElement>('step-trace').addEventListener('click', () => {
+  const id = SelectedMemory.get();
+  if (!id) { say('Trace: select the suspicious memory first (step 1).'); return; }
+  say(`Trace: provenance and custody for ${id} are in the inspector. Known links are the recorded chain; anything absent is shown as unknown, not filled in.`);
+  $<HTMLElement>('inspector').scrollIntoView({ block: 'start' });
+});
+$<HTMLButtonElement>('step-understand').addEventListener('click', () => {
+  if (!lastImpact) { say('Understand: select a memory first so MNEME impact can be loaded.'); return; }
+  say(`Understand: DIRECT = recorded receipt/decision. DERIVED = from recorded evidence. DERIVED (unattested) = a different actor retold it. POSSIBLE = co-served only, NOT causal. Lines and the inspector list use the same classes.`);
+});
+$<HTMLButtonElement>('step-compare').addEventListener('click', () => void runCounterfactual('exclusion'));
+$<HTMLButtonElement>('step-preserve').addEventListener('click', () => void preserveBundle());
 
 let zoom = 1;
 function applyZoom(): void {
