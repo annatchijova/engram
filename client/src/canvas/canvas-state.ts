@@ -12,14 +12,6 @@ import type { CounterfactualDelta, CustodyChain, ImpactReport, MemorySummary } f
 
 export type EdgeClass = 'DIRECT' | 'DERIVED' | 'DERIVED_UNATTESTED' | 'POSSIBLE';
 
-export type CanvasEdge = {
-  source: string;
-  target: string;
-  cls: EdgeClass;
-  /** Human label that travels with the line; meaning never rides on color or distance alone. */
-  label: string;
-};
-
 export const EDGE_LABEL: Record<EdgeClass, string> = {
   DIRECT: 'DIRECT — receipt/decision recorded by MNEME',
   DERIVED: 'DERIVED — derived from recorded evidence',
@@ -27,12 +19,20 @@ export const EDGE_LABEL: Record<EdgeClass, string> = {
   POSSIBLE: 'POSSIBLE — co-served/resonant only, NOT causal',
 };
 
-/** Same hex values as XR CUSTODY_COLOR (field-system.ts) plus a glyph + text label, so status never rides on color alone. */
+/** Same hex values as XR CUSTODY_COLOR (field-system.ts) plus glyph + text, so status never rides on color alone. */
 export const CUSTODY_PRESENTATION: Record<string, { hex: string; glyph: string; label: string }> = {
   CLEAN: { hex: '#3fa34d', glyph: '●', label: 'Clean' },
   TAINT_FLAGGED: { hex: '#e0a62b', glyph: '▲', label: 'Taint flagged' },
   QUARANTINED: { hex: '#c13030', glyph: '■', label: 'Quarantined' },
   SUPERSEDED: { hex: '#6b6f76', glyph: '◆', label: 'Superseded' },
+};
+
+export type CanvasEdge = {
+  source: string;
+  target: string;
+  cls: EdgeClass;
+  /** Human label that travels with the line; meaning never rides on color or distance alone. */
+  label: string;
 };
 
 export function custodyPresentation(status: string): { hex: string; glyph: string; label: string } {

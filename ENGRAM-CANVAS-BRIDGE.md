@@ -74,6 +74,19 @@ returns 200, an unrelated origin is refused (400).
   1:00 typed relationships and preview (no commit); 1:40 compare worlds
   with the sealed delta; 2:20 export bundle and read the verifier verdict;
   2:45 open the same memory in XR (`?memory=` link).
+- Fixture: `python3 scripts/verify-fixture.py` seeds the Compromised
+  Memory scenario twice into throwaway DBs through MNEME's public API
+  and asserts structural identity (7/7 PASS). Bit-identical seals are
+  explicitly not claimed: decision ids are random per seed and hashes
+  embed wall-clock time.
+- Red-team: ENGRAM-REDTEAM-ROUND3.md records predicted vs observed for
+  the 17 probes, with unresolved items named (device behaviour, race,
+  fuzz, scale) rather than smoothed over.
+- XR beyond the camera tweak is bounded by preservation: scene and
+  systems carry the uncommitted login/onboarding WIP, so composition
+  changes there wait for that migration to land; the shared projection
+  vocabulary now lives behind client/src/shared-projection.ts for XR
+  to adopt, with palette parity pinned by test.
 
 ## 60-second walkthrough (first-time viewer)
 
