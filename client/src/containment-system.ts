@@ -15,6 +15,7 @@
 import { createSystem, UIKitMLAsset } from '@iwsdk/core';
 import { EngramApi } from './engram-api.js';
 import { FieldSystem } from './field-system.js';
+import { OnboardingEvents } from './onboarding-events.js';
 import { SessionStore } from './session.js';
 
 const TARGET_ACTOR_ID = 'pipeline-logs';
@@ -70,11 +71,13 @@ export class ContainmentSystem extends createSystem({}) {
               text: `This will QUARANTINE ${TARGET_ACTOR_ID} and TAINT_FLAG ` +
                 `${preview.count} ${preview.count === 1 ? 'memory' : 'memories'}: ` +
                 `${preview.would_flag_memory_ids.join(', ')}. Flagged memories remain ` +
-                `rehabilitatable in MNEME later, but this build cannot rehabilitate them.`,
+                `rehabilitatable in MNEME later, but this build cannot rehabilitate them. ` +
+                `This flags the memory as suspect; it does not delete it.`,
             });
           }
           resultText?.setProperties({ text: '' });
           previewSection?.setProperties({ display: 'flex' });
+          OnboardingEvents.emit('stage-done');
         } catch (err) {
           previewText?.setProperties({ text: `FAILED to preview: ${(err as Error).message}` });
           previewSection?.setProperties({ display: 'flex' });
@@ -106,6 +109,7 @@ export class ContainmentSystem extends createSystem({}) {
           previewSection?.setProperties({ display: 'none' });
           const field = this.world.getSystem(FieldSystem);
           await field?.refresh();
+          OnboardingEvents.emit('commit-done');
         } catch (err) {
           resultText?.setProperties({ text: `FAILED to commit: ${(err as Error).message}` });
         }

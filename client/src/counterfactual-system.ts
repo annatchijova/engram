@@ -31,6 +31,7 @@ import {
 } from '@iwsdk/core';
 import { CounterfactualDelta, EngramApi } from './engram-api.js';
 import { MemoryNode } from './memory-node-component.js';
+import { OnboardingEvents } from './onboarding-events.js';
 import { SessionStore } from './session.js';
 
 const CHAMBER_CENTER = { x: 0, y: 0.75, z: -2.3 };
@@ -58,9 +59,10 @@ export class CounterfactualSystem extends createSystem({
     const containmentBtn = panel.getElementById('cf-containment');
     const collapseBtn = panel.getElementById('cf-collapse');
 
-    const onExclusion = () => void this.run(() => EngramApi.exclusionEffect());
+    const onExclusion = () =>
+      void this.run('exclusion-run', () => EngramApi.exclusionEffect());
     const onContainment = () =>
-      void this.run(() => {
+      void this.run('containment-cf-run', () => {
         const session = SessionStore.get();
         if (!session) {
           throw new Error('log in first (top-right) — containment widens the custody gate.');
@@ -96,7 +98,10 @@ export class CounterfactualSystem extends createSystem({
     panel?.getElementById('cf-result')?.setProperties({ text: '' });
   }
 
-  private async run(call: () => Promise<CounterfactualDelta>): Promise<void> {
+  private async run(
+    kind: 'exclusion-run' | 'containment-cf-run',
+    call: () => Promise<CounterfactualDelta>,
+  ): Promise<void> {
     const panel = this.world.getSceneObject<UIKitMLAsset>('counterfactual-panel');
     const result = panel?.getElementById('cf-result');
     let delta: CounterfactualDelta;
@@ -148,5 +153,6 @@ export class CounterfactualSystem extends createSystem({
         `receipt B ${delta.receipt_b_sha256.slice(0, 12)}...\n` +
         `delta ${delta.delta_sha256.slice(0, 16)}...`,
     });
+    OnboardingEvents.emit(kind);
   }
 }

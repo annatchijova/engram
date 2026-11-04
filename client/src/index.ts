@@ -10,12 +10,11 @@ import projectOptions from 'virtual:iwsdk-project';
 import { ContainmentSystem } from './containment-system.js';
 import { CounterfactualSystem } from './counterfactual-system.js';
 import { FieldSystem } from './field-system.js';
-import { initLoginOverlay } from './login-overlay.js';
+import { LoginSystem } from './login-system.js';
+import { OnboardingSystem } from './onboarding-system.js';
 import { PortableSystem } from './portable-system.js';
 import { SelectionSystem } from './selection-system.js';
 import { TraceSystem } from './trace-system.js';
-
-initLoginOverlay();
 
 // Deployment diagnostics: World.create() previously had no .catch(), and a
 // rejection or a worker-thread error can be invisible to normal console
@@ -41,9 +40,15 @@ World.create(
   projectOptions,
 ).then((world) => {
   world.registerSystem(FieldSystem);
+  world.registerSystem(LoginSystem);
   world.registerSystem(SelectionSystem);
   world.registerSystem(ContainmentSystem);
   world.registerSystem(TraceSystem);
   world.registerSystem(CounterfactualSystem);
   world.registerSystem(PortableSystem);
+  // Last: it reaches into panels (containment/counterfactual/portable,
+  // legend's trace section) that the systems above already resolved via
+  // getSceneObject in their own init() — registration order is the only
+  // thing guaranteeing those lookups succeed here.
+  world.registerSystem(OnboardingSystem);
 }).catch((err) => showBootError('World.create failed', err));

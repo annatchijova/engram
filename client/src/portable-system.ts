@@ -7,6 +7,7 @@
  */
 import { createSystem, UIKitMLAsset } from '@iwsdk/core';
 import { EngramApi } from './engram-api.js';
+import { OnboardingEvents } from './onboarding-events.js';
 
 export class PortableSystem extends createSystem({}) {
   private lastBundleJson: string | null = null;
@@ -34,6 +35,7 @@ export class PortableSystem extends createSystem({}) {
               `${bundle.verifier.exit_code === null ? '' : ` exit ${bundle.verifier.exit_code}`}\n` +
               bundle.verifier.output_lines.slice(0, 4).join('\n'),
           });
+          OnboardingEvents.emit('bundle-verified');
         } catch (err) {
           result?.setProperties({ text: `FAILED to export: ${(err as Error).message}` });
         }

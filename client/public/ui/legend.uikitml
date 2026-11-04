@@ -38,41 +38,54 @@
     color: #ff8080;
     margin-top: 1;
   }
+  .gloss {
+    font-size: 0.85;
+    color: #8a8f98;
+    margin-left: 0.6;
+  }
 </style>
 <div class="panel-root">
   <div class="heading">custody_status</div>
   <div class="row">
     <div class="swatch" id="swatch-CLEAN"></div>
     <span class="label" id="text-CLEAN">CLEAN</span>
+    <span class="gloss">not flagged by anything</span>
   </div>
   <div class="row">
     <div class="swatch" id="swatch-TAINT_FLAGGED"></div>
     <span class="label" id="text-TAINT_FLAGGED">TAINT_FLAGGED</span>
+    <span class="gloss">marked suspect, not yet removed from use</span>
   </div>
   <div class="row">
     <div class="swatch" id="swatch-QUARANTINED"></div>
     <span class="label" id="text-QUARANTINED">QUARANTINED</span>
+    <span class="gloss">isolated - its source actor was shut off</span>
   </div>
   <div class="row">
     <div class="swatch" id="swatch-SUPERSEDED"></div>
     <span class="label" id="text-SUPERSEDED">SUPERSEDED</span>
+    <span class="gloss">replaced by a newer memory</span>
   </div>
-  <div class="heading" style="margin-top: 1.5">trace edges</div>
-  <div class="row">
+  <div class="heading" id="trace-legend-heading" style="margin-top: 1.5; display: none">trace edges</div>
+  <div class="row" id="trace-legend-section" style="display: none">
     <div class="swatch" id="swatch-DIRECT"></div>
     <span class="label" id="text-DIRECT">DIRECT</span>
+    <span class="gloss">this memory caused that one, provably</span>
   </div>
-  <div class="row">
+  <div class="row" id="trace-legend-derived" style="display: none">
     <div class="swatch" id="swatch-DERIVED"></div>
     <span class="label" id="text-DERIVED">DERIVED</span>
+    <span class="gloss">built from it, with a signed receipt</span>
   </div>
-  <div class="row">
+  <div class="row" id="trace-legend-derived-unattested" style="display: none">
     <div class="swatch" id="swatch-DERIVED_UNATTESTED"></div>
     <span class="label" id="text-DERIVED_UNATTESTED">DERIVED (unattested)</span>
+    <span class="gloss">looks derived, but no receipt proves it</span>
   </div>
-  <div class="row">
+  <div class="row" id="trace-legend-possible" style="display: none">
     <div class="swatch" id="swatch-POSSIBLE"></div>
     <span class="label" id="text-POSSIBLE">POSSIBLE (not causal)</span>
+    <span class="gloss">touched the same context - not a cause</span>
   </div>
   <span class="status-line" id="legend-status" style="display: none"></span>
 </div>

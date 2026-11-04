@@ -14,8 +14,8 @@ import {
   Entity,
   Mesh,
   MeshStandardMaterial,
+  BoxGeometry,
   RayInteractable,
-  SphereGeometry,
   UIKitMLAsset,
 } from '@iwsdk/core';
 import { EngramApi } from './engram-api.js';
@@ -35,10 +35,29 @@ export const CUSTODY_COLOR: Record<string, string> = {
 const ARC_CENTER = { x: 0, y: 1.3, z: -1.6 };
 const ARC_RADIUS = 0.9;
 const ARC_SPAN_DEG = 140;
-const NODE_RADIUS = 0.055;
+// update(delta, time)'s units aren't documented; the reference example
+// (elevator.ts: Math.sin(time * 0.5) as a slow bob) only makes sense if
+// both are in SECONDS, matching three.js Clock convention. Tracking
+// elapsed-via-delta-accumulation instead of an absolute clock means this
+// transition is correct regardless of what time's epoch/zero-point is.
+const TRANSITION_SECONDS = 0.4;
+
+// One real custody-status change, mid-lerp between its old and new
+// CUSTODY_COLOR entries — never a third color, never started before
+// refresh() already applied the server's real new status.
+type ColorTransition = {
+  material: MeshStandardMaterial;
+  from: Color;
+  to: Color;
+  toStatus: string;
+  mesh: Mesh;
+  elapsed: number;
+};
 
 export class FieldSystem extends createSystem({}) {
-  private geometry = new SphereGeometry(NODE_RADIUS, 24, 16);
+  // Evidence slabs, not spheres: a flat forensic tag whose face takes the
+  // custody material. Size is reading distance only — never authority.
+  private geometry = new BoxGeometry(0.17, 0.11, 0.025);
   private nodeEntities: Entity[] = [];
   // One shared material per custody_status: N nodes × M refreshes must not
   // mint a new MeshStandardMaterial each — the custody→appearance mapping
@@ -46,6 +65,12 @@ export class FieldSystem extends createSystem({}) {
   // shared material would recolor every node of that status at once).
   private statusMaterials: Record<string, MeshStandardMaterial> = {};
   private fallbackMaterial = new MeshStandardMaterial({ color: new Color('#999999') });
+  // memory_id -> custody_status as of the last refresh, so the next refresh
+  // can tell which specific nodes actually changed (never animate a status
+  // that didn't really change, never guess from a recreated/disposed node).
+  private previousStatus = new Map<string, string>();
+  // Reused every frame — never allocate inside update().
+  private transitions: ColorTransition[] = [];
 
   init(): void {
     for (const [status, hex] of Object.entries(CUSTODY_COLOR)) {
@@ -54,6 +79,24 @@ export class FieldSystem extends createSystem({}) {
       });
     }
     void this.refresh();
+  }
+
+  update(delta: number): void {
+    for (let i = this.transitions.length - 1; i >= 0; i--) {
+      const t = this.transitions[i];
+      t.elapsed += delta;
+      const alpha = Math.min(1, t.elapsed / TRANSITION_SECONDS);
+      if (alpha >= 1) {
+        // Finished: hand the node back to the shared material (per Nivel 6
+        // hardening, N nodes must not each keep minting their own) and
+        // dispose the transitional instance so it doesn't leak.
+        t.mesh.material = this.statusMaterials[t.toStatus] ?? this.fallbackMaterial;
+        t.material.dispose();
+        this.transitions.splice(i, 1);
+      } else {
+        t.material.color.lerpColors(t.from, t.to, alpha);
+      }
+    }
   }
 
   /** Re-fetches the field and rebuilds the memory nodes. Public so
@@ -80,9 +123,16 @@ export class FieldSystem extends createSystem({}) {
 
     for (const entity of this.nodeEntities) entity.dispose();
     this.nodeEntities = [];
+    // A transitioning node's mesh is about to be disposed along with
+    // everything above — any transition still in flight for it is now
+    // chasing a destroyed mesh. Drop those in-flight records and finish
+    // the stale material instance rather than lerping into nothing.
+    for (const t of this.transitions) t.material.dispose();
+    this.transitions = [];
 
     const count = memories.length;
     const startDeg = -ARC_SPAN_DEG / 2;
+    const nextStatus = new Map<string, string>();
     memories.forEach((m, i) => {
       const angleDeg = count <= 1 ? 0 : startDeg + (ARC_SPAN_DEG * i) / (count - 1);
       const angle = (angleDeg * Math.PI) / 180;
@@ -92,9 +142,31 @@ export class FieldSystem extends createSystem({}) {
       // Unknown status (server-side vocabulary newer than this client)
       // gets the neutral fallback material — visible as "unmapped", never
       // silently painted as a known status.
-      const material = this.statusMaterials[m.custody_status] ?? this.fallbackMaterial;
-      const mesh = new Mesh(this.geometry, material);
+      const targetMaterial = this.statusMaterials[m.custody_status] ?? this.fallbackMaterial;
+      const priorStatus = this.previousStatus.get(m.memory_id);
+      // A real, server-confirmed change (never a guess, never on click):
+      // this memory existed before refresh() and its status is now
+      // different. Start the mesh on its OWN material at the OLD color and
+      // let update() lerp it toward the new one — only CUSTODY_COLOR
+      // values are ever either endpoint.
+      const changed = priorStatus !== undefined && priorStatus !== m.custody_status
+        && CUSTODY_COLOR[priorStatus] !== undefined && CUSTODY_COLOR[m.custody_status] !== undefined;
+
+      const mesh = changed
+        ? new Mesh(this.geometry, new MeshStandardMaterial({ color: new Color(CUSTODY_COLOR[priorStatus!]) }))
+        : new Mesh(this.geometry, targetMaterial);
       mesh.position.set(x, ARC_CENTER.y, z);
+
+      if (changed) {
+        this.transitions.push({
+          material: mesh.material as MeshStandardMaterial,
+          from: new Color(CUSTODY_COLOR[priorStatus!]),
+          to: new Color(CUSTODY_COLOR[m.custody_status]),
+          toStatus: m.custody_status,
+          mesh,
+          elapsed: 0,
+        });
+      }
 
       const entity = this.world.createTransformEntity(mesh);
       entity.addComponent(RayInteractable);
@@ -103,7 +175,9 @@ export class FieldSystem extends createSystem({}) {
         custodyStatus: m.custody_status,
       });
       this.nodeEntities.push(entity);
+      nextStatus.set(m.memory_id, m.custody_status);
     });
+    this.previousStatus = nextStatus;
   }
 
   private populateLegend(

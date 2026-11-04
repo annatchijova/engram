@@ -7,5 +7,6 @@
 
 import { defineComponents } from '@iwsdk/core';
 import { MemoryNode } from './memory-node-component.js';
+import { OnboardingStage } from './onboarding-stage-component.js';
 
-export default defineComponents([MemoryNode]);
+export default defineComponents([MemoryNode, OnboardingStage]);
