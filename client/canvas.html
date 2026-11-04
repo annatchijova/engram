@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>ENGRAM Canvas — verifiable spatial memory</title>
+    <link rel="stylesheet" href="/src/canvas/canvas.css" />
+  </head>
+  <body>
+    <a class="skip" href="#inspector">Skip to inspector</a>
+    <header class="topbar">
+      <div>
+        <h1>ENGRAM Canvas</h1>
+        <p class="sub">Memories you can investigate. Every line has a meaning, every memory has provenance.</p>
+      </div>
+      <nav aria-label="Surfaces">
+        <a id="xr-link" href="./index.html">Open XR view</a>
+      </nav>
+    </header>
+    <p id="status" class="status" role="status" aria-live="polite">Loading field from the ENGRAM adapter…</p>
+    <main class="layout">
+      <section class="board-wrap" aria-labelledby="board-h">
+        <h2 id="board-h">Investigation board <span class="hint">(drag moves cards only — it never changes memory state)</span></h2>
+        <div class="toolbar" role="search">
+          <label>Search <input id="search" type="search" placeholder="id, topic or text" /></label>
+          <label>Custody <select id="filter-status"><option value="">All statuses</option></select></label>
+          <button id="guide-btn" type="button">Start guided investigation</button>
+          <button id="json-btn" type="button">Export JSON Canvas</button>
+          <button id="bundle-btn" type="button">Export evidence bundle</button>
+        </div>
+        <div id="board" class="board">
+          <svg id="edges" class="edges" aria-hidden="true"></svg>
+          <div id="cards"></div>
+        </div>
+        <div class="legend" aria-label="Legend">
+          <h3>How to read this board</h3>
+          <ul id="custody-legend"></ul>
+          <ul>
+            <li><span class="sw line-direct"></span> DIRECT — recorded receipt/decision</li>
+            <li><span class="sw line-derived"></span> DERIVED — from recorded evidence</li>
+            <li><span class="sw line-unattested"></span> DERIVED (unattested)</li>
+            <li><span class="sw line-possible"></span> POSSIBLE — not causal</li>
+          </ul>
+        </div>
+        <section class="worlds" aria-labelledby="worlds-h">
+          <h3 id="worlds-h">Compare worlds</h3>
+          <p class="hint">MNEME returns a sealed, query-scoped delta — not two complete worlds. The hypothetical was never executed.</p>
+          <div class="world-btns">
+            <button id="cf-exclusion" type="button">What if the gate memory is excluded? (narrowing)</button>
+            <button id="cf-containment" type="button">What if the poisoned source is contained? (widening, needs login)</button>
+          </div>
+          <div class="world-grid">
+            <article class="world factual"><h4>FACTUAL WORLD — authoritative record</h4><div id="world-a">Run a comparison to see the recorded serving list.</div></article>
+            <article class="world hypothetical"><h4>COUNTERFACTUAL WORLD — sealed hypothetical</h4><div id="world-b">No hypothetical loaded. Hypothetical cards are never mixed into the board above.</div></article>
+          </div>
+          <div id="cf-detail"></div>
+        </section>
+      </section>
+      <aside id="inspector" class="inspector" tabindex="-1" aria-labelledby="insp-h">
+        <h2 id="insp-h">Inspector</h2>
+        <div id="insp-body">Select a memory card to inspect provenance, custody and relationships.</div>
+        <section aria-labelledby="contain-h">
+          <h3 id="contain-h">Containment (actor quarantine)</h3>
+          <p class="hint">The only supported mutation. Preview first, commit second — staging is not committing. This quarantines an actor, not a single memory.</p>
+          <label>Actor <select id="actor-select"></select></label>
+          <button id="preview-btn" type="button">Preview containment</button>
+          <div id="preview-body"></div>
+          <fieldset class="login-box">
+            <legend>Log in to commit (MNEME checks authority)</legend>
+            <label>User <input id="login-user" autocomplete="username" /></label>
+            <label>Password <input id="login-pass" type="password" autocomplete="current-password" /></label>
+            <button id="login-btn" type="button">Log in</button>
+            <span id="login-state">Not logged in. Reading needs no login.</span>
+          </fieldset>
+          <label>Reason <input id="commit-reason" placeholder="Required by MNEME" /></label>
+          <button id="commit-btn" type="button" disabled>Commit quarantine</button>
+          <div id="commit-body"></div>
+        </section>
+      </aside>
+    </main>
+    <ol class="guide" aria-label="Guided investigation">
+      <li><strong>Observe:</strong> find the card the server marks taint-flagged or quarantined.</li>
+      <li><strong>Investigate:</strong> select it and read provenance, custody chain and typed relationships.</li>
+      <li><strong>Preview:</strong> stage the actor containment and see exactly what would be flagged.</li>
+      <li><strong>Compare:</strong> run a counterfactual and read removed/entered/rank changes.</li>
+      <li><strong>Explain:</strong> check claim changes and decision dependencies (field-wide, kept separate).</li>
+      <li><strong>Preserve:</strong> export the evidence bundle. Integrity of the file is not truth of every claim.</li>
+    </ol>
+    <script type="module" src="/src/canvas/canvas-main.ts"></script>
+  </body>
+</html>
