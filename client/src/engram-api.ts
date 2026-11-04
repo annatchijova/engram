@@ -10,7 +10,7 @@
  */
 
 const API_BASE = (import.meta.env.VITE_ENGRAM_API_BASE as string | undefined) ??
-  'http://localhost:8000';
+  'http://localhost:17347';
 const READ_TOKEN = import.meta.env.VITE_ENGRAM_READ_TOKEN as string | undefined;
 
 // Nivel 5 — minimal check, not a hard gate: a real version-negotiation UI

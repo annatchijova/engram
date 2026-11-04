@@ -16,7 +16,7 @@ import urllib.request
 
 os.environ["no_proxy"] = "localhost,127.0.0.1"  # env may carry it empty
 os.environ["NO_PROXY"] = "localhost,127.0.0.1"
-BASE = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8000"
+BASE = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:17347"
 
 
 def get(path: str, token: str | None = None):

@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # ENGRAM local development: adapter (MNEME gateway) + Vite client.
 # Run from anywhere: ./scripts/dev-local.sh
-# Adapter: http://localhost:8000  |  Canvas: https://localhost:8081/canvas.html
+# Adapter: http://localhost:17347  |  Canvas: https://localhost:8081/canvas.html
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 export ENGRAM_READ_TOKEN="${ENGRAM_READ_TOKEN:-devtoken123}"
 export ENGRAM_DEMO_PASSWORD="${ENGRAM_DEMO_PASSWORD:-demo-password}"
 export ENGRAM_CLIENT_ORIGIN="${ENGRAM_CLIENT_ORIGIN:-https://localhost:8081,http://localhost:8081}"
-PORT="${ENGRAM_ADAPTER_PORT:-8000}"
+PORT="${ENGRAM_ADAPTER_PORT:-17347}"
 export VITE_ENGRAM_API_BASE="http://localhost:$PORT"
 export VITE_ENGRAM_READ_TOKEN="$ENGRAM_READ_TOKEN"
 

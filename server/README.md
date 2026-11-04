@@ -18,7 +18,7 @@ python3 seed_demo_field.py
 ENGRAM_READ_TOKEN=devtoken123 \
 ENGRAM_CLIENT_ORIGIN=https://localhost:8081 \
 ENGRAM_DEMO_PASSWORD=demo-password \
-python3 -m uvicorn app:app --port 8000
+python3 -m uvicorn app:app --port 17347
 ```
 
 `ENGRAM_CLIENT_ORIGIN` must match exactly where `npm run dev` serves the

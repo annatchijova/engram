@@ -39,11 +39,11 @@ No LLM is called anywhere in this surface.
 
 ```sh
 ./scripts/dev-local.sh
-# Adapter: http://localhost:8000 | Canvas: https://localhost:8081/canvas.html
+# Adapter: http://localhost:17347 | Canvas: https://localhost:8081/canvas.html
 ```
 
 The script starts the adapter, waits for `/health`, then starts Vite with
-`VITE_ENGRAM_API_BASE=http://localhost:8000`. Round 3 root-caused the
+`VITE_ENGRAM_API_BASE=http://localhost:17347`. Round 3 root-caused the
 original "Failed to fetch" to five stacked layers: wrong working
 directory, a port split (8000 vs 8090 vs 8080), CORS origin scheme
 (`http://` configured while Vite serves `https://localhost:8081`), CORS

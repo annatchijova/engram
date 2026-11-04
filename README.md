@@ -41,7 +41,7 @@ Proximity does not automatically mean causality. Size does not mean authority. B
 ## Local Canvas demo (Round 4)
 
 ```sh
-./scripts/dev-local.sh   # adapter :8000 + client https://localhost:8081
+./scripts/dev-local.sh   # adapter :17347 + client https://localhost:8081
 python3 scripts/verify-fixture.py   # synthetic scenario, reproducible
 python3 scripts/test-adapter.py     # adapter regressions on a temp field
 ```
