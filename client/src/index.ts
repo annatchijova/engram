@@ -5,11 +5,20 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import { AmbientLight, Color, DirectionalLight, FogExp2, World } from '@iwsdk/core';
+import {
+  AmbientLight,
+  Color,
+  DirectionalLight,
+  FogExp2,
+  GridHelper,
+  PointLight,
+  World,
+} from '@iwsdk/core';
 import projectOptions from 'virtual:iwsdk-project';
 import { ContainmentSystem } from './containment-system.js';
 import { CounterfactualSystem } from './counterfactual-system.js';
 import { FieldSystem } from './field-system.js';
+import { HoverPreviewSystem } from './hover-preview-system.js';
 import { LoginSystem } from './login-system.js';
 import { OnboardingSystem } from './onboarding-system.js';
 import { PortableSystem } from './portable-system.js';
@@ -50,9 +59,21 @@ World.create(
     const key = new DirectionalLight('#dfeaf5', 1.6);
     key.position.set(1.5, 3, 1.5);
     rig.add(key);
+    // Atmosphere pass: still presentation-only, still no evidence meaning.
+    // A cool rim light behind the arc separates the slabs from the
+    // near-black background instead of leaving them flat-lit; a dim grid
+    // floor gives the seated room a spatial anchor in the empty lower
+    // field instead of the player standing over a void.
+    const rim = new PointLight('#2e6a8f', 2.2, 6, 2);
+    rim.position.set(0, 0.9, -2.3);
+    rig.add(rim);
+    const floor = new GridHelper(6, 24, '#2a3340', '#1a212b');
+    floor.position.set(0, 0, -1.6);
+    rig.add(floor);
   }
   world.registerSystem(FieldSystem);
   world.registerSystem(LoginSystem);
+  world.registerSystem(HoverPreviewSystem);
   world.registerSystem(SelectionSystem);
   world.registerSystem(ContainmentSystem);
   world.registerSystem(TraceSystem);

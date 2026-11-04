@@ -134,6 +134,23 @@
       }
     },
     {
+      "id": "preview-panel",
+      "name": "Preview Panel",
+      "content": {
+        "type": "asset",
+        "asset": "preview-panel"
+      },
+      "transform": {
+        "position": [
+          0,
+          0.95,
+          -1.05
+        ],
+        "scale": 1.05
+      },
+      "components": {}
+    },
+    {
       "id": "containment-panel",
       "name": "Containment Panel",
       "content": {

@@ -186,6 +186,8 @@ export class FieldSystem extends createSystem({}) {
       entity.addComponent(MemoryNode, {
         memoryId: m.memory_id,
         custodyStatus: m.custody_status,
+        topic: m.topic ?? '',
+        contentPreview: m.content_preview ?? '',
       });
       this.nodeEntities.push(entity);
       nextStatus.set(m.memory_id, m.custody_status);

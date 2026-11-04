@@ -31,6 +31,11 @@ export default defineAssets({
     type: AssetType.UIKitML,
     name: 'Detail Panel',
   },
+  'preview-panel': {
+    url: publicAssetUrl('ui/preview.uikitml'),
+    type: AssetType.UIKitML,
+    name: 'Preview Panel',
+  },
   'containment-panel': {
     url: publicAssetUrl('ui/containment.uikitml'),
     type: AssetType.UIKitML,
