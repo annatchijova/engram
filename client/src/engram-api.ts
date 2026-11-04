@@ -286,7 +286,26 @@ async function login(username: string, password: string): Promise<LoginResult> {
   return envelope.data;
 }
 
+export type HealthReport = {
+  status: string;
+  protocol_version: string;
+  field_epoch: string;
+  field_db_present: boolean;
+  read_token_configured: boolean;
+  demo_password_configured: boolean;
+  field_version: number;
+};
+
+// /health is the one unauthenticated, non-enveloped route: it exists so a
+// client can distinguish "adapter down" from "adapter up but refusing".
+async function health(): Promise<HealthReport> {
+  const res = await fetchWithTimeout('/health', { method: 'GET' });
+  if (!res.ok) throw new Error(`ENGRAM adapter /health -> HTTP ${res.status}`);
+  return (await res.json()) as HealthReport;
+}
+
 export const EngramApi = {
+  health,
   overview: () => request<FieldOverview>('/api/v1/field/overview'),
   listMemories: () =>
     request<{ total: number; memories: MemorySummary[] }>('/api/v1/memories?limit=200'),

@@ -10,7 +10,7 @@ import { SelectedMemory } from '../selected-memory.js';
 import { SessionStore } from '../session.js';
 import {
   applyDrag, buildEdges, buildJsonCanvas, canCommit, custodyPresentation,
-  custodySummary, findCompromised, onCounterfactualError, partitionCounterfactual,
+  custodySummary, diagnoseConnection, findCompromised, fitScale, clampZoom, onCounterfactualError, partitionCounterfactual,
   serializeLayout, wideningGuard, type CanvasEdge, type CardLayout, type WorldPartition,
 } from './canvas-state.js';
 
@@ -165,6 +165,13 @@ async function selectMemory(id: string): Promise<void> {
 }
 
 async function boot(): Promise<void> {
+  let healthStatus: string | null = null;
+  try {
+    healthStatus = (await EngramApi.health()).status;
+  } catch {
+    say(diagnoseConnection({ reachable: false, httpStatus: null, protocolMatches: null, totalMemories: null, healthStatus: null }).message);
+    return;
+  }
   try {
     const [ov, list, actors] = await Promise.all([
       EngramApi.overview(), EngramApi.listMemories(), EngramApi.listActors(),
@@ -176,12 +183,17 @@ async function boot(): Promise<void> {
       + Object.keys(ov.custody_status_meaning).map((s) => `<option>${esc(s)}</option>`).join('');
     $<HTMLSelectElement>('actor-select').innerHTML = actors.actors
       .map((a) => `<option value="${esc(a.actor_id)}">${esc(a.display_name)} (${esc(a.actor_id)}, ${esc(a.status)})</option>`).join('');
-    say(`Field loaded: ${ov.total_memories} memories, field_version ${ov.field_version}. Adapter state is authoritative; card positions are not.`);
+    const diag = diagnoseConnection({ reachable: true, httpStatus: null, protocolMatches: true, totalMemories: ov.total_memories, healthStatus });
+    say(`${diag.message} Field: ${ov.total_memories} memories, snapshot field_version ${ov.field_version}. Adapter state is authoritative; card positions are not.`);
+    $<HTMLElement>('snapshot-line').textContent = `Snapshot: field_version ${ov.field_version} · health ${healthStatus ?? 'unknown'}`;
+    $<HTMLElement>('inventory').innerHTML = memories.map((m) => `<li><button type="button" class="inv" data-inv="${esc(m.memory_id)}">${custodyPresentation(m.custody_status).glyph} <span class="mono">${esc(m.memory_id)}</span> — ${esc(custodyPresentation(m.custody_status).label)}</button></li>`).join('');
+    document.querySelectorAll<HTMLButtonElement>('[data-inv]').forEach((b) => b.addEventListener('click', () => void selectMemory(b.dataset.inv!)));
     renderCards();
     const initial = new URLSearchParams(location.search).get('memory') ?? sessionStorage.getItem('engram.selectedMemory');
     if (initial && memories.some((m) => m.memory_id === initial)) await selectMemory(initial);
   } catch (err) {
-    say(`Adapter unreachable: ${(err as Error).message} Start the server (see server/README.md) and set VITE_ENGRAM_READ_TOKEN. No data was invented.`);
+    const status = /HTTP (\d{3})/.exec((err as Error).message)?.[1];
+    say(diagnoseConnection({ reachable: true, httpStatus: status ? Number(status) : null, protocolMatches: null, totalMemories: null, healthStatus }).message + ` Detail: ${(err as Error).message}`);
   }
 }
 
@@ -289,5 +301,47 @@ $<HTMLButtonElement>('bundle-btn').addEventListener('click', () => void (async (
     $<HTMLElement>('cf-detail').innerHTML = `<details><summary>Verifier output (${esc(v.status)})</summary><pre>${esc(v.output_lines.join('\n'))}</pre></details>`;
   } catch (err) { say(`Bundle export failed: ${(err as Error).message}`); }
 })());
+
+let zoom = 1;
+function applyZoom(): void {
+  $<HTMLElement>('viewport').style.transform = `scale(${zoom})`;
+  $<HTMLElement>('viewport').style.transformOrigin = '0 0';
+}
+$<HTMLButtonElement>('zoom-in').addEventListener('click', () => { zoom = clampZoom(zoom + 0.1); applyZoom(); });
+$<HTMLButtonElement>('zoom-out').addEventListener('click', () => { zoom = clampZoom(zoom - 0.1); applyZoom(); });
+$<HTMLButtonElement>('fit-btn').addEventListener('click', () => {
+  const pts = memories.map((m, i) => pos(m.memory_id, i));
+  const w = Math.max(...pts.map((p) => p.x + 320), 320);
+  const h = Math.max(...pts.map((p) => p.y + 200), 200);
+  const board = $<HTMLElement>('board');
+  zoom = fitScale({ w, h }, { w: board.clientWidth, h: board.clientHeight });
+  applyZoom();
+});
+$<HTMLButtonElement>('reset-layout').addEventListener('click', () => {
+  layout = {}; zoom = 1; localStorage.removeItem(LAYOUT_KEY); applyZoom(); renderCards();
+  say('Layout reset. Only card positions changed — no MNEME state was touched.');
+});
+const VIEWS_KEY = 'engram.canvas.views.v1';
+function loadViews(): Record<string, string> {
+  try { return JSON.parse(localStorage.getItem(VIEWS_KEY) ?? '{}') as Record<string, string>; } catch { return {}; }
+}
+function refreshViewSelect(): void {
+  $<HTMLSelectElement>('view-select').innerHTML = '<option value="">Choose a saved view</option>'
+    + Object.keys(loadViews()).sort().map((n) => `<option>${esc(n)}</option>`).join('');
+}
+$<HTMLButtonElement>('save-view').addEventListener('click', () => {
+  const name = $<HTMLInputElement>('view-name').value.trim();
+  if (!name) { say('Name the view first. Views store layout only, never evidence.'); return; }
+  const views = loadViews(); views[name] = serializeLayout(layout);
+  localStorage.setItem(VIEWS_KEY, JSON.stringify(views)); refreshViewSelect();
+  say(`View "${name}" saved (card positions only).`);
+});
+$<HTMLSelectElement>('view-select').addEventListener('change', () => {
+  const name = $<HTMLSelectElement>('view-select').value;
+  const raw = loadViews()[name];
+  if (!raw) return;
+  try { layout = JSON.parse(raw) as CardLayout; saveLayout(); renderCards(); } catch { say(`Saved view "${name}" is unreadable and was not applied.`); }
+});
+refreshViewSelect();
 
 void boot();

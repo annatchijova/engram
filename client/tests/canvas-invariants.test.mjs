@@ -96,6 +96,33 @@ test('10. POSSIBLE label says NOT causal regardless of card distance', () => {
   assert.equal(serializeLayout(layout), serializeLayout({ 'mem-b': { x: 9999, y: 9999 }, 'mem-a': { x: 0, y: 0 } }));
 });
 
+test('R3-1. connection states are distinguishable and never swap empty for down', async () => {
+  const { diagnoseConnection } = await import('../src/canvas/canvas-state.ts');
+  const base = { reachable: true, httpStatus: null, protocolMatches: true, totalMemories: 8, healthStatus: 'ok' };
+  assert.equal(diagnoseConnection({ ...base, reachable: false }).state, 'server-unavailable');
+  assert.equal(diagnoseConnection({ ...base, httpStatus: 401 }).state, 'auth-required');
+  assert.equal(diagnoseConnection({ ...base, protocolMatches: false }).state, 'schema-mismatch');
+  assert.equal(diagnoseConnection({ ...base, totalMemories: 0 }).state, 'empty-investigation');
+  assert.equal(diagnoseConnection(base).state, 'connected');
+});
+
+test('R3-2. viewport zoom is clamped and fit derives from bounds only', async () => {
+  const { clampZoom, fitScale } = await import('../src/canvas/canvas-state.ts');
+  assert.equal(clampZoom(99), 2);
+  assert.equal(clampZoom(0.01), 0.4);
+  assert.equal(fitScale({ w: 800, h: 600 }, { w: 400, h: 600 }), 0.5);
+  assert.equal(fitScale({ w: 0, h: 0 }, { w: 400, h: 600 }), 1);
+});
+
+test('R3-3. Canvas custody palette matches the XR field-system source (projection consistency)', async () => {
+  const fs = await import('node:fs');
+  const xr = fs.readFileSync(new URL('../src/field-system.ts', import.meta.url), 'utf8');
+  for (const hex of ['#3fa34d', '#e0a62b', '#c13030', '#6b6f76']) assert.ok(xr.includes(hex), `XR missing ${hex}`);
+  const cfg = JSON.parse(fs.readFileSync(new URL('../iwsdk.config.json', import.meta.url), 'utf8'));
+  assert.equal(cfg.world.xr.features.handTracking, true);
+  assert.equal(cfg.world.features.locomotion, false);
+});
+
 test('guided demo target is chosen from server custody status, never hardcoded as fact', () => {
   assert.equal(findCompromised([mem('a'), mem('b', 'TAINT_FLAGGED')])?.memory_id, 'b');
   assert.equal(findCompromised([mem('a')]), null);

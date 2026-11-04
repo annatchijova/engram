@@ -50,7 +50,15 @@ VERIFIER_PATH = Path(MNEME_REPO_PATH) / "verify_offline.py"
 PROTOCOL_VERSION = "engram-query/v1"
 DB_PATH = Path(os.environ.get("MNEME_DB_PATH", Path(__file__).parent / "data" / "demo_field.db"))
 READ_TOKEN = os.environ.get("ENGRAM_READ_TOKEN")
-DEV_ORIGIN = os.environ.get("ENGRAM_CLIENT_ORIGIN", "http://localhost:5173")
+# Vite (IWSDK plugin) serves HTTPS on 8081 by default; the exact Origin
+# string must match scheme+host+port or the browser blocks every response.
+# ENGRAM_CLIENT_ORIGIN may hold one origin or a comma-separated list.
+DEV_ORIGINS = [
+    o.strip() for o in os.environ.get(
+        "ENGRAM_CLIENT_ORIGIN",
+        "https://localhost:8081,http://localhost:8081",
+    ).split(",") if o.strip()
+]
 
 # Nivel 5 — the field version is DERIVED from persisted state, not kept in a
 # process global: every mutation MNEME exposes through this adapter appends
@@ -64,9 +72,11 @@ def _field_version(cur: sqlite3.Cursor) -> int:
 app = FastAPI(title="ENGRAM MNEME read adapter", version=PROTOCOL_VERSION)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[DEV_ORIGIN],
+    allow_origins=DEV_ORIGINS,
     allow_methods=["GET", "POST"],
-    allow_headers=["Authorization"],
+    # Content-Type is required: login/quarantine POSTs send JSON bodies and
+    # their preflight otherwise fails even with a correct origin and token.
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 _bearer = HTTPBearer(auto_error=False)

@@ -35,18 +35,45 @@ hashes and MNEME's `summary` are shown verbatim beside their seals. The
 only floats are card coordinates — presentation state outside every seal.
 No LLM is called anywhere in this surface.
 
-## Run
+## Run (one command, from anywhere)
 
 ```sh
-# adapter (server/)
-ENGRAM_READ_TOKEN=devtoken123 ENGRAM_DEMO_PASSWORD=demo-password \
-ENGRAM_CLIENT_ORIGIN=http://localhost:8081 \
-python3 -m uvicorn app:app --port 8090   # client/.env points at 8090
-
-# client (client/)
-npm run dev:runtime                      # Vite on https://localhost:8081
-# open https://localhost:8081/canvas.html  (XR stays at /index.html)
+./scripts/dev-local.sh
+# Adapter: http://localhost:8000 | Canvas: https://localhost:8081/canvas.html
 ```
+
+The script starts the adapter, waits for `/health`, then starts Vite with
+`VITE_ENGRAM_API_BASE=http://localhost:8000`. Round 3 root-caused the
+original "Failed to fetch" to five stacked layers: wrong working
+directory, a port split (8000 vs 8090 vs 8080), CORS origin scheme
+(`http://` configured while Vite serves `https://localhost:8081`), CORS
+preflight missing `Content-Type` (blocked every POST), and Vite baking
+`VITE_*` at start. Adapter CORS now defaults to both localhost:8081
+schemes and allows `Authorization, Content-Type`; verified live:
+GET overview returns `access-control-allow-origin`, login preflight
+returns 200, an unrelated origin is refused (400).
+
+## Round 3 additions
+
+- Connection states are explicit (Connected / Server unavailable /
+  Authentication required / API schema mismatch / Empty investigation),
+  each with its next action; `/health` is probed before the field loads.
+- Three-region workspace: left investigation rail (snapshot, guided
+  scenario, search, custody filter, evidence inventory, saved layout
+  views, legend), center board with zoom/fit/reset, right inspector.
+  Login moved into a collapsed contextual authorization disclosure.
+- XR camera re-centred on the seated arc in `iwsdk.config.json` (clean
+  file only; the uncommitted scene/login WIP was not touched). Meta docs
+  verified via metavr: this project is the WebXR/IWSDK path; the device
+  list was empty, so no headset behaviour is claimed.
+- Tests: 14/14 (adds connection-state, viewport and Canvas/XR palette
+  consistency). Predictions recorded before probes; stale commit (409),
+  ada widening (403) and evil-origin preflight (400) behaved as predicted.
+- Three-minute video script: 0:00 open Canvas, guided investigation
+  highlights the compromised memory; 0:30 inspector provenance + custody;
+  1:00 typed relationships and preview (no commit); 1:40 compare worlds
+  with the sealed delta; 2:20 export bundle and read the verifier verdict;
+  2:45 open the same memory in XR (`?memory=` link).
 
 ## 60-second walkthrough (first-time viewer)
 

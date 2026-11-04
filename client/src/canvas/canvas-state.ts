@@ -127,6 +127,49 @@ export function findCompromised(memories: MemorySummary[]): MemorySummary | null
   return memories.find((m) => m.custody_status === 'TAINT_FLAGGED' || m.custody_status === 'QUARANTINED') ?? null;
 }
 
+/** Board viewport (presentation only): zoom is clamped, fit is computed from card bounds, never from evidence values. */
+export function clampZoom(z: number): number {
+  return Math.min(2, Math.max(0.4, Math.round(z * 20) / 20));
+}
+
+export function fitScale(bounds: { w: number; h: number }, view: { w: number; h: number }): number {
+  if (bounds.w <= 0 || bounds.h <= 0) return 1;
+  return clampZoom(Math.min(view.w / bounds.w, view.h / bounds.h));
+}
+
+export type ConnectionDiagnosis = {
+  state: 'connected' | 'server-unavailable' | 'auth-required' | 'schema-mismatch' | 'empty-investigation';
+  message: string;
+};
+
+/**
+ * Connection honesty: five distinguishable states, each with its next
+ * action. A network failure is never rendered as an empty investigation,
+ * and an empty field is never rendered as a connection failure.
+ */
+export function diagnoseConnection(opts: {
+  reachable: boolean;
+  httpStatus: number | null;
+  protocolMatches: boolean | null;
+  totalMemories: number | null;
+  healthStatus: string | null;
+}): ConnectionDiagnosis {
+  if (!opts.reachable) {
+    return { state: 'server-unavailable', message: 'Server unavailable: the adapter did not answer. Start it with ./scripts/dev-local.sh from the repo root, then reload. No data was invented.' };
+  }
+  if (opts.httpStatus === 401 || opts.httpStatus === 500) {
+    return { state: 'auth-required', message: `Authentication required (HTTP ${opts.httpStatus}): the read token is missing or does not match ENGRAM_READ_TOKEN on the adapter. Align client/.env and restart Vite.` };
+  }
+  if (opts.protocolMatches === false) {
+    return { state: 'schema-mismatch', message: 'API schema mismatch: the adapter speaks a different protocol version than this client expects (engram-query/v1). Update client and adapter together.' };
+  }
+  if (opts.totalMemories === 0) {
+    return { state: 'empty-investigation', message: 'Connected, but the field is empty: seed the demonstration with python3 seed_demo_field.py in server/, then reload.' };
+  }
+  const degraded = opts.healthStatus && opts.healthStatus !== 'ok' ? ` Adapter health reports "${opts.healthStatus}" — check /health before trusting the field.` : '';
+  return { state: 'connected', message: `Connected to the MNEME adapter.${degraded}` };
+}
+
 export type JsonCanvasExport = { json: string; warnings: string[] };
 
 /** Optional JSON Canvas interop. Edge labels carry the class as text; typed MNEME semantics do not survive as authority. */
