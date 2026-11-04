@@ -10,7 +10,7 @@ import { SelectedMemory } from '../selected-memory.js';
 import { SessionStore } from '../session.js';
 import {
   applyDrag, buildEdges, buildJsonCanvas, canCommit, custodyPresentation,
-  cardScrollTarget, classifyComparison, computeGraphLayout, custodySummary, diagnoseConnection, escapeHtml, findCompromised, fitScale, focusNeighborhood, clampZoom, onCounterfactualError, partitionCounterfactual, typedGraphEdges, validateCustodyLinks, type GraphEdge,
+  cardScrollTarget, classifyComparison, computeGraphLayout, custodySummary, diagnoseConnection, escapeHtml, findCompromised, fitScale, focusNeighborhood, clampZoom, layoutBounds, onCounterfactualError, partitionCounterfactual, typedGraphEdges, validateCustodyLinks, type GraphEdge,
   serializeLayout, wideningGuard, type CanvasEdge, type CardLayout, type WorldPartition,
 } from './canvas-state.js';
 
@@ -44,6 +44,12 @@ function say(msg: string): void { $<HTMLElement>('status').textContent = msg; }
 const esc = escapeHtml;
 
 function renderCards(): void {
+  const bounds = layoutBounds(Object.fromEntries(memories.map((m, i) => [m.memory_id, pos(m.memory_id, i)])));
+  for (const id of ['viewport', 'cards', 'edges']) {
+    const el = $<HTMLElement>(id);
+    el.style.width = `${bounds.w}px`; el.style.height = `${bounds.h}px`;
+  }
+  (document.getElementById('edges') as unknown as SVGSVGElement).setAttribute('viewBox', `0 0 ${bounds.w} ${bounds.h}`);
   const q = $<HTMLInputElement>('search').value.toLowerCase();
   const f = $<HTMLSelectElement>('filter-status').value;
   const box = $<HTMLElement>('cards');
@@ -107,7 +113,6 @@ function enableDrag(el: HTMLElement, id: string, i: number): void {
 
 function drawEdges(): void {
   const svg = document.getElementById('edges') as unknown as SVGSVGElement;
-  svg.setAttribute('viewBox', '0 0 1600 1200');
   const all: GraphEdge[] = graphEdges.length
     ? graphEdges
     : edges.map((e) => ({ ...e, kind: e.cls, directed: e.cls !== 'POSSIBLE' }));

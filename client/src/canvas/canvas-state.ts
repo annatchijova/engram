@@ -212,9 +212,13 @@ export function focusNeighborhood(edges: GraphEdge[], focusId: string): FocusInf
 /** Deterministic ring layout: focus at centre, recorded neighbours on ring 1, the rest outside. Presentation only. */
 export function computeGraphLayout(ids: string[], edges: GraphEdge[], focusId: string | null): CardLayout {
   const sorted = [...ids].sort();
-  if (!focusId) {
+  if (!focusId || sorted.length > 40) {
+    // Bounded packing: ring radius grows with count and would leave the
+    // 1600x1200 board (red-team R7: 200 nodes landed at y=-6619). Large
+    // fields pack into the board instead; focus, if any, takes cell one.
+    const ordered = focusId ? [focusId, ...sorted.filter((id) => id !== focusId)] : sorted;
     const grid: CardLayout = {};
-    sorted.forEach((id, i) => { grid[id] = { x: 24 + (i % 5) * 262, y: 24 + Math.floor(i / 5) * 190 }; });
+    ordered.forEach((id, i) => { grid[id] = { x: 24 + (i % 5) * 262, y: 24 + Math.floor(i / 5) * 190 }; });
     return grid;
   }
   const { neighbors } = focusId ? focusNeighborhood(edges, focusId) : { neighbors: new Set<string>() };
@@ -245,6 +249,13 @@ export function classifyComparison(delta: CounterfactualDelta): ComparisonClasse
     onlyHypothetical: delta.served_b.filter((id) => !a.has(id)),
     rankChanged: delta.rank_changed.map((r) => r[0]),
   };
+}
+
+/** Content bounds of a layout so the board can grow (and scroll) instead of clipping large graphs. */
+export function layoutBounds(layout: CardLayout): { w: number; h: number } {
+  let w = 1600, h = 1200;
+  for (const p of Object.values(layout)) { w = Math.max(w, p.x + 280); h = Math.max(h, p.y + 210); }
+  return { w, h };
 }
 
 /** Scroll target that centres a 240x160 node in the board with padding — framing never clips the node. */

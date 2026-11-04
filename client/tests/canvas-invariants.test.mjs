@@ -190,6 +190,23 @@ test('R6 framing: scroll target centres the node and never goes negative', async
   assert.deepEqual(cardScrollTarget({ x: 0, y: 0 }, { w: 800, h: 600 }), { left: 0, top: 0 });
 });
 
+test('R7 red-team: exports leak no seals/tokens; 200-node graph stays inside the board', async () => {
+  const { buildJsonCanvas: bj, serializeLayout, computeGraphLayout: cgl } = await import('../src/canvas/canvas-state.ts');
+  const out = bj([mem('mem-a')], { 'mem-a': { x: 1, y: 2 } }, []);
+  assert.ok(!/sha256|session|token|confidence/i.test(out.json), 'presentation export leaked authority data');
+  assert.ok(!/token/i.test(serializeLayout({ 'mem-a': { x: 1, y: 2 } })));
+  const ids = Array.from({ length: 200 }, (_, i) => `m${i}`);
+  const l = cgl(ids, [], 'm0');
+  const { layoutBounds } = await import('../src/canvas/canvas-state.ts');
+  const b = layoutBounds(l);
+  for (const p of Object.values(l)) {
+    assert.ok(Number.isFinite(p.x) && Number.isFinite(p.y));
+    assert.ok(p.x >= 0 && p.y >= 0, `node off board at ${p.x},${p.y}`);
+    assert.ok(p.x + 240 <= b.w && p.y + 160 <= b.h, 'node outside declared content bounds');
+  }
+  assert.deepEqual(l, cgl(ids, [], 'm0'));
+});
+
 test('guided demo target is chosen from server custody status, never hardcoded as fact', () => {
   assert.equal(findCompromised([mem('a'), mem('b', 'TAINT_FLAGGED')])?.memory_id, 'b');
   assert.equal(findCompromised([mem('a')]), null);
