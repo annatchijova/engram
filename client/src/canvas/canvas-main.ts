@@ -10,7 +10,7 @@ import { SelectedMemory } from '../selected-memory.js';
 import { SessionStore } from '../session.js';
 import {
   applyDrag, buildEdges, buildJsonCanvas, canCommit, custodyPresentation,
-  custodySummary, diagnoseConnection, escapeHtml, findCompromised, fitScale, clampZoom, onCounterfactualError, partitionCounterfactual, validateCustodyLinks,
+  classifyComparison, computeGraphLayout, custodySummary, diagnoseConnection, escapeHtml, findCompromised, fitScale, focusNeighborhood, clampZoom, onCounterfactualError, partitionCounterfactual, typedGraphEdges, validateCustodyLinks, type GraphEdge,
   serializeLayout, wideningGuard, type CanvasEdge, type CardLayout, type WorldPartition,
 } from './canvas-state.js';
 
@@ -30,6 +30,8 @@ let edges: CanvasEdge[] = [];
 let lastImpact: ImpactReport | null = null;
 let staged: { actorId: string; fieldVersion: number } | null = null;
 let worldState: { hypothetical: WorldPartition | null } = { hypothetical: null };
+let graphEdges: GraphEdge[] = [];
+let focusMode = false;
 
 function loadLayout(): CardLayout {
   try { return JSON.parse(localStorage.getItem(LAYOUT_KEY) ?? '{}') as CardLayout; } catch { return {}; }
@@ -51,8 +53,10 @@ function renderCards(): void {
     if (q && !`${m.memory_id} ${m.topic ?? ''} ${m.content_preview}`.toLowerCase().includes(q)) return;
     const p = custodyPresentation(m.custody_status);
     const selected = SelectedMemory.get() === m.memory_id;
+    const dim = focusMode && SelectedMemory.get() !== null && !selected
+      && !focusNeighborhood(graphEdges, SelectedMemory.get()!).neighbors.has(m.memory_id);
     const el = document.createElement('article');
-    el.className = 'card' + (selected ? ' selected' : '');
+    el.className = 'card' + (selected ? ' selected' : '') + (dim ? ' dim' : '');
     el.dataset.id = m.memory_id;
     el.style.left = `${pos(m.memory_id, i).x}px`;
     el.style.top = `${pos(m.memory_id, i).y}px`;
@@ -104,16 +108,19 @@ function enableDrag(el: HTMLElement, id: string, i: number): void {
 function drawEdges(): void {
   const svg = document.getElementById('edges') as unknown as SVGSVGElement;
   svg.setAttribute('viewBox', '0 0 1600 1200');
-  let html = '';
-  for (const e of edges) {
+  const all: GraphEdge[] = graphEdges.length
+    ? graphEdges
+    : edges.map((e) => ({ ...e, kind: e.cls, directed: e.cls !== 'POSSIBLE' }));
+  let html = '<defs><marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 z" fill="#33414f"/></marker></defs>';
+  for (const e of all) {
     const si = memories.findIndex((m) => m.memory_id === e.source);
     const ti = memories.findIndex((m) => m.memory_id === e.target);
     if (si < 0 || ti < 0) continue;
     const a = pos(e.source, si), b = pos(e.target, ti);
     const s = EDGE_STROKE[e.cls];
     const mx = (a.x + b.x + 300) / 2, my = (a.y + b.y + 60) / 2;
-    html += `<line x1="${a.x + 150}" y1="${a.y + 30}" x2="${b.x + 150}" y2="${b.y + 30}" stroke="${s.stroke}" stroke-width="${s.width}" ${s.dash ? `stroke-dasharray="${s.dash}"` : ''}/>`
-      + `<text x="${mx}" y="${my}" font-size="11" fill="#1b2129">${esc(e.cls)}</text>`;
+    html += `<line x1="${a.x + 150}" y1="${a.y + 30}" x2="${b.x + 150}" y2="${b.y + 30}" stroke="${s.stroke}" stroke-width="${s.width}" ${s.dash ? `stroke-dasharray="${s.dash}"` : ''} ${e.directed ? 'marker-end="url(#arr)"' : ''}><title>${esc(e.label)}: ${esc(e.source)} -> ${esc(e.target)}</title></line>`
+      + `<text x="${mx}" y="${my}" font-size="11" fill="#1b2129">${esc(e.kind)}</text>`;
   }
   svg.innerHTML = html;
 }
@@ -181,7 +188,21 @@ async function boot(): Promise<void> {
       + Object.keys(ov.custody_status_meaning).map((s) => `<option>${esc(s)}</option>`).join('');
     $<HTMLSelectElement>('actor-select').innerHTML = actors.actors
       .map((a) => `<option value="${esc(a.actor_id)}">${esc(a.display_name)} (${esc(a.actor_id)}, ${esc(a.status)})</option>`).join('');
+    const ids = new Set(memories.map((m) => m.memory_id));
+    const settled = await Promise.allSettled(memories.map((m) => EngramApi.getImpact(m.memory_id)));
+    const reports = settled.flatMap((r) => (r.status === 'fulfilled' ? [r.value] : []));
+    graphEdges = typedGraphEdges(reports, ids);
+    if (Object.keys(layout).length === 0) {
+      layout = computeGraphLayout([...ids], graphEdges, findCompromised(memories)?.memory_id ?? null);
+      saveLayout();
+    }
+    const subsetNote = reports.length < memories.length
+      ? ` Graph subset: ${reports.length}/${memories.length} impact reports loaded — relationships may be incomplete.`
+      : ov.total_memories > memories.length
+        ? ` Showing ${memories.length} of ${ov.total_memories} memories (adapter page limit) — the graph is a subset.`
+        : '';
     const diag = diagnoseConnection({ reachable: true, httpStatus: null, protocolMatches: true, totalMemories: ov.total_memories, healthStatus });
+    say(subsetNote ? diag.message + subsetNote : diag.message);
     say(`${diag.message} Field: ${ov.total_memories} memories, snapshot field_version ${ov.field_version}. Adapter state is authoritative; card positions are not.`);
     $<HTMLElement>('snapshot-line').textContent = `Snapshot: field_version ${ov.field_version} · health ${healthStatus ?? 'unknown'}`;
     $<HTMLElement>('inventory').innerHTML = memories.map((m) => `<li><button type="button" class="inv" data-inv="${esc(m.memory_id)}">${custodyPresentation(m.custody_status).glyph} <span class="mono">${esc(m.memory_id)}</span> — ${esc(custodyPresentation(m.custody_status).label)}</button></li>`).join('');
@@ -214,6 +235,7 @@ async function runCounterfactual(kind: 'exclusion' | 'containment'): Promise<voi
       <p><strong>MNEME summary (verbatim, beside its seal):</strong> ${esc(delta.summary)}</p>
       <p class="mono">delta_sha256 ${esc(delta.delta_sha256)} · query ${esc(delta.query_sha256)} · top_k ${delta.top_k} · hops ${delta.hops}</p>
       <p>Removed from serving: ${delta.removed_from_serving.map(esc).join(', ') || 'none'} · Entered: ${delta.entered_top_k.map(esc).join(', ') || 'none'} · Interference (query-scoped): <strong>${delta.interference ? 'yes' : 'no'}</strong></p>
+      ${(() => { const c = classifyComparison(delta); return `<p>Comparison classes — in both worlds: ${c.inBoth.map(esc).join(', ') || 'none'} · only in baseline: ${c.onlyBaseline.map(esc).join(', ') || 'none'} · only in hypothetical: ${c.onlyHypothetical.map(esc).join(', ') || 'none'} · rank changed: ${c.rankChanged.map(esc).join(', ') || 'none'} · not determinable from this delta: any effect outside the seeded query scope.</p>`; })()}
       <p>Rank changes: ${delta.rank_changed.map((r) => `${esc(r[0])} ${r[1]}→${r[2]}`).join('; ') || 'none'} · Score changes: ${delta.score_changed.map((r) => `${esc(r[0])} ${esc(r[1])}→${esc(r[2])}`).join('; ') || 'none'}</p>
       <p>Claim outcome changes: ${delta.claim_outcome_changed.map((r) => `${esc(r[0])}: ${esc(r[1])}→${esc(r[2])}`).join('; ') || 'none reported'}</p>
       <p><strong>Decision dependencies changed (field-wide, kept separate from the query verdict):</strong> ${delta.decision_dependency_changed.map(esc).join(', ') || 'none'}</p>
@@ -311,6 +333,18 @@ $<HTMLButtonElement>('step-understand').addEventListener('click', () => {
   if (!lastImpact) { say('Understand: select a memory first so MNEME impact can be loaded.'); return; }
   say(`Understand: DIRECT = recorded receipt/decision. DERIVED = from recorded evidence. DERIVED (unattested) = a different actor retold it. POSSIBLE = co-served only, NOT causal. Lines and the inspector list use the same classes.`);
 });
+$<HTMLButtonElement>('focus-btn').addEventListener('click', () => {
+  const id = SelectedMemory.get();
+  if (!id) { say('Focus: select a memory first. Neighbours are shown as recorded dependency or potential exposure — never as confirmed contamination.'); return; }
+  focusMode = true; renderCards();
+  const info = focusNeighborhood(graphEdges, id);
+  say(`Focus on ${id}: ${info.neighbors.size} recorded neighbour(s) kept bright. Labels in the inspector state the exposure honestly; unrelated nodes are dimmed, not deleted.`);
+});
+$<HTMLButtonElement>('full-btn').addEventListener('click', () => { focusMode = false; renderCards(); say('Full investigation restored.'); });
+$<HTMLButtonElement>('graph-layout-btn').addEventListener('click', () => {
+  layout = computeGraphLayout(memories.map((m) => m.memory_id), graphEdges, SelectedMemory.get() ?? findCompromised(memories)?.memory_id ?? null);
+  saveLayout(); renderCards(); say('Graph layout applied (recorded neighbours near the focus). Positions are presentation only.');
+});
 $<HTMLButtonElement>('step-compare').addEventListener('click', () => void runCounterfactual('exclusion'));
 $<HTMLButtonElement>('step-preserve').addEventListener('click', () => void preserveBundle());
 
@@ -330,8 +364,9 @@ $<HTMLButtonElement>('fit-btn').addEventListener('click', () => {
   applyZoom();
 });
 $<HTMLButtonElement>('reset-layout').addEventListener('click', () => {
-  layout = {}; zoom = 1; localStorage.removeItem(LAYOUT_KEY); applyZoom(); renderCards();
-  say('Layout reset. Only card positions changed — no MNEME state was touched.');
+  layout = computeGraphLayout(memories.map((m) => m.memory_id), graphEdges, findCompromised(memories)?.memory_id ?? null);
+  zoom = 1; saveLayout(); applyZoom(); renderCards();
+  say('Layout reset to the graph layout. Only card positions changed — no MNEME state was touched.');
 });
 const VIEWS_KEY = 'engram.canvas.views.v1';
 function loadViews(): Record<string, string> {

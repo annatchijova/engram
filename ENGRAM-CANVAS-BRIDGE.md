@@ -174,3 +174,22 @@ returns 200, an unrelated origin is refused (400).
   XR and adapter unchanged.
 - Revisit trigger: an ENGRAM HTTP contract for claims/detail/`as_of`,
   or XR adopting the `?memory=` hand-off.
+
+## Round 5 — spatial provenance graph
+
+The board is no longer a grid: the adapter now exposes MNEME's typed
+DAG (`edges`: level, kind, source, target) on the impact response, and
+the Canvas renders the whole graph from it. Only CO_SERVED is drawn
+undirected; recorded kinds keep their direction (arrowheads). Focus
+Investigation dims unrelated nodes and labels neighbours as recorded
+dependency or potential exposure — never confirmed contamination.
+The comparison now classifies in-both / only-baseline /
+only-hypothetical / rank-changed, with the not-determinable remainder
+stated. Layout is deterministic rings around the focus, saved and
+restored as presentation only. Tests: 20/20.
+
+90-second demo: 0:00 the graph opens on the compromised memory;
+0:15 Observe highlights its custody; 0:30 Trace follows typed edges;
+0:50 Understand separates attested, unattested and possible;
+1:05 Compare runs the exclusion delta side by side; 1:20 Preserve
+exports the bundle and reads the verifier verdict.

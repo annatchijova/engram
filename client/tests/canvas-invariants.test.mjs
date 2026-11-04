@@ -151,6 +151,39 @@ test('R4-3. expired sessions are flagged client-side; oversized edge sets stay t
   assert.equal(be(impact({ possible_memories: many })).length, 5000);
 });
 
+test('R5-1. whole-graph edges keep MNEME kind/direction; only CO_SERVED is symmetric', async () => {
+  const { typedGraphEdges } = await import('../src/canvas/canvas-state.ts');
+  const ids = new Set(['a', 'b', 'c']);
+  const reports = [{ edges: [
+    { level: 'POSSIBLE', kind: 'CO_SERVED', source: 'a', target: 'b' },
+    { level: 'POSSIBLE', kind: 'CO_SERVED', source: 'b', target: 'a' },
+    { level: 'DERIVED', kind: 'SUPERSEDED_BY', source: 'a', target: 'c' },
+    { level: 'DIRECT', kind: 'USED_BY', source: 'a', target: 'decision-1' },
+  ] }];
+  const edges = typedGraphEdges(reports, ids);
+  assert.equal(edges.length, 2);
+  assert.equal(edges.find((e) => e.kind === 'CO_SERVED')?.directed, false);
+  assert.equal(edges.find((e) => e.kind === 'SUPERSEDED_BY')?.directed, true);
+});
+
+test('R5-2. graph layout is deterministic and focus neighbours get exposure language, never contamination', async () => {
+  const { computeGraphLayout, focusNeighborhood } = await import('../src/canvas/canvas-state.ts');
+  const ids = ['a', 'b', 'c', 'd'];
+  const edges = [{ source: 'a', target: 'b', cls: 'POSSIBLE', kind: 'CO_SERVED', directed: false, label: 'x' }];
+  const l1 = computeGraphLayout(ids, edges, 'a');
+  assert.deepEqual(l1, computeGraphLayout(ids, edges, 'a'));
+  const pts = Object.values(l1);
+  for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++)
+    assert.ok(Math.abs(pts[i].x - pts[j].x) > 100 || Math.abs(pts[i].y - pts[j].y) > 100, 'nodes overlap');
+  assert.match(focusNeighborhood(edges, 'a').exposure.get('b'), /effect not determined/);
+});
+
+test('R5-3. comparison classification separates both/only-baseline/only-hypothetical', async () => {
+  const { classifyComparison } = await import('../src/canvas/canvas-state.ts');
+  const c = classifyComparison(delta({ served_a: ['a', 'b'], served_b: ['b', 'c'], rank_changed: [['b', 1, 2]] }));
+  assert.deepEqual(c, { inBoth: ['b'], onlyBaseline: ['a'], onlyHypothetical: ['c'], rankChanged: ['b'] });
+});
+
 test('guided demo target is chosen from server custody status, never hardcoded as fact', () => {
   assert.equal(findCompromised([mem('a'), mem('b', 'TAINT_FLAGGED')])?.memory_id, 'b');
   assert.equal(findCompromised([mem('a')]), null);

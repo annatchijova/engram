@@ -85,7 +85,10 @@ export type CustodyChain = {
   entries: CustodyEntry[];
 };
 
+export type ImpactEdge = { level: string; kind: string; source: string; target: string };
+
 export type ImpactReport = {
+  edges?: ImpactEdge[];
   memory_id: string;
   direct_receipts: string[];
   direct_decisions: string[];

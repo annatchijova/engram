@@ -267,6 +267,13 @@ def get_impact(memory_id: str) -> dict[str, Any]:
         "derived_unattested": list(report.derived_unattested),
         "derived_decisions": list(report.derived_decisions),
         "possible_memories": list(report.possible_memories),
+        # Typed DAG from MNEME (level, kind, source, target): the flattened
+        # lists above conflate directed and symmetric kinds, so the graph
+        # surface consumes these edges verbatim instead of reconstructing.
+        "edges": [
+            {"level": level, "kind": kind, "source": source, "target": target}
+            for level, kind, source, target in report.edges
+        ],
         "impact_sha256": report.impact_sha256,
     })
 

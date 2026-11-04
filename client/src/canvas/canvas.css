@@ -26,6 +26,7 @@ input, select { font: inherit; padding: 5px; border: 1px solid var(--line); bord
 #cards { position: relative; width: 1600px; height: 1200px; }
 .card { position: absolute; width: 300px; background: var(--paper); border: 1px solid #7d8794; border-top: 5px solid #555; border-radius: 4px; padding: 10px; cursor: grab; }
 .card.selected { border-color: #0b6fa4; box-shadow: 0 0 0 2px #0b6fa4 inset; }
+.card.dim { opacity: 0.28; }
 .card h3 { margin: 0 0 4px; font: 700 13px Consolas, monospace; }
 .card p { margin: 4px 0; font-size: 13px; }
 .badge { display: inline-block; padding: 1px 7px; border: 1px solid var(--ink); border-radius: 999px; font-size: 12px; font-weight: 700; background: #fff; }

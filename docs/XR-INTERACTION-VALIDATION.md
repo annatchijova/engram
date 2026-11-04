@@ -18,6 +18,15 @@ seated (locomotion false), grabbing true, Quest 3 emulator declared.
 - The XR scene/systems carry the uncommitted login/onboarding
   migration; composition changes beyond the camera wait for it to land.
 
+## Round 5 note
+
+The desktop board is now a spatial provenance graph fed by MNEME's
+typed DAG (`edges` on the impact response). XR has no focus/subgraph
+mode today (selection is a single `Pressed` id; trace scans all
+nodes), and no new XR system can be registered without editing the
+uncommitted login/onboarding WIP files. The 2D fallback therefore
+carries the full investigation; XR parity waits for that migration.
+
 ## What requires real hardware or a running simulator
 
 Hand-tracking reliability, text readability at viewing distance,

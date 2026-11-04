@@ -159,6 +159,94 @@ export function isSessionValid(expiresAt: number | null, now: number): boolean {
   return expiresAt !== null && expiresAt > now;
 }
 
+export type GraphEdge = CanvasEdge & { kind: string; directed: boolean };
+
+/**
+ * Whole-graph edges come from MNEME's typed DAG (level, kind, source,
+ * target), never reconstructed from flattened lists. Only CO_SERVED is
+ * symmetric contact; every other kind keeps its recorded direction.
+ * Edges to receipts/decisions stay in the inspector as evidence and are
+ * drawn only when both ends are memory nodes on the board.
+ */
+export function typedGraphEdges(
+  reports: { edges?: { level: string; kind: string; source: string; target: string }[] }[],
+  memoryIds: Set<string>,
+): GraphEdge[] {
+  const seen = new Set<string>();
+  const out: GraphEdge[] = [];
+  for (const report of reports) {
+    for (const e of report.edges ?? []) {
+      if (!memoryIds.has(e.source) || !memoryIds.has(e.target) || e.source === e.target) continue;
+      const cls = (e.level === 'DERIVED_UNATTESTED' ? 'DERIVED_UNATTESTED'
+        : e.level === 'DERIVED' ? 'DERIVED' : e.level === 'POSSIBLE' ? 'POSSIBLE' : 'DIRECT') as EdgeClass;
+      const directed = e.kind !== 'CO_SERVED';
+      const key = directed
+        ? `${e.source}->${e.target}:${e.kind}`
+        : [e.source, e.target].sort().join('<->') + `:${e.kind}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ source: e.source, target: e.target, cls, kind: e.kind, directed,
+        label: `${EDGE_LABEL[cls]} [${e.kind}]` });
+    }
+  }
+  return out;
+}
+
+export type FocusInfo = { neighbors: Set<string>; exposure: Map<string, string> };
+
+/** Focus never asserts contamination: neighbours get exposure language, custody stays the server's per-memory fact. */
+export function focusNeighborhood(edges: GraphEdge[], focusId: string): FocusInfo {
+  const neighbors = new Set<string>();
+  const exposure = new Map<string, string>();
+  for (const e of edges) {
+    const other = e.source === focusId ? e.target : e.target === focusId ? e.source : null;
+    if (!other) continue;
+    neighbors.add(other);
+    exposure.set(other, e.cls === 'POSSIBLE'
+      ? 'Potential exposure — effect not determined (association only, no recorded causal link)'
+      : 'Recorded dependency — custody effect not determined by this edge');
+  }
+  return { neighbors, exposure };
+}
+
+/** Deterministic ring layout: focus at centre, recorded neighbours on ring 1, the rest outside. Presentation only. */
+export function computeGraphLayout(ids: string[], edges: GraphEdge[], focusId: string | null): CardLayout {
+  const sorted = [...ids].sort();
+  if (!focusId) {
+    const grid: CardLayout = {};
+    sorted.forEach((id, i) => { grid[id] = { x: 24 + (i % 4) * 330, y: 24 + Math.floor(i / 4) * 240 }; });
+    return grid;
+  }
+  const { neighbors } = focusId ? focusNeighborhood(edges, focusId) : { neighbors: new Set<string>() };
+  const ring1 = sorted.filter((id) => neighbors.has(id));
+  const ring2 = sorted.filter((id) => id !== focusId && !neighbors.has(id));
+  const layout: CardLayout = {};
+  const place = (list: string[], radius: number, cx: number, cy: number): void => {
+    list.forEach((id, i) => {
+      const a = (i / Math.max(1, list.length)) * Math.PI * 2 - Math.PI / 2;
+      layout[id] = { x: Math.round(cx + Math.cos(a) * radius - 150), y: Math.round(cy + Math.sin(a) * radius * 0.72 - 90) };
+    });
+  };
+  const cx = 760, cy = 520;
+  if (focusId && sorted.includes(focusId)) layout[focusId] = { x: cx - 150, y: cy - 90 };
+  place(ring1, Math.max(430, ring1.length * 360 / (Math.PI * 2)), cx, cy);
+  place(ring2, Math.max(760, ring2.length * 370 / (Math.PI * 2)), cx, cy);
+  return layout;
+}
+
+export type ComparisonClasses = { inBoth: string[]; onlyBaseline: string[]; onlyHypothetical: string[]; rankChanged: string[] };
+
+/** Side-by-side classification from the sealed delta lists; unknown stays out of every bucket. */
+export function classifyComparison(delta: CounterfactualDelta): ComparisonClasses {
+  const a = new Set(delta.served_a), b = new Set(delta.served_b);
+  return {
+    inBoth: delta.served_a.filter((id) => b.has(id)),
+    onlyBaseline: delta.served_a.filter((id) => !b.has(id)),
+    onlyHypothetical: delta.served_b.filter((id) => !a.has(id)),
+    rankChanged: delta.rank_changed.map((r) => r[0]),
+  };
+}
+
 export type ConnectionDiagnosis = {
   state: 'connected' | 'server-unavailable' | 'mneme-unavailable' | 'auth-required' | 'schema-mismatch' | 'empty-investigation';
   message: string;
