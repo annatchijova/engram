@@ -10,7 +10,7 @@ import { SelectedMemory } from '../selected-memory.js';
 import { SessionStore } from '../session.js';
 import {
   applyDrag, buildEdges, buildJsonCanvas, canCommit, custodyPresentation,
-  cardScrollTarget, classifyComparison, computeGraphLayout, custodySummary, diagnoseConnection, escapeHtml, findCompromised, fitScale, focusNeighborhood, clampZoom, layoutBounds, onCounterfactualError, partitionCounterfactual, typedGraphEdges, validateCustodyLinks, type GraphEdge,
+  cardScrollTarget, classifyComparison, computeGraphLayout, custodySummary, diagnoseConnection, epistemicBanners, escapeHtml, findCompromised, fitScale, focusNeighborhood, clampZoom, layoutBounds, onCounterfactualError, partitionCounterfactual, typedGraphEdges, validateCustodyLinks, type GraphEdge,
   serializeLayout, wideningGuard, type CanvasEdge, type CardLayout, type WorldPartition,
 } from './canvas-state.js';
 
@@ -155,6 +155,7 @@ async function selectMemory(id: string): Promise<void> {
     const p = custodyPresentation(detail.custody_status);
     body.innerHTML = `
       <h3 class="mono">${esc(detail.memory_id)}</h3>
+      ${epistemicBanners({ custodyStatus: detail.custody_status, chainPayloads: chain.entries.map((e) => e.payload_json), pairPresent: detail.memory_id === 'mem-poison' && memories.some((m) => m.memory_id === 'mem-gate') }).map((b) => `<p role="note"><strong>${esc(b)}</strong></p>`).join('')}
       <p><span class="badge" style="border-color:${p.hex}">${p.glyph} ${esc(p.label)}</span>
       <span class="hint">${esc(overview?.custody_status_meaning[detail.custody_status] ?? 'Meaning not returned by adapter — shown as unknown.')}</span></p>
       <p>${esc(detail.content)}</p>

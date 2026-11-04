@@ -266,6 +266,30 @@ export function cardScrollTarget(p: { x: number; y: number }, view: { w: number;
   };
 }
 
+/**
+ * Epistemic banners: custody is not truth, and a textual contradiction is
+ * not a recorded causal type. CONTRADICTED_BY is not an MNEME kind, so the
+ * poison/gate pair is surfaced as readable content conflict over a
+ * POSSIBLE (CO_SERVED) record — never promoted to a causal edge.
+ */
+export function epistemicBanners(opts: {
+  custodyStatus: string;
+  chainPayloads: string[];
+  pairPresent: boolean;
+}): string[] {
+  const out: string[] = [];
+  if (opts.pairPresent) {
+    out.push('Content conflict: mem-poison and mem-gate make opposite claims. The recorded relationship is POSSIBLE (co-served) only — MNEME does not record which statement is true.');
+  }
+  if (opts.custodyStatus === 'CLEAN' && opts.chainPayloads.some((p) => p.toLowerCase().includes('derived_from_decision'))) {
+    out.push('CLEAN CUSTODY ≠ VERIFIED CONTENT: this record derives from a recorded decision; its custody is clean, its content truth is not established by custody.');
+  }
+  if (opts.custodyStatus === 'TAINT_FLAGGED' || opts.custodyStatus === 'QUARANTINED') {
+    out.push('Custody problem ≠ proven false content: this status governs serving and trust, it does not by itself falsify the text.');
+  }
+  return out;
+}
+
 export type ConnectionDiagnosis = {
   state: 'connected' | 'server-unavailable' | 'mneme-unavailable' | 'auth-required' | 'schema-mismatch' | 'empty-investigation';
   message: string;

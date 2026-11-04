@@ -207,6 +207,16 @@ test('R7 red-team: exports leak no seals/tokens; 200-node graph stays inside the
   assert.deepEqual(l, cgl(ids, [], 'm0'));
 });
 
+test('R8 epistemic banners: contradiction stays POSSIBLE, clean custody is not verified content', async () => {
+  const { epistemicBanners } = await import('../src/canvas/canvas-state.ts');
+  const pair = epistemicBanners({ custodyStatus: 'TAINT_FLAGGED', chainPayloads: [], pairPresent: true });
+  assert.ok(pair.some((b) => /POSSIBLE \(co-served\) only/.test(b)));
+  assert.ok(pair.some((b) => /does not by itself falsify/.test(b)));
+  const clean = epistemicBanners({ custodyStatus: 'CLEAN', chainPayloads: ['{"derived_from_decision":"decision-1"}'], pairPresent: false });
+  assert.ok(clean.some((b) => /CLEAN CUSTODY ≠ VERIFIED CONTENT/.test(b)));
+  assert.deepEqual(epistemicBanners({ custodyStatus: 'CLEAN', chainPayloads: [], pairPresent: false }), []);
+});
+
 test('guided demo target is chosen from server custody status, never hardcoded as fact', () => {
   assert.equal(findCompromised([mem('a'), mem('b', 'TAINT_FLAGGED')])?.memory_id, 'b');
   assert.equal(findCompromised([mem('a')]), null);

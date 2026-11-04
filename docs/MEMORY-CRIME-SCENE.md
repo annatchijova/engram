@@ -34,3 +34,17 @@
   running: slab readability, selection comfort, transitions and frame
   rate have zero executed evidence. Desktop fallback (this Canvas)
   carries the full 90-120 second journey today.
+
+## Round 8 addendum
+
+- Canvas inspector now carries epistemic banners derived only from real
+  adapter data: "CLEAN CUSTODY != VERIFIED CONTENT" for a CLEAN memory
+  whose custody payload records `derived_from_decision` (`mem-note`),
+  and "a custody problem is not proof of false content" for the
+  `mem-poison` / `mem-gate` pair. Contradiction is recorded content over
+  the real relationship vocabulary; MNEME has no `CONTRADICTED_BY`
+  relation and none was invented.
+- XR slabs face the seated viewer and carry an ambient + directional
+  light rig. Verified in headless Chromium against the live adapter
+  (see [XR-IMPLEMENTATION-ROUND8.md](XR-IMPLEMENTATION-ROUND8.md));
+  headset status is unchanged: NOT TESTED.

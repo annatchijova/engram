@@ -57,7 +57,7 @@ type ColorTransition = {
 export class FieldSystem extends createSystem({}) {
   // Evidence slabs, not spheres: a flat forensic tag whose face takes the
   // custody material. Size is reading distance only — never authority.
-  private geometry = new BoxGeometry(0.17, 0.11, 0.025);
+  private geometry = new BoxGeometry(0.21, 0.13, 0.025);
   private nodeEntities: Entity[] = [];
   // One shared material per custody_status: N nodes × M refreshes must not
   // mint a new MeshStandardMaterial each — the custody→appearance mapping
@@ -156,11 +156,15 @@ export class FieldSystem extends createSystem({}) {
         ? new Mesh(this.geometry, new MeshStandardMaterial({ color: new Color(CUSTODY_COLOR[priorStatus!]) }))
         : new Mesh(this.geometry, targetMaterial);
       mesh.position.set(x, ARC_CENTER.y, z);
+      // Face the seated viewer at the arc center's origin so slab faces
+      // (and their labels) stay readable across the 140-degree span.
+      // Orientation is presentation only; it encodes no relationship.
+      mesh.lookAt(0, ARC_CENTER.y, 0);
       // QUARANTINED gets a containment frame slightly larger than the slab:
       // a boundary treatment in addition to color, never instead of it.
       if (m.custody_status === CustodyStatus.QUARANTINED) {
         const frame = new Mesh(
-          new BoxGeometry(0.19, 0.13, 0.03),
+          new BoxGeometry(0.23, 0.15, 0.03),
           new MeshStandardMaterial({ color: new Color('#c13030'), wireframe: true }),
         );
         mesh.add(frame);

@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import { Color, FogExp2, World } from '@iwsdk/core';
+import { AmbientLight, Color, DirectionalLight, FogExp2, World } from '@iwsdk/core';
 import projectOptions from 'virtual:iwsdk-project';
 import { ContainmentSystem } from './containment-system.js';
 import { CounterfactualSystem } from './counterfactual-system.js';
@@ -45,6 +45,11 @@ World.create(
   if (scene) {
     scene.background = new Color('#101722');
     scene.fog = new FogExp2('#101722', 0.045);
+    const rig = scene as unknown as { add: (...o: unknown[]) => void };
+    rig.add(new AmbientLight('#8fa8bf', 0.7));
+    const key = new DirectionalLight('#dfeaf5', 1.6);
+    key.position.set(1.5, 3, 1.5);
+    rig.add(key);
   }
   world.registerSystem(FieldSystem);
   world.registerSystem(LoginSystem);

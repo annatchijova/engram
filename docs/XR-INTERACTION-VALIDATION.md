@@ -43,3 +43,18 @@ selected slab scales 1.3x as non-color feedback; guided texts now run
 as Acts I-IV (Discovery, Provenance, Impact, Counterfactual). All of
 it typechecks and builds; none of it has been seen in a headset or
 the simulator, so readability and comfort remain open.
+
+## Round 8 validation (desktop browser only)
+
+Executed 2026-11-04 in headless Chromium (SwiftShader) against the
+production build plus the live seeded adapter (9 memories, field
+version 22): the XR scene boots with zero console errors, all 9
+custody slabs render on the arc facing the viewer under the new light
+rig, and the Acts/legend/login panels are legible at 1366x768. With
+the adapter down, the scene reports the unreachable adapter honestly
+and fabricates nothing. A desktop mouse click on a slab produced no
+visible selection change in this run, so desktop-pointer selection
+feedback is NOT VERIFIED. The in-world Acts buttons are UIKit panels,
+not DOM controls, and were not driven. Headset, controllers, and hand
+tracking remain NOT TESTED; full detail in
+[XR-IMPLEMENTATION-ROUND8.md](XR-IMPLEMENTATION-ROUND8.md).
