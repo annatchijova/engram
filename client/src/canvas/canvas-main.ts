@@ -10,7 +10,7 @@ import { SelectedMemory } from '../selected-memory.js';
 import { SessionStore } from '../session.js';
 import {
   applyDrag, buildEdges, buildJsonCanvas, canCommit, custodyPresentation,
-  classifyComparison, computeGraphLayout, custodySummary, diagnoseConnection, escapeHtml, findCompromised, fitScale, focusNeighborhood, clampZoom, onCounterfactualError, partitionCounterfactual, typedGraphEdges, validateCustodyLinks, type GraphEdge,
+  cardScrollTarget, classifyComparison, computeGraphLayout, custodySummary, diagnoseConnection, escapeHtml, findCompromised, fitScale, focusNeighborhood, clampZoom, onCounterfactualError, partitionCounterfactual, typedGraphEdges, validateCustodyLinks, type GraphEdge,
   serializeLayout, wideningGuard, type CanvasEdge, type CardLayout, type WorldPartition,
 } from './canvas-state.js';
 
@@ -61,12 +61,12 @@ function renderCards(): void {
     el.style.left = `${pos(m.memory_id, i).x}px`;
     el.style.top = `${pos(m.memory_id, i).y}px`;
     el.style.borderTopColor = p.hex;
+    const degree = graphEdges.filter((e) => e.source === m.memory_id || e.target === m.memory_id).length;
     el.innerHTML = `<h3>${esc(m.memory_id)}</h3>
       <span class="badge" style="border-color:${p.hex}">${p.glyph} ${esc(p.label)}</span>
       <p>${esc(m.content_preview || '(no preview returned)')}</p>
-      <p class="mono">topic: ${esc(m.topic ?? 'not recorded')} · state: ${esc(m.field_state)}<br/>created: ${esc(m.created_at)}</p>
-      <button type="button" class="inspect" aria-pressed="${selected}">Inspect ${esc(m.memory_id)}</button>
-      <p class="hint">Arrow keys on this button move the card (layout only).</p>`;
+      <p class="mono">${degree} recorded relationship(s) · full detail in inspector</p>
+      <button type="button" class="inspect" aria-pressed="${selected}">Inspect ${esc(m.memory_id)}</button>`;
     const btn = el.querySelector<HTMLButtonElement>('.inspect')!;
     btn.addEventListener('click', () => void selectMemory(m.memory_id));
     // Non-drag alternative for every drag (WCAG 2.5.7): arrows move, native button keeps focus semantics.
@@ -118,14 +118,23 @@ function drawEdges(): void {
     if (si < 0 || ti < 0) continue;
     const a = pos(e.source, si), b = pos(e.target, ti);
     const s = EDGE_STROKE[e.cls];
-    const mx = (a.x + b.x + 300) / 2, my = (a.y + b.y + 60) / 2;
-    html += `<line x1="${a.x + 150}" y1="${a.y + 30}" x2="${b.x + 150}" y2="${b.y + 30}" stroke="${s.stroke}" stroke-width="${s.width}" ${s.dash ? `stroke-dasharray="${s.dash}"` : ''} ${e.directed ? 'marker-end="url(#arr)"' : ''}><title>${esc(e.label)}: ${esc(e.source)} -> ${esc(e.target)}</title></line>`
+    const mx = (a.x + b.x + 240) / 2, my = (a.y + b.y + 60) / 2;
+    html += `<line x1="${a.x + 120}" y1="${a.y + 30}" x2="${b.x + 120}" y2="${b.y + 30}" stroke="${s.stroke}" stroke-width="${s.width}" ${s.dash ? `stroke-dasharray="${s.dash}"` : ''} ${e.directed ? 'marker-end="url(#arr)"' : ''}><title>${esc(e.label)}: ${esc(e.source)} -> ${esc(e.target)}</title></line>`
       + `<text x="${mx}" y="${my}" font-size="11" fill="#1b2129">${esc(e.kind)}</text>`;
   }
   svg.innerHTML = html;
 }
 
+function centreOn(id: string): void {
+  const i = memories.findIndex((m) => m.memory_id === id);
+  if (i < 0) return;
+  const board = $<HTMLElement>('board');
+  const t = cardScrollTarget(pos(id, i), { w: board.clientWidth, h: board.clientHeight });
+  board.scrollTo({ left: t.left / zoom, top: t.top / zoom, behavior: 'smooth' });
+}
+
 async function selectMemory(id: string): Promise<void> {
+  centreOn(id);
   SelectedMemory.set(id);
   sessionStorage.setItem('engram.selectedMemory', id);
   history.replaceState(null, '', `?memory=${encodeURIComponent(id)}`);
@@ -146,7 +155,7 @@ async function selectMemory(id: string): Promise<void> {
       <p>${esc(detail.content)}</p>
       <table>
         <tr><th>Provenance</th><td>created by <span class="mono">${esc(detail.created_by)}</span> at ${esc(detail.created_at)}; topic ${esc(detail.topic ?? 'not recorded')}</td></tr>
-        <tr><th>Content hash</th><td class="mono">${esc(detail.content_sha256)}</td></tr>
+        <tr><th>Content hash</th><td class="mono">${esc(detail.content_sha256)} <button type="button" data-copy="${esc(detail.content_sha256)}">Copy</button></td></tr>
         <tr><th>Confidence (server text, never recomputed here)</th><td class="mono">${esc(detail.confidence)}</td></tr>
         <tr><th>Field state / superseded by</th><td>${esc(detail.field_state)} / ${esc(detail.superseded_by ?? '—')}</td></tr>
         <tr><th>Custody</th><td>${esc(custodySummary(chain))} Link structure: ${validateCustodyLinks(chain) ? 'consistent (display check only)' : 'BROKEN or unavailable — do not treat as verified; use the bundle verifier'}</td></tr>
@@ -164,6 +173,8 @@ async function selectMemory(id: string): Promise<void> {
       ${chain.entries.map((e) => `<details><summary>#${e.seq} ${esc(e.event_type)} — ${esc(e.actor_id)} (${esc(e.created_at)})</summary>
         <p>${esc(e.reason)}</p><p class="mono">entry ${esc(e.entry_hash)}<br/>prev ${esc(e.prev_hash)}<br/>${esc(e.payload_json)}</p></details>`).join('') || '<p>No custody entries returned.</p>'}
       <p class="hint">Chain integrity for export is checked by the bundle verifier; this view displays the chain, it does not re-verify it.</p>`;
+    body.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((b) =>
+      b.addEventListener('click', () => void navigator.clipboard?.writeText(b.dataset.copy ?? '')));
   } catch (err) {
     body.innerHTML = `<p role="alert">Could not inspect ${esc(id)}: ${esc((err as Error).message)}</p>`;
   }
@@ -205,6 +216,13 @@ async function boot(): Promise<void> {
     say(subsetNote ? diag.message + subsetNote : diag.message);
     say(`${diag.message} Field: ${ov.total_memories} memories, snapshot field_version ${ov.field_version}. Adapter state is authoritative; card positions are not.`);
     $<HTMLElement>('snapshot-line').textContent = `Snapshot: field_version ${ov.field_version} · health ${healthStatus ?? 'unknown'}`;
+    const suspicious = findCompromised(memories);
+    $<HTMLElement>('question-context').textContent = suspicious
+      ? ` Investigating ${suspicious.memory_id} — custody ${custodyPresentation(suspicious.custody_status).label} per MNEME. Snapshot field_version ${ov.field_version}.`
+      : ' No memory is marked compromised by the server in this field.';
+    if (!SelectedMemory.get()) {
+      $<HTMLElement>('insp-body').innerHTML = `<p>Select a memory node to inspect it. Reading needs no login.</p><p>Custody in this field: ${Object.entries(ov.custody_status_distribution).map(([k, v]) => `${esc(k)} ${v}`).join(' · ')}</p>`;
+    }
     $<HTMLElement>('inventory').innerHTML = memories.map((m) => `<li><button type="button" class="inv" data-inv="${esc(m.memory_id)}">${custodyPresentation(m.custody_status).glyph} <span class="mono">${esc(m.memory_id)}</span> — ${esc(custodyPresentation(m.custody_status).label)}</button></li>`).join('');
     document.querySelectorAll<HTMLButtonElement>('[data-inv]').forEach((b) => b.addEventListener('click', () => void selectMemory(b.dataset.inv!)));
     renderCards();
@@ -345,8 +363,42 @@ $<HTMLButtonElement>('graph-layout-btn').addEventListener('click', () => {
   layout = computeGraphLayout(memories.map((m) => m.memory_id), graphEdges, SelectedMemory.get() ?? findCompromised(memories)?.memory_id ?? null);
   saveLayout(); renderCards(); say('Graph layout applied (recorded neighbours near the focus). Positions are presentation only.');
 });
-$<HTMLButtonElement>('step-compare').addEventListener('click', () => void runCounterfactual('exclusion'));
+$<HTMLButtonElement>('step-compare').addEventListener('click', () => { openComparison(); void runCounterfactual('exclusion'); });
+function openComparison(): void {
+  $<HTMLElement>('compare-view').scrollIntoView({ block: 'start' });
+  $<HTMLElement>('compare-view').setAttribute('tabindex', '-1');
+  $<HTMLElement>('compare-view').focus({ preventScroll: true });
+}
+$<HTMLButtonElement>('compare-open').addEventListener('click', openComparison);
+$<HTMLButtonElement>('compare-close').addEventListener('click', () => {
+  $<HTMLElement>('board').scrollIntoView({ block: 'start' });
+});
 $<HTMLButtonElement>('step-preserve').addEventListener('click', () => void preserveBundle());
+const STEP_IDS = ['step-observe', 'step-trace', 'step-understand', 'step-compare', 'step-preserve'];
+const STEP_NOTES = [
+  'Step 1 of 5 — Observe: the suspicious memory is highlighted with its real custody status.',
+  'Step 2 of 5 — Trace: recorded provenance and custody are in the inspector; unknown links stay unknown.',
+  'Step 3 of 5 — Understand: recorded dependencies vs possible exposure. A link is not contamination.',
+  'Step 4 of 5 — Compare: a bounded, sealed hypothetical. It was not executed.',
+  'Step 5 of 5 — Preserve: export the bundle; integrity of the file is not truth of every claim.',
+];
+let currentStep = 0;
+function setStep(i: number, trigger = true): void {
+  currentStep = Math.min(4, Math.max(0, i));
+  STEP_IDS.forEach((id, j) => {
+    const li = $<HTMLButtonElement>(id).closest('li')!;
+    li.classList.toggle('done', j < currentStep);
+    if (j === currentStep) $<HTMLButtonElement>(id).setAttribute('aria-current', 'step');
+    else $<HTMLButtonElement>(id).removeAttribute('aria-current');
+  });
+  $<HTMLElement>('step-note').textContent = STEP_NOTES[currentStep]!;
+  $<HTMLButtonElement>('step-back').disabled = currentStep === 0;
+  $<HTMLButtonElement>('step-next').disabled = currentStep === 4;
+  if (trigger) $<HTMLButtonElement>(STEP_IDS[currentStep]!).click();
+}
+STEP_IDS.forEach((id, j) => $<HTMLButtonElement>(id).addEventListener('click', () => setStep(j, false)));
+$<HTMLButtonElement>('step-back').addEventListener('click', () => setStep(currentStep - 1));
+$<HTMLButtonElement>('step-next').addEventListener('click', () => setStep(currentStep + 1));
 
 let zoom = 1;
 function applyZoom(): void {

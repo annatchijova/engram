@@ -214,7 +214,7 @@ export function computeGraphLayout(ids: string[], edges: GraphEdge[], focusId: s
   const sorted = [...ids].sort();
   if (!focusId) {
     const grid: CardLayout = {};
-    sorted.forEach((id, i) => { grid[id] = { x: 24 + (i % 4) * 330, y: 24 + Math.floor(i / 4) * 240 }; });
+    sorted.forEach((id, i) => { grid[id] = { x: 24 + (i % 5) * 262, y: 24 + Math.floor(i / 5) * 190 }; });
     return grid;
   }
   const { neighbors } = focusId ? focusNeighborhood(edges, focusId) : { neighbors: new Set<string>() };
@@ -224,13 +224,13 @@ export function computeGraphLayout(ids: string[], edges: GraphEdge[], focusId: s
   const place = (list: string[], radius: number, cx: number, cy: number): void => {
     list.forEach((id, i) => {
       const a = (i / Math.max(1, list.length)) * Math.PI * 2 - Math.PI / 2;
-      layout[id] = { x: Math.round(cx + Math.cos(a) * radius - 150), y: Math.round(cy + Math.sin(a) * radius * 0.72 - 90) };
+      layout[id] = { x: Math.round(cx + Math.cos(a) * radius - 120), y: Math.round(cy + Math.sin(a) * radius * 0.72 - 70) };
     });
   };
   const cx = 760, cy = 520;
-  if (focusId && sorted.includes(focusId)) layout[focusId] = { x: cx - 150, y: cy - 90 };
-  place(ring1, Math.max(430, ring1.length * 360 / (Math.PI * 2)), cx, cy);
-  place(ring2, Math.max(760, ring2.length * 370 / (Math.PI * 2)), cx, cy);
+  if (focusId && sorted.includes(focusId)) layout[focusId] = { x: cx - 120, y: cy - 70 };
+  place(ring1, Math.max(430, ring1.length * 300 / (Math.PI * 2)), cx, cy);
+  place(ring2, Math.max(760, ring2.length * 310 / (Math.PI * 2)), cx, cy);
   return layout;
 }
 
@@ -244,6 +244,14 @@ export function classifyComparison(delta: CounterfactualDelta): ComparisonClasse
     onlyBaseline: delta.served_a.filter((id) => !b.has(id)),
     onlyHypothetical: delta.served_b.filter((id) => !a.has(id)),
     rankChanged: delta.rank_changed.map((r) => r[0]),
+  };
+}
+
+/** Scroll target that centres a 240x160 node in the board with padding — framing never clips the node. */
+export function cardScrollTarget(p: { x: number; y: number }, view: { w: number; h: number }): { left: number; top: number } {
+  return {
+    left: Math.max(0, Math.round(p.x + 120 - view.w / 2)),
+    top: Math.max(0, Math.round(p.y + 80 - view.h / 2)),
   };
 }
 

@@ -193,3 +193,46 @@ restored as presentation only. Tests: 20/20.
 0:50 Understand separates attested, unattested and possible;
 1:05 Compare runs the exclusion delta side by side; 1:20 Preserve
 exports the bundle and reads the verifier verdict.
+
+## Round 6 — visual breakthrough (uncommitted)
+
+Exact files changed by Rounds 5-6 (user WIP untouched, listed nowhere
+here): client/canvas.html, client/src/canvas/canvas-main.ts,
+client/src/canvas/canvas-state.ts, client/src/canvas/canvas.css,
+client/src/field-system.ts (evidence-slab geometry only, one anchored
+hunk inside the WIP file), client/public/scenes/main.iwsdk.scene.json
+(panel zone positions/scales only), docs/MEMORY-CRIME-SCENE.md,
+ENGRAM-CANVAS-BRIDGE.md.
+
+Visual summary: dark Memory Investigation Laboratory system, compact
+240px nodes with one-line summary and relationship counts, five-step
+stepper with current/completed state and Back/Next, central question
+banner ("Can this memory still be trusted?"), prominent Explore in XR
+entry, dedicated comparison view (recorded baseline vs sealed
+hypothetical, classification legend, back-to-graph), contained
+opacity/border transitions disabled under prefers-reduced-motion.
+Graph layout is unchanged from Round 5 (typed MNEME DAG, deterministic
+rings, recorded direction, focus dimming with exposure language).
+
+XR status: PARTIAL — evidence slabs and composed zones A-E are
+implemented and compile; semantic zoom is panel scaling (detail
+1.35x), not distance LOD; focus/subgraph and guided-stage completion
+on device remain UNVERIFIED (no Quest, simulator frontend not
+running). Browser verification: NOT PERFORMED (no Chromium in the
+environment; HTTP serving 200 only). Executed verification: client
+tests 21/21, typecheck clean, production build OK, readiness 5/5 on
+port 17347 against the real adapter.
+
+Remaining defects: manual visual overlap check at 1920/1440/1280 and
+narrow widths pending; XR focus/subgraph pending the login/onboarding
+migration landing; live demo field still holds the pre-Round-4 seed
+(8 memories) until deliberately reseeded; edge labels at very small
+zoom may need manual confirmation.
+
+Launch: `./scripts/dev-local.sh`, then
+`https://localhost:8081/canvas.html` (Explore in XR opens the spatial
+view). 90-second demo: 0-10 compromised memory and central question;
+10-25 Trace over typed edges; 25-40 Understand separates attested,
+unattested and possible; 40-60 Compare opens the comparison view and
+runs the sealed delta; 60-75 classified differences side by side;
+75-90 Preserve exports the bundle and reads the verifier verdict.

@@ -184,6 +184,12 @@ test('R5-3. comparison classification separates both/only-baseline/only-hypothet
   assert.deepEqual(c, { inBoth: ['b'], onlyBaseline: ['a'], onlyHypothetical: ['c'], rankChanged: ['b'] });
 });
 
+test('R6 framing: scroll target centres the node and never goes negative', async () => {
+  const { cardScrollTarget } = await import('../src/canvas/canvas-state.ts');
+  assert.deepEqual(cardScrollTarget({ x: 1000, y: 800 }, { w: 800, h: 600 }), { left: 720, top: 580 });
+  assert.deepEqual(cardScrollTarget({ x: 0, y: 0 }, { w: 800, h: 600 }), { left: 0, top: 0 });
+});
+
 test('guided demo target is chosen from server custody status, never hardcoded as fact', () => {
   assert.equal(findCompromised([mem('a'), mem('b', 'TAINT_FLAGGED')])?.memory_id, 'b');
   assert.equal(findCompromised([mem('a')]), null);
