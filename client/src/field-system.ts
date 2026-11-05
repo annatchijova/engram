@@ -13,8 +13,13 @@ import {
   createSystem,
   Entity,
   Mesh,
+  MeshBasicMaterial,
   MeshStandardMaterial,
   BoxGeometry,
+  EdgesGeometry,
+  LineBasicMaterial,
+  LineSegments,
+  OneHandGrabbable,
   RayInteractable,
   UIKitMLAsset,
 } from '@iwsdk/core';
@@ -58,13 +63,29 @@ export class FieldSystem extends createSystem({}) {
   // Evidence slabs, not spheres: a flat forensic tag whose face takes the
   // custody material. Size is reading distance only — never authority.
   private geometry = new BoxGeometry(0.21, 0.13, 0.025);
+  // A thin, neutral-gray edge outline shared by every slab regardless of
+  // custody_status — purely a "card has a defined edge" cosmetic. It is
+  // the same color/width on every node, so it carries no evidence meaning
+  // on its own; only CUSTODY_COLOR does that.
+  private edgeGeometry = new EdgesGeometry(this.geometry);
+  private edgeMaterial = new LineBasicMaterial({ color: new Color('#05070a') });
   private nodeEntities: Entity[] = [];
   // One shared material per custody_status: N nodes × M refreshes must not
   // mint a new MeshStandardMaterial each — the custody→appearance mapping
   // is CUSTODY_COLOR, and sharing enforces that literally (mutating a
   // shared material would recolor every node of that status at once).
+  // roughness/metalness/emissive are rendering quality only: every status
+  // material gets the SAME values, differing only in the CUSTODY_COLOR hex
+  // itself (used for both base color and emissive) — no second channel of
+  // evidence meaning is introduced.
   private statusMaterials: Record<string, MeshStandardMaterial> = {};
-  private fallbackMaterial = new MeshStandardMaterial({ color: new Color('#999999') });
+  private fallbackMaterial = new MeshStandardMaterial({
+    color: new Color('#999999'),
+    emissive: new Color('#999999'),
+    emissiveIntensity: 0.12,
+    roughness: 0.4,
+    metalness: 0.2,
+  });
   // memory_id -> custody_status as of the last refresh, so the next refresh
   // can tell which specific nodes actually changed (never animate a status
   // that didn't really change, never guess from a recreated/disposed node).
@@ -76,6 +97,10 @@ export class FieldSystem extends createSystem({}) {
     for (const [status, hex] of Object.entries(CUSTODY_COLOR)) {
       this.statusMaterials[status] = new MeshStandardMaterial({
         color: new Color(hex),
+        emissive: new Color(hex),
+        emissiveIntensity: 0.12,
+        roughness: 0.4,
+        metalness: 0.2,
       });
     }
     void this.refresh();
@@ -153,21 +178,47 @@ export class FieldSystem extends createSystem({}) {
         && CUSTODY_COLOR[priorStatus] !== undefined && CUSTODY_COLOR[m.custody_status] !== undefined;
 
       const mesh = changed
-        ? new Mesh(this.geometry, new MeshStandardMaterial({ color: new Color(CUSTODY_COLOR[priorStatus!]) }))
+        ? new Mesh(
+            this.geometry,
+            new MeshStandardMaterial({
+              color: new Color(CUSTODY_COLOR[priorStatus!]),
+              emissive: new Color(CUSTODY_COLOR[priorStatus!]),
+              emissiveIntensity: 0.12,
+              roughness: 0.4,
+              metalness: 0.2,
+            }),
+          )
         : new Mesh(this.geometry, targetMaterial);
       mesh.position.set(x, ARC_CENTER.y, z);
       // Face the seated viewer at the arc center's origin so slab faces
       // (and their labels) stay readable across the 140-degree span.
       // Orientation is presentation only; it encodes no relationship.
       mesh.lookAt(0, ARC_CENTER.y, 0);
-      // QUARANTINED gets a containment frame slightly larger than the slab:
-      // a boundary treatment in addition to color, never instead of it.
+      // A defined edge on every slab, regardless of status — purely a
+      // "this is a solid tag, not a flat decal" read, same neutral color
+      // on every node.
+      mesh.add(new LineSegments(this.edgeGeometry, this.edgeMaterial));
+      // QUARANTINED gets a containment treatment in addition to color,
+      // never instead of it: the existing wireframe frame, plus a faint
+      // translucent shell in the SAME custody-red — reads as an isolation
+      // field around the tag rather than just a thin outline, without
+      // adding any hue the mapping doesn't already declare.
       if (m.custody_status === CustodyStatus.QUARANTINED) {
         const frame = new Mesh(
           new BoxGeometry(0.23, 0.15, 0.03),
           new MeshStandardMaterial({ color: new Color('#c13030'), wireframe: true }),
         );
         mesh.add(frame);
+        const shell = new Mesh(
+          new BoxGeometry(0.27, 0.19, 0.07),
+          new MeshBasicMaterial({
+            color: new Color('#c13030'),
+            transparent: true,
+            opacity: 0.07,
+            depthWrite: false,
+          }),
+        );
+        mesh.add(shell);
       }
 
       if (changed) {
@@ -183,6 +234,19 @@ export class FieldSystem extends createSystem({}) {
 
       const entity = this.world.createTransformEntity(mesh);
       entity.addComponent(RayInteractable);
+      // Hands-first (per the project's own "hands-first, seated" target):
+      // an evidence slab can be directly hand-pinched off the arc and
+      // turned/pulled close to read, same as the ray-select path already
+      // above it — this is presentation only (position in a scene graph),
+      // never a MNEME write, exactly like the Canvas desktop drag. Bounds
+      // keep a grabbed slab inside the seated room rather than letting it
+      // disappear behind the player or through the floor; refresh() rebuilds
+      // every node from scratch, so a dropped slab's position resets on the
+      // next real custody change regardless of where a hand left it.
+      entity.addComponent(OneHandGrabbable, {
+        translateMin: [-1.3, 0.6, -2.3],
+        translateMax: [1.3, 2.0, -0.05],
+      });
       entity.addComponent(MemoryNode, {
         memoryId: m.memory_id,
         custodyStatus: m.custody_status,

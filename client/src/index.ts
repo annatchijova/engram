@@ -6,12 +6,17 @@
  */
 
 import {
-  AmbientLight,
   Color,
   DirectionalLight,
+  DoubleSide,
   FogExp2,
   GridHelper,
+  HemisphereLight,
+  Mesh,
+  MeshStandardMaterial,
+  PlaneGeometry,
   PointLight,
+  SpotLight,
   World,
 } from '@iwsdk/core';
 import projectOptions from 'virtual:iwsdk-project';
@@ -55,21 +60,67 @@ World.create(
     scene.background = new Color('#101722');
     scene.fog = new FogExp2('#101722', 0.045);
     const rig = scene as unknown as { add: (...o: unknown[]) => void };
-    rig.add(new AmbientLight('#8fa8bf', 0.7));
-    const key = new DirectionalLight('#dfeaf5', 1.6);
+
+    // Hemisphere fill replaces a flat AmbientLight: sky/ground tint gives
+    // surfaces a soft top-down gradient instead of uniform flat light —
+    // the single biggest source of the "flat" read on standard materials.
+    rig.add(new HemisphereLight('#4f6b8c', '#1c2430', 0.65));
+
+    const key = new DirectionalLight('#dfeaf5', 1.3);
     key.position.set(1.5, 3, 1.5);
     rig.add(key);
+    // Soft cool fill opposite the key so the unlit side of every slab and
+    // panel still reads as modeled geometry instead of falling to black —
+    // low intensity on purpose, it must never compete with the key.
+    const fill = new DirectionalLight('#5e7a99', 0.35);
+    fill.position.set(-2, 1.6, 0.5);
+    rig.add(fill);
+    // A focused pool of light over the seated arc: the "interrogation
+    // table" cue that makes the evidence band read as the room's one
+    // deliberately lit surface instead of evenly floodlit geometry.
+    const pool = new SpotLight('#eef3fa', 3.2, 7, Math.PI / 5, 0.55, 1.4);
+    pool.position.set(0, 2.6, -0.6);
+    pool.target.position.set(0, 1.1, -1.6);
+    rig.add(pool);
+    rig.add(pool.target);
     // Atmosphere pass: still presentation-only, still no evidence meaning.
     // A cool rim light behind the arc separates the slabs from the
-    // near-black background instead of leaving them flat-lit; a dim grid
-    // floor gives the seated room a spatial anchor in the empty lower
-    // field instead of the player standing over a void.
+    // near-black background instead of leaving them flat-lit.
     const rim = new PointLight('#2e6a8f', 2.2, 6, 2);
     rim.position.set(0, 0.9, -2.3);
     rig.add(rim);
+
+    // Solid floor beneath the grid: without it the grid lines float in a
+    // void with nothing to shade, which is the other half of "flat". A
+    // slightly glossy dark surface catches the key/pool lights and gives
+    // the seated room an actual ground plane instead of empty space below
+    // the player.
+    const floorMat = new MeshStandardMaterial({
+      color: new Color('#0c1118'),
+      roughness: 0.78,
+      metalness: 0.12,
+    });
+    const floorMesh = new Mesh(new PlaneGeometry(7, 7), floorMat);
+    floorMesh.rotation.x = -Math.PI / 2;
+    floorMesh.position.set(0, -0.002, -1.6);
+    rig.add(floorMesh);
     const floor = new GridHelper(6, 24, '#2a3340', '#1a212b');
     floor.position.set(0, 0, -1.6);
     rig.add(floor);
+
+    // A back wall closes the room off instead of leaving the arc floating
+    // against an unbroken void past the fog — a faint vertical gradient
+    // (via the key/pool falloff) is now visible across its surface,
+    // giving the space a back boundary the fog alone could never imply.
+    const wallMat = new MeshStandardMaterial({
+      color: new Color('#1b2534'),
+      roughness: 0.82,
+      metalness: 0.08,
+      side: DoubleSide,
+    });
+    const wall = new Mesh(new PlaneGeometry(9, 4.5), wallMat);
+    wall.position.set(0, 2.1, -3);
+    rig.add(wall);
   }
   world.registerSystem(FieldSystem);
   world.registerSystem(LoginSystem);
