@@ -51,6 +51,39 @@ board (the XR view stays at `/index.html`). Guides:
 `docs/DEMO-SCENARIO.md`, `docs/XR-INTERACTION-VALIDATION.md`,
 `docs/SECURITY-ROUND4.md`. Spanish summary: `README.es.md`.
 
+## Visual demo
+
+ENGRAM is an evidence investigation surface for researchers, scientists,
+forensic analysts, and safety engineers. If you know Obsidian, think of ENGRAM
+as a knowledge canvas where every connection has to explain its provenance.
+
+### The trust question
+
+![Dual evidence camera](visual/evidence-dual-camera.png)
+
+The warm factual world and the violet hypothetical world remain visibly distinct.
+
+### The investigation canvas
+
+![ENGRAM Canvas initial investigation](visual/canvas-initial.png)
+
+The investigator starts with a concrete question: can this memory still be trusted?
+
+### Typed provenance
+
+![ENGRAM Canvas provenance graph](visual/canvas-provenance.png)
+
+Direct, derived, unattested, and possible relationships are not collapsed into one generic graph edge.
+
+### Preserve the answer
+
+![ENGRAM evidence bundle](visual/evidence-bundle.png)
+
+The investigation can be exported as an evidence bundle for later verification.
+The demo field is synthetic; the UI and adapter path are real, and the
+counterfactual is explicitly sealed as never executed. More visual references
+are collected in [`visual/README.md`](visual/README.md).
+
 ## Live
 
 - **Client**: https://client-six-mu-93.vercel.app
