@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="320" viewBox="0 0 360 320" role="img" aria-labelledby="title desc">
+  <title id="title">ENGRAM symbol</title>
+  <desc id="desc">A factual field drawn as a solid E, distinct from a violet counterfactual chamber, with evidence marks shown by shape.</desc>
+  <g transform="translate(16 35)" fill="none" stroke-linecap="square" stroke-linejoin="miter">
+    <path d="M48 30H158 M48 30V250 M48 140H132 M48 250H158" stroke="#EEE9DF" stroke-width="15"/>
+    <path d="M205 67H288V213H205" stroke="#B8A6EC" stroke-width="7"/>
+    <rect x="78" y="70" width="17" height="17" rx="1.5" fill="#D58B58" stroke="none"/>
+    <path d="M102 105L113 116L102 127L91 116Z" stroke="#EEE9DF" stroke-width="3.5"/>
+    <circle cx="91" cy="184" r="3.2" fill="#B8A6EC" stroke="none"/>
+    <circle cx="105" cy="184" r="3.2" fill="#B8A6EC" stroke="none"/>
+    <circle cx="119" cy="184" r="3.2" fill="#B8A6EC" stroke="none"/>
+  </g>
+</svg>

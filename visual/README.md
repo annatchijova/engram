@@ -1,5 +1,7 @@
 # ENGRAM Visual Demo
 
+![ENGRAM logo](ENGRAM-logo.png)
+
 ENGRAM is an evidence investigation surface for researchers, scientists, forensic analysts, and safety engineers who need to understand not only what a result says, but where it came from and whether it can still be trusted.
 
 ## The mental model
@@ -32,6 +34,12 @@ ENGRAM does not treat every line as the same. Relationships are distinguished as
 
 The result is not just a visual explanation. The investigation can be exported as an evidence bundle for later verification. The demo field is synthetic; the UI and adapter path are real, and the counterfactual is explicitly sealed as never executed.
 
+### Additional references
+
+![Layered memory plate](Placa%20de%20memoria%20en%20capas-9.png)
+
+![ENGRAM architecture diagram](mermaid-diagram.png)
+
 ## Who would use it?
 
 - Researchers tracing the provenance of derived findings.
@@ -50,5 +58,9 @@ The result is not just a visual explanation. The investigation can be exported a
 - `canvas-initial.png` — initial investigation canvas.
 - `canvas-provenance.png` — selected memory with typed provenance.
 - `evidence-bundle.png` — exported evidence and custody material.
+- `ENGRAM-logo.png` and `ENGRAM-mark.svg` — project identity.
 - `Placa de memoria en capas-9.png` — supplementary visual plate.
+- `mermaid-diagram.png` — architecture reference.
+- `gemini-video-script.md` — four-minute video script in six 40-second segments.
+- `mcp.md` — frontend and MCP direction notes.
 

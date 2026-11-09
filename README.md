@@ -3,6 +3,8 @@
 **Geometry of Evidence**  
 *Memory Has Geometry.*
 
+![ENGRAM logo](visual/ENGRAM-logo.png)
+
 ENGRAM is an immersive XR environment for inspecting and operating on computational memory as spatial, verifiable structures.
 
 It is being designed on top of [MNEME](https://github.com/annatchijova/mneme): MNEME decides and proves; ENGRAM makes those decisions inspectable and operable through the body.
@@ -83,6 +85,15 @@ The investigation can be exported as an evidence bundle for later verification.
 The demo field is synthetic; the UI and adapter path are real, and the
 counterfactual is explicitly sealed as never executed. More visual references
 are collected in [`visual/README.md`](visual/README.md).
+
+### Additional visual references
+
+![Layered memory plate](visual/Placa%20de%20memoria%20en%20capas-9.png)
+
+![ENGRAM architecture diagram](visual/mermaid-diagram.png)
+
+The production notes are in [`visual/gemini-video-script.md`](visual/gemini-video-script.md)
+and [`visual/mcp.md`](visual/mcp.md).
 
 ## Live
 
