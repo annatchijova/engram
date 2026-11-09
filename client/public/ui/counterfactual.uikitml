@@ -56,7 +56,7 @@
     margin-top: 1;
   }
 </style>
-<div class="panel-root">
+<div class="panel-root" id="counterfactual-root" style="display: none">
   <div class="heading">counterfactual chamber</div>
   <span class="hint" id="cf-hint">exclusion needs no login; containment needs an operator session</span>
   <div class="btn-row">

@@ -86,20 +86,27 @@
     font-size: 1;
     color: #a8d8a8;
   }
+  .gloss {
+    font-size: 0.85;
+    color: #8a7a5a;
+    margin-top: 0.3;
+  }
 </style>
-<div class="panel-root" id="containment-root">
+<div class="panel-root" id="containment-root" style="display: none">
   <div class="heading">containment console</div>
   <span class="hint" id="containment-hint">log in to stage a quarantine</span>
   <div class="actor-row">
     <span class="actor-label" id="actor-row-label">pipeline-logs (ACTIVE)</span>
     <button class="stage-btn" id="stage-btn">Stage quarantine</button>
   </div>
+  <span class="gloss">preview only - nothing changes yet</span>
   <div class="preview" id="preview-section" style="display: none">
     <span class="preview-text" id="preview-text"></span>
     <div class="commit-row">
       <button class="commit-btn" id="commit-btn">Commit</button>
       <button class="cancel-btn" id="cancel-btn">Cancel</button>
     </div>
+    <span class="gloss">Commit is the one action that actually changes the field</span>
     <span class="result-text" id="result-text"></span>
   </div>
 </div>

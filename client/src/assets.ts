@@ -11,6 +11,16 @@ const publicAssetUrl = (filePath: string): string =>
   `${import.meta.env.BASE_URL}${filePath.replace(/^\/+/u, '')}`;
 
 export default defineAssets({
+  'next-step-panel': {
+    url: publicAssetUrl('ui/next-step.uikitml'),
+    type: AssetType.UIKitML,
+    name: 'Next Step Panel',
+  },
+  'login-panel': {
+    url: publicAssetUrl('ui/login.uikitml'),
+    type: AssetType.UIKitML,
+    name: 'Login Panel',
+  },
   'legend-panel': {
     url: publicAssetUrl('ui/legend.uikitml'),
     type: AssetType.UIKitML,
@@ -20,6 +30,11 @@ export default defineAssets({
     url: publicAssetUrl('ui/detail.uikitml'),
     type: AssetType.UIKitML,
     name: 'Detail Panel',
+  },
+  'preview-panel': {
+    url: publicAssetUrl('ui/preview.uikitml'),
+    type: AssetType.UIKitML,
+    name: 'Preview Panel',
   },
   'containment-panel': {
     url: publicAssetUrl('ui/containment.uikitml'),

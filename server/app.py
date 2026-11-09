@@ -14,7 +14,9 @@ from the client, and that identity binding is still an open question
 answering it badly: there is nothing here to authorize.
 
 AUTH PLACEHOLDER (named, not hidden): every request needs a static bearer
-token from ENGRAM_READ_TOKEN. This is NOT the externally-authenticated
+token from ENGRAM_READ_TOKEN — except GET /health, which is unauthenticated
+and reports only whether prerequisites exist (never secrets, never field
+content). This is NOT the externally-authenticated
 actor identity the architecture calls for — it is a single shared secret
 for local hackathon use. It is acceptable only because this file exposes
 zero mutating capability: holding the token lets you read the field, and
@@ -48,19 +50,33 @@ VERIFIER_PATH = Path(MNEME_REPO_PATH) / "verify_offline.py"
 PROTOCOL_VERSION = "engram-query/v1"
 DB_PATH = Path(os.environ.get("MNEME_DB_PATH", Path(__file__).parent / "data" / "demo_field.db"))
 READ_TOKEN = os.environ.get("ENGRAM_READ_TOKEN")
-DEV_ORIGIN = os.environ.get("ENGRAM_CLIENT_ORIGIN", "http://localhost:5173")
+# Vite (IWSDK plugin) serves HTTPS on 8081 by default; the exact Origin
+# string must match scheme+host+port or the browser blocks every response.
+# ENGRAM_CLIENT_ORIGIN may hold one origin or a comma-separated list.
+DEV_ORIGINS = [
+    o.strip() for o in os.environ.get(
+        "ENGRAM_CLIENT_ORIGIN",
+        "https://localhost:8081,http://localhost:8081",
+    ).split(",") if o.strip()
+]
 
-# Nivel 5 — process-lifetime only, named honestly: a real multi-instance
-# deployment would need this durable (in the DB), not a module global.
-# Bumped after every successful mutation; staged commits check it first.
-FIELD_VERSION = 0
+# Nivel 5 — the field version is DERIVED from persisted state, not kept in a
+# process global: every mutation MNEME exposes through this adapter appends
+# custody-chain events, so the entry count grows strictly with each write.
+# A staged commit's expected_field_version therefore survives restarts
+# instead of resetting to 0 with the process.
+def _field_version(cur: sqlite3.Cursor) -> int:
+    cur.execute("SELECT COUNT(*) FROM custody_chain")
+    return int(cur.fetchone()[0])
 
 app = FastAPI(title="ENGRAM MNEME read adapter", version=PROTOCOL_VERSION)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[DEV_ORIGIN],
+    allow_origins=DEV_ORIGINS,
     allow_methods=["GET", "POST"],
-    allow_headers=["Authorization"],
+    # Content-Type is required: login/quarantine POSTs send JSON bodies and
+    # their preflight otherwise fails even with a correct origin and token.
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 _bearer = HTTPBearer(auto_error=False)
@@ -69,7 +85,7 @@ _bearer = HTTPBearer(auto_error=False)
 def require_token(creds: HTTPAuthorizationCredentials | None = Depends(_bearer)) -> None:
     if not READ_TOKEN:
         raise HTTPException(500, "ENGRAM_READ_TOKEN is not configured on the server.")
-    if creds is None or creds.credentials != READ_TOKEN:
+    if creds is None or not secrets.compare_digest(creds.credentials, READ_TOKEN):
         raise HTTPException(401, "Missing or invalid bearer token.")
 
 
@@ -82,10 +98,21 @@ def _conn() -> sqlite3.Connection:
     return conn
 
 
+# C2 — the deployed backend has no persistent volume: every restart reseeds
+# a fresh field. Rather than hide that, each boot mints a field_epoch token
+# carried in every envelope and /health, so a client can tell "the field
+# reset under me" from "the field is empty."
+FIELD_EPOCH = secrets.token_hex(8)
+
+
 def _envelope(data: Any) -> dict[str, Any]:
     return {
         "protocol_version": PROTOCOL_VERSION,
-        "snapshot_as_of": datetime.now(timezone.utc).isoformat(),
+        # Wall-clock response time, not a snapshot boundary: named served_at
+        # so it is never mistaken for a verified "as-of" marker. The real
+        # ordering value a client can stage against is field_version.
+        "served_at": datetime.now(timezone.utc).isoformat(),
+        "field_epoch": FIELD_EPOCH,
         "data": data,
     }
 
@@ -96,6 +123,35 @@ CUSTODY_STATUS_MEANING = {
     "QUARANTINED": "Direct evidence against this memory - invisible, not rehabilitable",
     "SUPERSEDED": "Replaced by a newer memory - invisible, preserved",
 }
+
+
+@app.get("/health")
+def health() -> dict[str, Any]:
+    """Unauthenticated liveness + degradation report.
+
+    Reports only whether prerequisites exist — never secrets, never field
+    content. A missing DB or unset read token is a *degraded* service, not a
+    silent one: a client can tell "the field was never seeded" from "the
+    adapter is down" without holding any credential.
+    """
+    db_present = DB_PATH.exists()
+    field_version: int | None = None
+    if db_present:
+        conn = sqlite3.connect(str(DB_PATH))
+        conn.execute("PRAGMA query_only = ON")
+        try:
+            field_version = _field_version(conn.cursor())
+        finally:
+            conn.close()
+    return {
+        "status": "ok" if (db_present and READ_TOKEN) else "degraded",
+        "protocol_version": PROTOCOL_VERSION,
+        "field_epoch": FIELD_EPOCH,
+        "field_db_present": db_present,
+        "read_token_configured": bool(READ_TOKEN),
+        "demo_password_configured": DEMO_PASSWORD is not None,
+        "field_version": field_version,
+    }
 
 
 @app.get("/api/v1/field/overview", dependencies=[Depends(require_token)])
@@ -112,6 +168,7 @@ def field_overview() -> dict[str, Any]:
     actors = cur.fetchone()[0]
     ledger = authority.ledger_exists(cur)
     roots = authority.root_subjects(cur) if ledger else []
+    field_version = _field_version(cur)
     conn.close()
     return _envelope({
         "total_memories": total,
@@ -122,7 +179,7 @@ def field_overview() -> dict[str, Any]:
         "authority_ledger_exists": ledger,
         "root_actors": roots,
         "capability_vocabulary": sorted(authority.CAPABILITIES),
-        "field_version": FIELD_VERSION,
+        "field_version": field_version,
     })
 
 
@@ -210,6 +267,13 @@ def get_impact(memory_id: str) -> dict[str, Any]:
         "derived_unattested": list(report.derived_unattested),
         "derived_decisions": list(report.derived_decisions),
         "possible_memories": list(report.possible_memories),
+        # Typed DAG from MNEME (level, kind, source, target): the flattened
+        # lists above conflate directed and symmetric kinds, so the graph
+        # surface consumes these edges verbatim instead of reconstructing.
+        "edges": [
+            {"level": level, "kind": kind, "source": source, "target": target}
+            for level, kind, source, target in report.edges
+        ],
         "impact_sha256": report.impact_sha256,
     })
 
@@ -254,14 +318,39 @@ def list_actors() -> dict[str, Any]:
 # honest about what it is, not as a production auth system.
 # ---------------------------------------------------------------------------
 
+# Multiple demo users map to seeded MNEME actors with DIFFERENT capability
+# sets — the point is exercising the authority gate for real: `ada` holds
+# STORE/REINFORCE/DECIDE only, so her quarantine commits and counterfactual
+# widening are refused by MNEME's own authority.gate (403), not by this
+# adapter.
 DEMO_USERS: dict[str, dict[str, str]] = {
     "omar": {"actor_id": "analyst-omar", "display_name": "Analyst Omar"},
+    "ada": {"actor_id": "agent-ada", "display_name": "Agent Ada"},
 }
-DEMO_PASSWORD = os.environ.get("ENGRAM_DEMO_PASSWORD", "demo-password")
+# Fail-closed: no default password. If the variable is unset, login refuses
+# with 503 instead of authenticating against a value published in the README.
+DEMO_PASSWORD = os.environ.get("ENGRAM_DEMO_PASSWORD")
 SESSION_TTL_SECONDS = 3600
 
+# In-memory maps bounded explicitly: SESSIONS evicts expired entries on every
+# access and is hard-capped; IDEMPOTENCY is FIFO-capped. An evicted
+# idempotency key does not cause a double effect — MNEME's own
+# "already QUARANTINED" refusal is the durable dedup, the cache only saves
+# the replay the round-trip.
+SESSIONS_MAX = 64
+IDEMPOTENCY_MAX = 256
 SESSIONS: dict[str, dict[str, Any]] = {}
 IDEMPOTENCY: dict[str, dict[str, Any]] = {}
+
+
+def _sweep_sessions() -> None:
+    now = time.time()
+    for token in [t for t, s in SESSIONS.items() if s["expires_at"] < now]:
+        del SESSIONS[token]
+    if len(SESSIONS) > SESSIONS_MAX:
+        oldest_first = sorted(SESSIONS, key=lambda t: SESSIONS[t]["expires_at"])
+        for token in oldest_first[: len(SESSIONS) - SESSIONS_MAX]:
+            del SESSIONS[token]
 
 
 def _rw_conn() -> sqlite3.Connection:
@@ -278,6 +367,7 @@ def require_session(
 ) -> dict[str, Any]:
     if creds is None:
         raise HTTPException(401, "Missing session token.")
+    _sweep_sessions()
     session = SESSIONS.get(creds.credentials)
     if session is None:
         raise HTTPException(401, "Invalid or expired session token.")
@@ -289,11 +379,20 @@ def require_session(
 
 @app.post("/api/v1/auth/login")
 def login(payload: dict[str, str] = Body(...)) -> dict[str, Any]:
+    if DEMO_PASSWORD is None:
+        raise HTTPException(
+            503,
+            "Login is not configured on this server "
+            "(ENGRAM_DEMO_PASSWORD unset) — refusing rather than "
+            "authenticating against a default credential.",
+        )
     username = payload.get("username", "")
     password = payload.get("password", "")
     user = DEMO_USERS.get(username)
     if user is None or not secrets.compare_digest(password, DEMO_PASSWORD):
         raise HTTPException(401, "Invalid username or password.")
+
+    _sweep_sessions()
 
     conn = _conn()
     cur = conn.cursor()
@@ -336,13 +435,14 @@ def quarantine_preview(actor_id: str) -> dict[str, Any]:
         (actor_id, *trust.NON_INFLUENCE_EVENTS),
     )
     would_flag = [r[0] for r in cur.fetchall()]
+    field_version = _field_version(cur)
     conn.close()
     return _envelope({
         "actor_id": actor_id,
         "already_quarantined": already_quarantined,
         "would_flag_memory_ids": would_flag,
         "count": len(would_flag),
-        "field_version": FIELD_VERSION,
+        "field_version": field_version,
     })
 
 
@@ -363,7 +463,6 @@ def quarantine_actor(
     payload: dict[str, Any] = Body(...),
     session: dict[str, Any] = Depends(require_session),
 ) -> dict[str, Any]:
-    global FIELD_VERSION
     reason = payload.get("reason", "")
     idempotency_key = payload.get("idempotency_key", "")
     if not reason.strip():
@@ -371,31 +470,40 @@ def quarantine_actor(
     if not idempotency_key.strip():
         raise HTTPException(400, "idempotency_key is required.")
 
+    expected_version = payload.get("expected_field_version")
+    if expected_version is not None and (
+        isinstance(expected_version, bool)
+        or not isinstance(expected_version, int)
+    ):
+        raise HTTPException(
+            400, "expected_field_version must be an integer when present.")
+
     cache_key = f"quarantine:{session['actor_id']}:{idempotency_key}"
     cached = IDEMPOTENCY.get(cache_key)
     if cached is not None:
         return cached
 
-    # Stale-snapshot precondition (Nivel 5): checked before touching MNEME,
-    # and worded distinctly from "already QUARANTINED" so an operator can
-    # tell "the world moved under you" from "someone already did this."
-    expected_version = payload.get("expected_field_version")
-    if expected_version is not None and int(expected_version) != FIELD_VERSION:
-        raise HTTPException(
-            409,
-            f"stale snapshot: field is now at version {FIELD_VERSION}, you "
-            f"staged against version {expected_version} — refresh and restage.",
-        )
-
     conn = _rw_conn()
     try:
         cur = conn.cursor()
+        # Stale-snapshot precondition (Nivel 5): checked against the
+        # PERSISTED version inside the same transaction as the mutation,
+        # and worded distinctly from "already QUARANTINED" so an operator
+        # can tell "the world moved under you" from "someone already did
+        # this."
+        current_version = _field_version(cur)
+        if expected_version is not None and expected_version != current_version:
+            raise HTTPException(
+                409,
+                f"stale snapshot: field is now at version {current_version}, "
+                f"you staged against version {expected_version} — refresh "
+                "and restage.",
+            )
         sweep = trust.quarantine_actor(
             cur, actor_id=actor_id, initiated_by=session["actor_id"],
             reason=reason,
         )
         conn.commit()
-        FIELD_VERSION += 1
     except ValueError as err:
         conn.rollback()
         raise _map_mneme_error(err) from err
@@ -410,6 +518,9 @@ def quarantine_actor(
         "flagged_count": len(sweep.flagged_memory_ids),
         "advisory_resonant_neighbours": list(sweep.advisory_resonant_neighbours),
     })
+    if len(IDEMPOTENCY) >= IDEMPOTENCY_MAX:
+        # dict is insertion-ordered: evict the oldest entry first.
+        del IDEMPOTENCY[next(iter(IDEMPOTENCY))]
     IDEMPOTENCY[cache_key] = result
     return result
 
@@ -470,11 +581,41 @@ def exclusion_effect() -> dict[str, Any]:
     return _delta_envelope(delta)
 
 
+def _audit_read(actor_id: str, endpoint: str, delta) -> str:
+    """Append a local read-audit record for a custody-widening read.
+
+    Honest scope: this JSONL is the adapter's own claim that the read
+    happened — not sealed evidence, not written into MNEME. If a future
+    MNEME capability can attest reads, this migrates there; until then an
+    append-only file answers the investigation doc's "read audit gap" with
+    the smallest artifact that does not pretend to be more than it is.
+    A failed write degrades to a marker in the response, never hides the
+    result.
+    """
+    record = json.dumps({
+        "actor_id": actor_id,
+        "endpoint": endpoint,
+        "served_at": datetime.now(timezone.utc).isoformat(),
+        "field_epoch": FIELD_EPOCH,
+        "query_sha256": delta.query_sha256,
+        "delta_sha256": delta.delta_sha256,
+    }, sort_keys=True)
+    audit_path = DB_PATH.parent / "read_audit.jsonl"
+    try:
+        with open(audit_path, "a", encoding="utf-8") as f:
+            f.write(record + "\n")
+        return "RECORDED"
+    except OSError:
+        return "WRITE_FAILED"
+
+
 @app.get("/api/v1/counterfactual/containment-effect")
 def containment_effect(session: dict[str, Any] = Depends(require_session)) -> dict[str, Any]:
     """Widening — forces mem-poison back to CLEAN to see what it would
     have shown. MNEME's authority.gate rejects a session actor lacking
-    COUNTERFACTUAL; this adapter does not duplicate that check."""
+    COUNTERFACTUAL; this adapter does not duplicate that check. This is
+    the one read that *discloses* what custody withheld, so it is also
+    the one read that is audited (see _audit_read)."""
     conn = _conn()
     cur = conn.cursor()
     try:
@@ -486,7 +627,10 @@ def containment_effect(session: dict[str, Any] = Depends(require_session)) -> di
         conn.close()
         raise _map_mneme_error(err) from err
     conn.close()
-    return _delta_envelope(delta)
+    audit = _audit_read(session["actor_id"], "containment-effect", delta)
+    result = _delta_envelope(delta)
+    result["data"]["read_audit"] = audit
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -516,17 +660,28 @@ def export_bundle() -> dict[str, Any]:
             [sys.executable, str(VERIFIER_PATH), tmp_path],
             capture_output=True, text=True, timeout=30,
         )
+        verifier = {
+            "verified": r.returncode == 0,
+            "exit_code": r.returncode,
+            "status": "VERIFIED" if r.returncode == 0 else "REJECTED",
+            "output_lines": (r.stdout.strip() or r.stderr.strip()).splitlines(),
+        }
+    except (subprocess.TimeoutExpired, OSError) as err:
+        # A verifier that never ran is a named state, not a crash: the
+        # bundle may be fine, but the client must see VERIFIER_UNAVAILABLE,
+        # not a 500 it can't distinguish from a corrupted export.
+        verifier = {
+            "verified": False,
+            "exit_code": None,
+            "status": "VERIFIER_UNAVAILABLE",
+            "output_lines": [f"{type(err).__name__}: {err}"],
+        }
     finally:
         os.unlink(tmp_path)
 
-    output = (r.stdout.strip() or r.stderr.strip()).splitlines()
     return _envelope({
         "bundle_json": bundle_json,
         "bundle_sha256": outer.get("bundle_sha256"),
         "memory_count": memory_count,
-        "verifier": {
-            "verified": r.returncode == 0,
-            "exit_code": r.returncode,
-            "output_lines": output,
-        },
+        "verifier": verifier,
     })

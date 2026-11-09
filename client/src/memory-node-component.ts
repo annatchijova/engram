@@ -23,4 +23,8 @@ export const MemoryNode = createComponent('MemoryNode', {
     default: CustodyStatus.CLEAN,
     enum: CustodyStatus,
   },
+  // Cached straight from the same listMemories() response that already
+  // builds the slab — never a second fetch just to render a hover label.
+  topic: { type: Types.String, default: '' },
+  contentPreview: { type: Types.String, default: '' },
 });
