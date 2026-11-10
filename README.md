@@ -3,6 +3,8 @@
 **Geometry of Evidence**  
 *Memory Has Geometry.*
 
+![ENGRAM logo](visual/ENGRAM-logo.png)
+
 ENGRAM is an immersive XR environment for inspecting and operating on computational memory as spatial, verifiable structures.
 
 It is being designed on top of [MNEME](https://github.com/annatchijova/mneme): MNEME decides and proves; ENGRAM makes those decisions inspectable and operable through the body.
@@ -37,6 +39,61 @@ Every projection is scoped to an explicit world and snapshot. Factual worlds may
 Spatial form must communicate something true about the underlying state. Direct, derived, derived-unattested, and possible evidence remain distinct.
 
 Proximity does not automatically mean causality. Size does not mean authority. Brightness does not mean truth. Weight must not collapse confidence and standing into one signal. A line does not generically mean “related.”
+
+## Local Canvas demo (Round 4)
+
+```sh
+./scripts/dev-local.sh   # adapter :17347 + client https://localhost:8081
+python3 scripts/verify-fixture.py   # synthetic scenario, reproducible
+python3 scripts/test-adapter.py     # adapter regressions on a temp field
+```
+
+Open `https://localhost:8081/canvas.html` for the desktop investigation
+board (the XR view stays at `/index.html`). Guides:
+`docs/DEMO-SCENARIO.md`, `docs/XR-INTERACTION-VALIDATION.md`,
+`docs/SECURITY-ROUND4.md`. Spanish summary: `README.es.md`.
+
+## Visual demo
+
+ENGRAM is an evidence investigation surface for researchers, scientists,
+forensic analysts, and safety engineers. If you know Obsidian, think of ENGRAM
+as a knowledge canvas where every connection has to explain its provenance.
+
+### The trust question
+
+![Dual evidence camera](visual/evidence-dual-camera.png)
+
+The warm factual world and the violet hypothetical world remain visibly distinct.
+
+### The investigation canvas
+
+![ENGRAM Canvas initial investigation](visual/canvas-initial.png)
+
+The investigator starts with a concrete question: can this memory still be trusted?
+
+### Typed provenance
+
+![ENGRAM Canvas provenance graph](visual/canvas-provenance.png)
+
+Direct, derived, unattested, and possible relationships are not collapsed into one generic graph edge.
+
+### Preserve the answer
+
+![ENGRAM evidence bundle](visual/evidence-bundle.png)
+
+The investigation can be exported as an evidence bundle for later verification.
+The demo field is synthetic; the UI and adapter path are real, and the
+counterfactual is explicitly sealed as never executed. More visual references
+are collected in [`visual/README.md`](visual/README.md).
+
+### Additional visual references
+
+![Layered memory plate](visual/Placa%20de%20memoria%20en%20capas-9.png)
+
+![ENGRAM architecture diagram](visual/mermaid-diagram.png)
+
+The production notes are in [`visual/gemini-video-script.md`](visual/gemini-video-script.md)
+and [`visual/mcp.md`](visual/mcp.md).
 
 ## Live
 

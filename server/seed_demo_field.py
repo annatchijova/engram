@@ -147,6 +147,18 @@ def seed(conn: sqlite3.Connection) -> None:
         derived_from_decision=decision.decision_id)
     print("stored mem-note by agent-ada, derived_from_decision="
           f"{decision.decision_id}  <- the DERIVED edge impact() will find")
+
+    # Synthetic demo addition: a second retelling by a DIFFERENT actor.
+    # MNEME attests a derivation only when the declarant is the decision
+    # actor, so this one lands in DERIVED_UNATTESTED by design.
+    field.store(
+        cur, memory_id="mem-omar-note", actor_id="analyst-omar",
+        reason="analyst restating the decision",
+        content="Omar notes: hotfix 4.2 may skip the staging gate (per Ada decision).",
+        embedding=e([0.94, 0.07, 0.0]), embedding_model="demo",
+        derived_from_decision=decision.decision_id)
+    print("stored mem-omar-note by analyst-omar, derived_from_decision="
+          f"{decision.decision_id}  <- the DERIVED_UNATTESTED edge")
     conn.commit()
 
     section("3. A policy gets superseded through the real lineage path")

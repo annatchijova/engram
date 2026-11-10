@@ -28,6 +28,7 @@ import {
 } from '@iwsdk/core';
 import { EngramApi, ImpactReport } from './engram-api.js';
 import { MemoryNode } from './memory-node-component.js';
+import { OnboardingEvents } from './onboarding-events.js';
 import { SelectedMemory } from './selected-memory.js';
 
 type EdgeClass = 'DIRECT' | 'DERIVED' | 'DERIVED_UNATTESTED' | 'POSSIBLE';
@@ -41,11 +42,35 @@ const TRACE_STYLE: Record<EdgeClass, { color: string; dashed: boolean; opacity: 
   POSSIBLE: { color: '#888888', dashed: false, opacity: 0.35 },
 };
 
+// Same elapsed-accumulation reasoning as field-system.ts's color
+// transition (update(delta, time)'s units aren't documented; accumulating
+// delta avoids depending on them). This only ever reveals a line the
+// server's own causality.impact() already returned in full — the draw-on
+// is purely how it's shown, never a guess running ahead of the response.
+const DRAW_SECONDS = 0.4;
+
+type LineReveal = {
+  geometry: BufferGeometry;
+  line: Line;
+  from: Vector3;
+  to: Vector3;
+  dashed: boolean;
+  elapsed: number;
+};
+
 export class TraceSystem extends createSystem({
   nodes: { required: [MemoryNode] },
 }) {
   private traceEntities: Entity[] = [];
   private lineMaterials: Record<EdgeClass, LineBasicMaterial> = {} as never;
+  // Shared across all receipt/decision markers — allocating one per marker
+  // per trace leaks GPU materials on every re-run.
+  private markerMaterial = new MeshStandardMaterial({
+    color: new Color(TRACE_STYLE.DIRECT.color),
+  });
+  // Reused every frame — never allocate inside update().
+  private reveals: LineReveal[] = [];
+  private scratch = new Vector3();
 
   init(): void {
     for (const [key, style] of Object.entries(TRACE_STYLE) as [EdgeClass, typeof TRACE_STYLE[EdgeClass]][]) {
@@ -88,18 +113,35 @@ export class TraceSystem extends createSystem({
     return undefined;
   }
 
+  update(delta: number): void {
+    for (let i = this.reveals.length - 1; i >= 0; i--) {
+      const r = this.reveals[i];
+      r.elapsed += delta;
+      const alpha = Math.min(1, r.elapsed / DRAW_SECONDS);
+      this.scratch.lerpVectors(r.from, r.to, alpha);
+      r.geometry.attributes.position.setXYZ(1, this.scratch.x, this.scratch.y, this.scratch.z);
+      r.geometry.attributes.position.needsUpdate = true;
+      if (r.dashed) r.line.computeLineDistances();
+      if (alpha >= 1) this.reveals.splice(i, 1);
+    }
+  }
+
   private drawLine(from: Vector3, to: Vector3, cls: EdgeClass): void {
-    const geometry = new BufferGeometry().setFromPoints([from, to]);
+    // Starts as a zero-length line at `from` and is extended toward `to`
+    // by update() over DRAW_SECONDS — the data itself (both endpoints) is
+    // already fully known here; only the reveal is staggered.
+    const geometry = new BufferGeometry().setFromPoints([from, from]);
     const line = new Line(geometry, this.lineMaterials[cls]);
-    if (TRACE_STYLE[cls].dashed) line.computeLineDistances();
+    const dashed = TRACE_STYLE[cls].dashed;
+    if (dashed) line.computeLineDistances();
     const entity = this.world.createTransformEntity(line);
     this.traceEntities.push(entity);
+    this.reveals.push({ geometry, line, from, to, dashed, elapsed: 0 });
   }
 
   private drawMarker(kind: 'receipt' | 'decision', position: Vector3): Entity {
     const geometry = kind === 'receipt' ? new OctahedronGeometry(0.045) : new BoxGeometry(0.07, 0.07, 0.07);
-    const material = new MeshStandardMaterial({ color: new Color(TRACE_STYLE.DIRECT.color) });
-    const mesh = new Mesh(geometry, material);
+    const mesh = new Mesh(geometry, this.markerMaterial);
     mesh.position.copy(position);
     const entity = this.world.createTransformEntity(mesh);
     this.traceEntities.push(entity);
@@ -109,6 +151,8 @@ export class TraceSystem extends createSystem({
   private clearTrace(): void {
     for (const entity of this.traceEntities) entity.dispose();
     this.traceEntities = [];
+    // Any reveal still in flight is now chasing a disposed geometry.
+    this.reveals = [];
     const panel = this.world.getSceneObject<UIKitMLAsset>('detail-panel');
     panel?.getElementById('detail-impact')?.setProperties({ text: '' });
   }
@@ -167,5 +211,6 @@ export class TraceSystem extends createSystem({
         `DERIVED (unattested): ${report.derived_unattested.join(', ') || 'none'}\n` +
         `POSSIBLE (not causal): ${report.possible_memories.join(', ') || 'none'}`,
     });
+    OnboardingEvents.emit('trace-run');
   }
 }

@@ -8,6 +8,7 @@
 import { createSystem, Pressed, UIKitMLAsset } from '@iwsdk/core';
 import { EngramApi } from './engram-api.js';
 import { MemoryNode } from './memory-node-component.js';
+import { OnboardingEvents } from './onboarding-events.js';
 import { SelectedMemory } from './selected-memory.js';
 
 export class SelectionSystem extends createSystem({
@@ -15,9 +16,16 @@ export class SelectionSystem extends createSystem({
 }) {
   private busy = false;
 
+  private lastSelected: { scale: { set: (x: number, y: number, z: number) => void } } | null = null;
+
   init(): void {
     this.queries.selected.subscribe('qualify', (entity) => {
       const memoryId = entity.getValue(MemoryNode, 'memoryId') as string;
+      // Selection feedback beyond color: the selected slab grows; the
+      // previously selected one returns to its recorded size.
+      const obj = (entity as { object3D?: { scale: { set: (x: number, y: number, z: number) => void } } }).object3D;
+      if (this.lastSelected) this.lastSelected.scale.set(1, 1, 1);
+      if (obj) { obj.scale.set(1.3, 1.3, 1.3); this.lastSelected = obj; }
       void this.showDetail(memoryId);
     });
 
@@ -60,6 +68,7 @@ export class SelectionSystem extends createSystem({
         text: `custody chain (${custody.chain_length} events):\n\n${chainText}`,
       });
       panel?.getElementById('detail-root')?.setProperties({ display: 'flex' });
+      OnboardingEvents.emit('detail-shown');
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('[ENGRAM] failed to load memory detail:', err);

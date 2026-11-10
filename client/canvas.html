@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>ENGRAM Canvas — verifiable spatial memory</title>
+    <link rel="stylesheet" href="/src/canvas/canvas.css" />
+  </head>
+  <body>
+    <a class="skip" href="#inspector">Skip to inspector</a>
+    <header class="topbar">
+      <div>
+        <h1>ENGRAM Canvas</h1>
+        <p class="sub">Memories you can investigate. Every line has a meaning, every memory has provenance.</p>
+      </div>
+      <nav aria-label="Surfaces"><a id="xr-link" class="xr-cta" href="./index.html">Explore in XR<small>Investigate memory provenance in spatial computing</small></a></nav>
+    </header>
+    <section class="question" aria-labelledby="q-h">
+      <strong id="q-h">Can this memory still be trusted?</strong>
+      <span id="question-context" class="hint"> Loading the investigation…</span>
+    </section>
+    <p id="status" class="status" role="status" aria-live="polite">Loading field from the ENGRAM adapter…</p>
+    <main class="layout">
+      <aside class="rail" aria-labelledby="nav-h">
+        <h2 id="nav-h">Investigation</h2>
+        <p id="snapshot-line" class="mono">Snapshot: not loaded yet</p>
+        <h3>Guided scenario: The Compromised Memory (synthetic demo data)</h3>
+        <ol class="stepper" id="stepper">
+          <li><button id="step-observe" type="button">01 — Observe · Identify the suspicious memory</button></li>
+          <li><button id="step-trace" type="button">02 — Trace · Follow its provenance</button></li>
+          <li><button id="step-understand" type="button">03 — Understand · Dependencies and possible exposure</button></li>
+          <li><button id="step-compare" type="button">04 — Compare · Bounded counterfactual</button></li>
+          <li><button id="step-preserve" type="button">05 — Preserve · Export for verification</button></li>
+        </ol>
+        <p id="step-note" class="hint" role="status">Step 1 of 5 — Observe: find the memory the server marks compromised.</p>
+        <div class="step-nav">
+          <button id="step-back" type="button">Back</button>
+          <button id="step-next" type="button">Next</button>
+          <button id="guide-btn" type="button">Restart guided investigation</button>
+        </div>
+        <h3><label for="search">Search memories</label></h3>
+        <input id="search" type="search" placeholder="id, topic or text" />
+        <h3><label for="filter-status">Custody filter</label></h3>
+        <select id="filter-status"><option value="">All statuses</option></select>
+        <h3>Evidence inventory</h3>
+        <ul id="inventory" class="inventory"><li>Nothing loaded yet.</li></ul>
+        <h3>Saved views (layout only)</h3>
+        <label>View name <input id="view-name" placeholder="e.g. gate review" /></label>
+        <button id="save-view" type="button">Save current layout</button>
+        <label>Load view <select id="view-select"><option value="">Choose a saved view</option></select></label>
+        <h3>How to read this board</h3>
+        <ul id="custody-legend"></ul>
+        <ul class="legend-lines">
+          <li><span class="sw line-direct"></span> DIRECT — recorded receipt/decision</li>
+          <li><span class="sw line-derived"></span> DERIVED — from recorded evidence</li>
+          <li><span class="sw line-unattested"></span> DERIVED (unattested)</li>
+          <li><span class="sw line-possible"></span> POSSIBLE — not causal</li>
+        </ul>
+      </aside>
+      <section class="board-wrap" aria-labelledby="board-h">
+        <h2 id="board-h">Evidence Canvas <span class="hint">(drag moves cards only — it never changes memory state)</span></h2>
+        <div class="toolbar" role="group" aria-label="Board controls">
+          <button id="zoom-out" type="button">Zoom out</button>
+          <button id="zoom-in" type="button">Zoom in</button>
+          <button id="fit-btn" type="button">Fit to content</button>
+          <button id="focus-btn" type="button">Focus investigation</button>
+          <button id="full-btn" type="button">Show full investigation</button>
+          <button id="graph-layout-btn" type="button">Graph layout</button>
+          <button id="reset-layout" type="button">Reset layout</button>
+          <button id="json-btn" type="button">Export JSON Canvas</button>
+          <button id="bundle-btn" type="button">Export evidence bundle</button>
+          <button id="compare-open" type="button">Open comparison view</button>
+        </div>
+        <div id="board" class="board">
+          <div id="viewport">
+            <svg id="edges" class="edges" aria-hidden="true"></svg>
+            <div id="cards"></div>
+          </div>
+        </div>
+        <section class="worlds" id="compare-view" aria-labelledby="worlds-h">
+          <h3 id="worlds-h">Comparison view — recorded baseline vs sealed hypothetical</h3>
+          <p class="hint">MNEME returns a sealed, query-scoped delta — not two complete worlds. The hypothetical was never executed. Legend: in both = unchanged serving; only baseline = removed by the hypothetical; only hypothetical = entered under the override; rank changed = supported property change; anything outside the seeded query is not determinable.</p>
+          <button id="compare-close" type="button">Back to evidence graph</button>
+          <div class="world-btns">
+            <button id="cf-exclusion" type="button">What if the gate memory is excluded? (narrowing)</button>
+            <button id="cf-containment" type="button">What if the poisoned source is contained? (widening, needs login)</button>
+          </div>
+          <div class="world-grid">
+            <article class="world factual"><h4>FACTUAL WORLD — authoritative record</h4><div id="world-a">Run a comparison to see the recorded serving list.</div></article>
+            <article class="world hypothetical"><h4>COUNTERFACTUAL WORLD — sealed hypothetical</h4><div id="world-b">No hypothetical loaded. Hypothetical cards are never mixed into the board above.</div></article>
+          </div>
+          <div id="cf-detail"></div>
+        </section>
+      </section>
+      <aside id="inspector" class="inspector" tabindex="-1" aria-labelledby="insp-h">
+        <h2 id="insp-h">Inspector</h2>
+        <div id="insp-body">Select a memory card to inspect provenance, custody and relationships. Reading needs no login.</div>
+        <section aria-labelledby="contain-h">
+          <h3 id="contain-h">Containment (actor quarantine)</h3>
+          <p class="hint">The only supported mutation. Preview first, commit second — staging is not committing. This quarantines an actor, not a single memory, and MNEME gives no reversal operation through this adapter.</p>
+          <label>Actor <select id="actor-select"></select></label>
+          <button id="preview-btn" type="button">Preview containment</button>
+          <div id="preview-body"></div>
+          <details class="login-box">
+            <summary>Authorization — log in only to commit or to run a widening comparison</summary>
+            <label>User <input id="login-user" autocomplete="username" /></label>
+            <label>Password <input id="login-pass" type="password" autocomplete="current-password" /></label>
+            <button id="login-btn" type="button">Log in</button>
+            <span id="login-state">Not logged in. Reading needs no login.</span>
+          </details>
+          <label>Reason <input id="commit-reason" placeholder="Required by MNEME" /></label>
+          <button id="commit-btn" type="button" disabled>Commit quarantine</button>
+          <div id="commit-body"></div>
+        </section>
+      </aside>
+    </main>
+    <script type="module" src="/src/canvas/canvas-main.ts"></script>
+  </body>
+</html>

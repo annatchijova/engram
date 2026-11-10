@@ -12,6 +12,10 @@ export type Session = {
   actorId: string;
   displayName: string;
   effectiveCapabilities: string[];
+  // epoch ms — advisory display only; the server remains the authority on
+  // expiry (it still 401s). Showing it lets the operator re-login before a
+  // staged commit, not discover it at commit time.
+  expiresAt: number;
 };
 
 let current: Session | null = null;
