@@ -123,12 +123,6 @@ ENGRAM is an evidence investigation surface for researchers, scientists,
 forensic analysts, and safety engineers. If you know Obsidian, think of ENGRAM
 as a knowledge canvas where every connection has to explain its provenance.
 
-### The trust question
-
-![Dual evidence camera](visual/evidence-dual-camera.png)
-
-The warm factual world and the violet hypothetical world remain visibly distinct.
-
 ### The investigation canvas
 
 ![ENGRAM Canvas initial investigation](visual/canvas-initial.png)
@@ -147,17 +141,26 @@ Direct, derived, unattested, and possible relationships are not collapsed into o
 
 The investigation can be exported as an evidence bundle for later verification.
 The demo field is synthetic; the UI and adapter path are real, and the
-counterfactual is explicitly sealed as never executed. More visual references
-are collected in [`visual/README.md`](visual/README.md).
+counterfactual is explicitly sealed as never executed.
 
 ### Additional visual references
+
+![ENGRAM screenshot 1](visual/Screenshot%20from%202026-11-13%2011-18-41.png)
+
+![ENGRAM screenshot 2](visual/Screenshot%20from%202026-11-13%2011-18-56.png)
+
+![ENGRAM screenshot 3](visual/Screenshot%20from%202026-11-13%2011-52-08.png)
+
+![ENGRAM screenshot 4](visual/Screenshot%20from%202026-11-13%2016-55-36.png)
+
+![ENGRAM screenshot 5](visual/Screenshot%20from%202026-11-13%2017-00-02.png)
+
+![ENGRAM screenshot 6](visual/Screenshot%20from%202026-11-13%2017-00-20.png)
 
 ![Layered memory plate](visual/Placa%20de%20memoria%20en%20capas-9.png)
 
 ![ENGRAM architecture diagram](visual/mermaid-diagram.png)
 
-The production notes are in [`visual/gemini-video-script.md`](visual/gemini-video-script.md)
-and [`visual/mcp.md`](visual/mcp.md).
 
 ## Live
 
