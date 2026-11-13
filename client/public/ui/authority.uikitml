@@ -1,0 +1,17 @@
+<style>
+  .panel-root { flex-direction: column; width: 56; padding-top: 1.8; padding-bottom: 1.8; padding-left: 2.2; padding-right: 2.2; background-color: #0a1019f2; border-color: #6fa8dc; border-width: 0.12; border-radius: 0.8; }
+  .eyebrow { font-size: 0.9; font-weight: 700; color: #6fa8dc; margin-bottom: 0.3; }
+  .title { font-size: 1.7; font-weight: 700; color: #f2f6fa; margin-bottom: 0.6; }
+  .caps { font-size: 1.1; color: #cfe3ff; margin-bottom: 0.6; }
+  .chain { font-size: 0.95; color: #a8c4e0; margin-bottom: 0.8; }
+  .close { width: 100%; height: 2.4; background-color: #1d2a3b; border-radius: 1.2; justify-content: center; align-items: center; color: #cfd8e3; font-size: 1.05; cursor: pointer; }
+  .gloss { font-size: 0.85; color: #6f8196; margin-top: 0.6; }
+</style>
+<div class="panel-root" id="authority-root" style="display: none">
+  <span class="eyebrow">ACTOR AUTHORITY - read-only</span>
+  <span class="title" id="authority-title">actor</span>
+  <span class="caps" id="authority-caps"></span>
+  <span class="chain" id="authority-chain"></span>
+  <button class="close" id="authority-close">Close</button>
+  <span class="gloss">a grant is a recorded event with an issuer - capability is not rank, and status is not a verdict on this actor's memories</span>
+</div>

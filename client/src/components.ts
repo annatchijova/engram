@@ -6,7 +6,8 @@
  */
 
 import { defineComponents } from '@iwsdk/core';
+import { ActorTotem } from './actor-totem-component.js';
 import { MemoryNode } from './memory-node-component.js';
 import { OnboardingStage } from './onboarding-stage-component.js';
 
-export default defineComponents([MemoryNode, OnboardingStage]);
+export default defineComponents([MemoryNode, ActorTotem, OnboardingStage]);

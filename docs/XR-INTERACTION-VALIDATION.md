@@ -83,3 +83,35 @@ feedback is NOT VERIFIED. The in-world Acts buttons are UIKit panels,
 not DOM controls, and were not driven. Headset, controllers, and hand
 tracking remain NOT TESTED; full detail in
 [XR-IMPLEMENTATION-ROUND8.md](XR-IMPLEMENTATION-ROUND8.md).
+
+## Round 9 validation (emulated Quest 3, full loop)
+
+The XR client is now **ENGRAM — The Memory Observatory**: a seated room
+with five functional zones (factual field, provenance structure,
+intervention station, counterfactual chamber, verification instrument)
+plus an actor registry. Full report, evidence tables and limitations:
+[XR-OBSERVATORY-ROUND9.md](XR-OBSERVATORY-ROUND9.md).
+
+Executed in the IWSDK managed browser with the IWER **Meta Quest 3**
+emulator against the live adapter, driving real controller rays and
+asserting on ECS component values and live UIKit element state:
+
+- **28 checks pass**: the whole investigation loop (observe, select,
+  inspect, trace, stage, compare, commit, verify, collapse), both
+  authority refusals (403 for an actor without the grant, on both the
+  widening counterfactual and the commit), the stale-snapshot refusal
+  (409, field untouched), and three adapter-down degradation paths
+  including a cold start that renders zero memories and says why.
+- **Desktop-pointer selection, open since Round 8, now passes**: a mouse
+  click selects a core and opens the inspector, and a mouse click drives
+  an in-world UIKit button (the login submit reaching a real 401).
+- **Still NOT TESTED**: any physical headset, the Meta XR Simulator, real
+  hand tracking, and the in-headset keyboard. No Quest was connected
+  (`metavr device list` → `[]`) and `xrsim runtime ping` reports the
+  simulator is not running on this machine.
+
+Five real defects were found by driving the runtime (label sprites and
+line outlines hijacking every ray hit; `OneHandGrabbable` denying ray
+selection outright; UIKit's 300 ms click threshold plus nested-container
+layout making buttons unpressable; a successful commit erasing its own
+confirmation) and are documented with their fixes in the round report.

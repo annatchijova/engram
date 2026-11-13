@@ -12,6 +12,7 @@
  */
 import { createSystem, UIKitMLAsset } from '@iwsdk/core';
 import { EngramApi } from './engram-api.js';
+import { AudioCues } from './observatory/audio-cues.js';
 import { SessionStore } from './session.js';
 
 export class LoginSystem extends createSystem({}) {
@@ -56,10 +57,12 @@ export class LoginSystem extends createSystem({}) {
             `session until ${new Date(expiresAt).toLocaleTimeString()}`,
             false,
           );
+          AudioCues.play('open');
           this.password = '';
           passField?.setProperties({ value: '' });
         } catch (err) {
           SessionStore.set(null);
+          AudioCues.play('failure');
           setStatus(String((err as Error).message ?? err), true);
         }
       })();

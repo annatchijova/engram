@@ -7,87 +7,125 @@
  * docstring says "deliberately does NOT quarantine anything": this system
  * never calls a mutating endpoint.
  *
- * Receipt/decision markers use non-sphere geometry on purpose — memory
- * nodes are spheres, and the investigation doc's architecture critique #4
- * warns against "una sola clase Entity" mixing memory/claim/decision/grant.
+ * Every edge carries a text label with its class at the midpoint, so the
+ * meaning never rides on color or dash pattern alone. DIRECT and DERIVED
+ * edges additionally carry a travelling pulse (toward the target) as a
+ * reading aid; POSSIBLE edges deliberately get no pulse and stay faint.
+ * Receipt/decision markers use non-core geometry (octahedron/box) so they
+ * never read as memories.
  */
 import {
   BoxGeometry,
   BufferGeometry,
   Color,
   createSystem,
+  CylinderGeometry,
   Entity,
+  Group,
   Line,
   LineBasicMaterial,
-  LineDashedMaterial,
   Mesh,
   MeshStandardMaterial,
   OctahedronGeometry,
+  Quaternion,
+  Sprite,
+  SphereGeometry,
   UIKitMLAsset,
   Vector3,
 } from '@iwsdk/core';
 import { EngramApi, ImpactReport } from './engram-api.js';
-import { MemoryNode } from './memory-node-component.js';
+import { FieldSystem } from './field-system.js';
+import { AudioCues } from './observatory/audio-cues.js';
+import { disposeLabel, makeLabel } from './observatory/labels.js';
 import { OnboardingEvents } from './onboarding-events.js';
+import { requireElement } from './observatory/wiring.js';
 import { SelectedMemory } from './selected-memory.js';
-
-type EdgeClass = 'DIRECT' | 'DERIVED' | 'DERIVED_UNATTESTED' | 'POSSIBLE';
+import { EDGE_LABEL, EdgeClass } from './shared-projection.js';
 
 // Declared once — the only place an edge class maps to appearance. Never
 // let POSSIBLE read as visually equivalent to DIRECT (doc's own warning).
-const TRACE_STYLE: Record<EdgeClass, { color: string; dashed: boolean; opacity: number }> = {
-  DIRECT: { color: '#5fc9ff', dashed: false, opacity: 1 },
-  DERIVED: { color: '#e0a62b', dashed: true, opacity: 0.9 },
-  DERIVED_UNATTESTED: { color: '#8a6a2a', dashed: true, opacity: 0.6 },
-  POSSIBLE: { color: '#888888', dashed: false, opacity: 0.35 },
+//
+// Four independent channels separate the classes, so no single one has to
+// carry the meaning: solidity (continuous bar vs dashes vs hairline),
+// radius, color, and whether a pulse travels along it. POSSIBLE is
+// deliberately the only class drawn as a bare hairline with no volume and
+// no motion: it is not a cause, and it must never read as one.
+const TRACE_STYLE: Record<EdgeClass, {
+  color: string; dashed: boolean; opacity: number; pulse: boolean; radius: number;
+}> = {
+  DIRECT: { color: '#5fc9ff', dashed: false, opacity: 1, pulse: true, radius: 0.0042 },
+  DERIVED: { color: '#e0a62b', dashed: true, opacity: 0.95, pulse: true, radius: 0.0034 },
+  DERIVED_UNATTESTED: { color: '#8a6a2a', dashed: true, opacity: 0.7, pulse: false, radius: 0.0022 },
+  POSSIBLE: { color: '#8c97a6', dashed: false, opacity: 0.3, pulse: false, radius: 0 },
 };
+// Dashed classes are built from this many short segments; a WebGL line's
+// `linewidth` is ignored by every browser, so an edge that must be visible
+// across the room has to be geometry, not a line primitive.
+const DASH_SEGMENTS = 14;
+const UNIT_CYLINDER = new CylinderGeometry(1, 1, 1, 8, 1);
+const UP = new Vector3(0, 1, 0);
 
-// Same elapsed-accumulation reasoning as field-system.ts's color
-// transition (update(delta, time)'s units aren't documented; accumulating
-// delta avoids depending on them). This only ever reveals a line the
-// server's own causality.impact() already returned in full — the draw-on
-// is purely how it's shown, never a guess running ahead of the response.
-const DRAW_SECONDS = 0.4;
+const DRAW_SECONDS = 0.45;
+const PULSE_GEO = new SphereGeometry(0.011, 10, 8);
 
-type LineReveal = {
-  geometry: BufferGeometry;
-  line: Line;
-  from: Vector3;
-  to: Vector3;
-  dashed: boolean;
+type Endpoint = { memoryId: string } | { fixed: Vector3 };
+
+type TraceLine = {
+  /** Hairline fallback, used for POSSIBLE only. */
+  geometry: BufferGeometry | null;
+  line: Line | null;
+  /** Volumetric segments for the causal classes. */
+  segments: Mesh[];
+  group: Group | null;
+  from: Endpoint;
+  to: Endpoint;
+  cls: EdgeClass;
   elapsed: number;
+  label: Sprite;
+  pulse: Mesh | null;
+  pulseOffset: number;
 };
 
-export class TraceSystem extends createSystem({
-  nodes: { required: [MemoryNode] },
-}) {
+export class TraceSystem extends createSystem({}) {
   private traceEntities: Entity[] = [];
+  private lines: TraceLine[] = [];
+  private labels: Sprite[] = [];
   private lineMaterials: Record<EdgeClass, LineBasicMaterial> = {} as never;
-  // Shared across all receipt/decision markers — allocating one per marker
-  // per trace leaks GPU materials on every re-run.
+  private tubeMaterials: Record<EdgeClass, MeshStandardMaterial> = {} as never;
+  private qHelper = new Quaternion();
+  private dirHelper = new Vector3();
+  private pulseMaterials: Record<EdgeClass, MeshStandardMaterial> = {} as never;
   private markerMaterial = new MeshStandardMaterial({
-    color: new Color(TRACE_STYLE.DIRECT.color),
+    color: new Color(TRACE_STYLE.DIRECT.color), emissive: new Color(TRACE_STYLE.DIRECT.color),
+    emissiveIntensity: 0.6, roughness: 0.3, metalness: 0.4,
   });
-  // Reused every frame — never allocate inside update().
-  private reveals: LineReveal[] = [];
-  private scratch = new Vector3();
+  private rootId: string | null = null;
+  private a = new Vector3();
+  private b = new Vector3();
+  private c = new Vector3();
 
   init(): void {
     for (const [key, style] of Object.entries(TRACE_STYLE) as [EdgeClass, typeof TRACE_STYLE[EdgeClass]][]) {
-      this.lineMaterials[key] = style.dashed
-        ? new LineDashedMaterial({
-            color: new Color(style.color), transparent: true,
-            opacity: style.opacity, dashSize: 0.03, gapSize: 0.02,
-          })
-        : new LineBasicMaterial({
-            color: new Color(style.color), transparent: true, opacity: style.opacity,
-          });
+      this.lineMaterials[key] = new LineBasicMaterial({
+        color: new Color(style.color), transparent: true, opacity: style.opacity,
+      });
+      this.tubeMaterials[key] = new MeshStandardMaterial({
+        color: new Color(style.color), emissive: new Color(style.color),
+        emissiveIntensity: 0.85, roughness: 0.35, metalness: 0.2,
+        transparent: style.opacity < 1, opacity: style.opacity,
+      });
+      this.pulseMaterials[key] = new MeshStandardMaterial({
+        color: new Color(style.color), emissive: new Color(style.color), emissiveIntensity: 1.2,
+      });
     }
     this.populateTraceLegend();
 
     const panel = this.world.getSceneObject<UIKitMLAsset>('detail-panel');
-    const traceBtn = panel?.getElementById('detail-trace');
+    const traceBtn = requireElement(panel, 'detail-panel', 'detail-trace');
     const onTrace = () => void this.runTrace();
+    // A UIKit click needs press and release within @pmndrs/pointer-events'
+    // 300 ms clickThresholdMs: a longer hold is a grab gesture elsewhere in
+    // this scene and deliberately does nothing on a panel button.
     traceBtn?.addEventListener('click', onTrace);
     this.cleanupFuncs.push(
       () => traceBtn?.removeEventListener('click', onTrace),
@@ -103,56 +141,119 @@ export class TraceSystem extends createSystem({
     }
   }
 
-  private findNodePosition(memoryId: string): Vector3 | undefined {
-    for (const entity of this.queries.nodes.entities) {
-      if (entity.getValue(MemoryNode, 'memoryId') === memoryId) {
-        const obj = entity.object3D;
-        return obj ? obj.position.clone() : undefined;
+  private resolve(ep: Endpoint, target: Vector3): boolean {
+    if ('fixed' in ep) { target.copy(ep.fixed); return true; }
+    const field = this.world.getSystem(FieldSystem);
+    return field?.getCoreWorldPosition(ep.memoryId, target) !== undefined;
+  }
+
+  update(delta: number, time: number): void {
+    for (const l of this.lines) {
+      if (!this.resolve(l.from, this.a) || !this.resolve(l.to, this.b)) continue;
+      l.elapsed += delta;
+      // The whole edge set came back in one server response; only the
+      // reveal is staggered, and endpoints keep following cores a hand
+      // may have moved.
+      const alpha = Math.min(1, l.elapsed / DRAW_SECONDS);
+      this.c.lerpVectors(this.a, this.b, alpha);
+
+      if (l.geometry && l.line) {
+        const pos = l.geometry.attributes.position;
+        pos.setXYZ(0, this.a.x, this.a.y, this.a.z);
+        pos.setXYZ(1, this.c.x, this.c.y, this.c.z);
+        pos.needsUpdate = true;
+      }
+      if (l.segments.length > 0) {
+        this.dirHelper.subVectors(this.c, this.a);
+        const length = this.dirHelper.length();
+        if (length > 1e-5) {
+          this.qHelper.setFromUnitVectors(UP, this.dirHelper.clone().normalize());
+          const n = l.segments.length;
+          const radius = TRACE_STYLE[l.cls].radius;
+          // One continuous bar, or n dashes spaced along the same path.
+          const span = n === 1 ? 1 : 0.58 / n;
+          l.segments.forEach((seg, i) => {
+            const t = n === 1 ? 0.5 : (i + 0.5) / n;
+            seg.position.copy(this.a).addScaledVector(this.dirHelper, t);
+            seg.quaternion.copy(this.qHelper);
+            seg.scale.set(radius, n === 1 ? length : length * span, radius);
+          });
+        }
+      }
+      l.label.position.lerpVectors(this.a, this.b, 0.5);
+      l.label.position.y += 0.035;
+      l.label.visible = alpha >= 1;
+      if (l.pulse) {
+        const t = (time * 0.45 + l.pulseOffset) % 1;
+        l.pulse.position.lerpVectors(this.a, this.b, t * alpha);
       }
     }
-    return undefined;
   }
 
-  update(delta: number): void {
-    for (let i = this.reveals.length - 1; i >= 0; i--) {
-      const r = this.reveals[i];
-      r.elapsed += delta;
-      const alpha = Math.min(1, r.elapsed / DRAW_SECONDS);
-      this.scratch.lerpVectors(r.from, r.to, alpha);
-      r.geometry.attributes.position.setXYZ(1, this.scratch.x, this.scratch.y, this.scratch.z);
-      r.geometry.attributes.position.needsUpdate = true;
-      if (r.dashed) r.line.computeLineDistances();
-      if (alpha >= 1) this.reveals.splice(i, 1);
+  private drawLine(from: Endpoint, to: Endpoint, cls: EdgeClass): void {
+    const style = TRACE_STYLE[cls];
+    let geometry: BufferGeometry | null = null;
+    let line: Line | null = null;
+    const segments: Mesh[] = [];
+    let group: Group | null = null;
+    if (style.radius === 0) {
+      // POSSIBLE: a bare hairline, no volume, no motion.
+      geometry = new BufferGeometry().setFromPoints([new Vector3(), new Vector3()]);
+      line = new Line(geometry, this.lineMaterials[cls]);
+      line.frustumCulled = false;
+      this.traceEntities.push(this.world.createTransformEntity(line));
+    } else {
+      group = new Group();
+      const count = style.dashed ? DASH_SEGMENTS : 1;
+      for (let i = 0; i < count; i++) {
+        const seg = new Mesh(UNIT_CYLINDER, this.tubeMaterials[cls]);
+        seg.frustumCulled = false;
+        segments.push(seg);
+        group.add(seg);
+      }
+      this.traceEntities.push(this.world.createTransformEntity(group));
     }
+    const label = makeLabel(
+      [{ text: EDGE_LABEL[cls].split(' — ')[0], color: TRACE_STYLE[cls].color, size: 22, weight: '700' },
+       { text: EDGE_LABEL[cls].split(' — ')[1] ?? '', color: '#9fb3c8', size: 17 }],
+      { width: 0.2, background: '#0b121bcc', border: `${TRACE_STYLE[cls].color}66` },
+    );
+    label.visible = false;
+    this.labels.push(label);
+    this.traceEntities.push(this.world.createTransformEntity(label));
+    let pulse: Mesh | null = null;
+    if (TRACE_STYLE[cls].pulse) {
+      pulse = new Mesh(PULSE_GEO, this.pulseMaterials[cls]);
+      this.traceEntities.push(this.world.createTransformEntity(pulse));
+    }
+    this.lines.push({
+      geometry, line, segments, group, from, to, cls,
+      elapsed: 0, label, pulse, pulseOffset: Math.random(),
+    });
   }
 
-  private drawLine(from: Vector3, to: Vector3, cls: EdgeClass): void {
-    // Starts as a zero-length line at `from` and is extended toward `to`
-    // by update() over DRAW_SECONDS — the data itself (both endpoints) is
-    // already fully known here; only the reveal is staggered.
-    const geometry = new BufferGeometry().setFromPoints([from, from]);
-    const line = new Line(geometry, this.lineMaterials[cls]);
-    const dashed = TRACE_STYLE[cls].dashed;
-    if (dashed) line.computeLineDistances();
-    const entity = this.world.createTransformEntity(line);
-    this.traceEntities.push(entity);
-    this.reveals.push({ geometry, line, from, to, dashed, elapsed: 0 });
-  }
-
-  private drawMarker(kind: 'receipt' | 'decision', position: Vector3): Entity {
-    const geometry = kind === 'receipt' ? new OctahedronGeometry(0.045) : new BoxGeometry(0.07, 0.07, 0.07);
+  private drawMarker(kind: 'receipt' | 'decision', id: string, position: Vector3): void {
+    const geometry = kind === 'receipt' ? new OctahedronGeometry(0.04) : new BoxGeometry(0.065, 0.065, 0.065);
     const mesh = new Mesh(geometry, this.markerMaterial);
     mesh.position.copy(position);
-    const entity = this.world.createTransformEntity(mesh);
-    this.traceEntities.push(entity);
-    return entity;
+    this.traceEntities.push(this.world.createTransformEntity(mesh));
+    const label = makeLabel(
+      [{ text: kind === 'receipt' ? 'recall receipt' : 'recorded decision', color: TRACE_STYLE.DIRECT.color, size: 22, weight: '700' },
+       { text: id.length > 22 ? `${id.slice(0, 22)}…` : id, color: '#d8e6f5', size: 18 }],
+      { width: 0.22, background: '#0b121bd9', border: '#5fc9ff66' },
+    );
+    label.position.copy(position).y += 0.075;
+    this.labels.push(label);
+    this.traceEntities.push(this.world.createTransformEntity(label));
   }
 
   private clearTrace(): void {
+    for (const l of this.labels) disposeLabel(l);
+    this.labels = [];
     for (const entity of this.traceEntities) entity.dispose();
     this.traceEntities = [];
-    // Any reveal still in flight is now chasing a disposed geometry.
-    this.reveals = [];
+    this.lines = [];
+    this.rootId = null;
     const panel = this.world.getSceneObject<UIKitMLAsset>('detail-panel');
     panel?.getElementById('detail-impact')?.setProperties({ text: '' });
   }
@@ -167,29 +268,29 @@ export class TraceSystem extends createSystem({
     try {
       report = await EngramApi.getImpact(memoryId);
     } catch (err) {
+      AudioCues.play('failure');
       impactText?.setProperties({ text: `FAILED to trace: ${(err as Error).message}` });
       return;
     }
 
     this.clearTrace();
-    const rootPos = this.findNodePosition(memoryId);
+    const field = this.world.getSystem(FieldSystem);
+    const rootPos = field?.getCoreWorldPosition(memoryId, new Vector3());
     if (!rootPos) {
       impactText?.setProperties({ text: 'cannot trace: node not found in the rendered field.' });
       return;
     }
+    this.rootId = memoryId;
+    const root: Endpoint = { memoryId };
 
-    for (const id of report.derived_memories) {
-      const pos = this.findNodePosition(id);
-      if (pos) this.drawLine(rootPos, pos, 'DERIVED');
-    }
-    for (const id of report.derived_unattested) {
-      const pos = this.findNodePosition(id);
-      if (pos) this.drawLine(rootPos, pos, 'DERIVED_UNATTESTED');
-    }
-    for (const id of report.possible_memories) {
-      const pos = this.findNodePosition(id);
-      if (pos) this.drawLine(rootPos, pos, 'POSSIBLE');
-    }
+    const drawTo = (ids: string[], cls: EdgeClass) => {
+      for (const id of ids) {
+        if (field?.getCoreWorldPosition(id, this.a)) this.drawLine(root, { memoryId: id }, cls);
+      }
+    };
+    drawTo(report.derived_memories, 'DERIVED');
+    drawTo(report.derived_unattested, 'DERIVED_UNATTESTED');
+    drawTo(report.possible_memories, 'POSSIBLE');
 
     const markerTargets = [
       ...report.direct_receipts.map((id) => ({ id, kind: 'receipt' as const })),
@@ -197,10 +298,10 @@ export class TraceSystem extends createSystem({
     ];
     const n = markerTargets.length;
     markerTargets.forEach((m, i) => {
-      const offset = (i - (n - 1) / 2) * 0.1;
-      const markerPos = rootPos.clone().add(new Vector3(offset, 0.18, 0));
-      this.drawMarker(m.kind, markerPos);
-      this.drawLine(rootPos, markerPos, 'DIRECT');
+      const offset = (i - (n - 1) / 2) * 0.22;
+      const markerPos = rootPos.clone().add(new Vector3(offset, 0.46, 0.2));
+      this.drawMarker(m.kind, m.id, markerPos);
+      this.drawLine(root, { fixed: markerPos }, 'DIRECT');
     });
 
     impactText?.setProperties({
@@ -209,8 +310,10 @@ export class TraceSystem extends createSystem({
         `${report.direct_decisions.length} decision(s)\n` +
         `DERIVED: ${report.derived_memories.join(', ') || 'none'}\n` +
         `DERIVED (unattested): ${report.derived_unattested.join(', ') || 'none'}\n` +
-        `POSSIBLE (not causal): ${report.possible_memories.join(', ') || 'none'}`,
+        `POSSIBLE (not causal): ${report.possible_memories.join(', ') || 'none'}\n` +
+        `impact ${report.impact_sha256.slice(0, 16)}...`,
     });
+    AudioCues.play('trace');
     OnboardingEvents.emit('trace-run');
   }
 }

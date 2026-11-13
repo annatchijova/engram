@@ -1,80 +1,22 @@
 <style>
-  .panel-root {
-    flex-direction: column;
-    width: 60;
-    height: 48;
-    padding-top: 2;
-    padding-bottom: 2;
-    padding-left: 2.5;
-    padding-right: 2.5;
-    background-color: #14161a;
-    border-color: #3a3f47;
-    border-width: 0.15;
-    border-radius: 0.6;
-  }
-  .header-row {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1;
-  }
-  .title {
-    font-size: 1.8;
-    font-weight: 700;
-    color: #f2f2f2;
-  }
-  .close {
-    width: 2.4;
-    height: 2.4;
-    background-color: #3a3f47;
-    border-radius: 0.4;
-    justify-content: center;
-    align-items: center;
-    color: #f2f2f2;
-    font-size: 1.4;
-    cursor: pointer;
-  }
-  .field {
-    font-size: 1.2;
-    color: #c9c9c9;
-    margin-bottom: 0.8;
-  }
-  .hash {
-    font-size: 1;
-    color: #8a8a8a;
-    margin-bottom: 0.8;
-  }
-  .chain {
-    font-size: 1;
-    color: #a8d8a8;
-  }
-  .trace-btn {
-    width: 12;
-    height: 1.8;
-    margin-top: 1;
-    margin-bottom: 0.8;
-    background-color: #3a5a7a;
-    border-radius: 0.3;
-    justify-content: center;
-    align-items: center;
-    color: #e8e8e8;
-    font-size: 1;
-    cursor: pointer;
-  }
-  .impact {
-    font-size: 1;
-    color: #d8c8a8;
-  }
+  .panel-root { flex-direction: column; width: 60; padding-top: 1.8; padding-bottom: 1.8; padding-left: 2.2; padding-right: 2.2; background-color: #0a1019f2; border-color: #7fd4a8; border-width: 0.12; border-radius: 0.8; }
+  .eyebrow { font-size: 0.9; font-weight: 700; color: #7fd4a8; margin-bottom: 0.3; }
+  .title { font-size: 1.7; font-weight: 700; color: #f2f6fa; margin-bottom: 0.6; }
+  .field { font-size: 1.15; color: #dfe7ef; margin-bottom: 0.6; }
+  .hash { font-size: 0.95; color: #8fa3b8; margin-bottom: 0.6; }
+  .chain { font-size: 0.95; color: #a8d8b8; margin-bottom: 0.8; }
+  .trace-btn { width: 100%; height: 2.8; background-color: #2b5f8a; border-radius: 1.4; justify-content: center; align-items: center; color: #eaf6ff; font-size: 1.15; font-weight: 700; cursor: pointer; margin-bottom: 0.6; }
+  .close { width: 100%; height: 2.4; background-color: #1d2a3b; border-radius: 1.2; justify-content: center; align-items: center; color: #cfd8e3; font-size: 1.05; cursor: pointer; }
+  .impact { font-size: 0.95; color: #d8c8a8; margin-top: 0.8; }
 </style>
 <div class="panel-root" id="detail-root" style="display: none">
-  <div class="header-row">
-    <span class="title" id="detail-title">memory</span>
-    <button class="close" id="detail-close">x</button>
-  </div>
+  <span class="eyebrow">MEMORY RECORD - read-only</span>
+  <span class="title" id="detail-title">memory</span>
   <span class="field" id="detail-content"></span>
   <span class="hash" id="detail-hash"></span>
   <span class="field" id="detail-confidence"></span>
   <span class="chain" id="detail-chain"></span>
   <button class="trace-btn" id="detail-trace">Trace impact</button>
+  <button class="close" id="detail-close">Close record</button>
   <span class="impact" id="detail-impact"></span>
 </div>

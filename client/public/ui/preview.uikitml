@@ -1,41 +1,13 @@
 <style>
-  .panel-root {
-    flex-direction: column;
-    width: 46;
-    height: 16;
-    padding-top: 1.4;
-    padding-bottom: 1.4;
-    padding-left: 2;
-    padding-right: 2;
-    background-color: #14161aee;
-    border-color: #3a5a7a;
-    border-width: 0.15;
-    border-radius: 0.6;
-  }
-  .id {
-    font-size: 1.3;
-    font-weight: 700;
-    color: #f2f2f2;
-    margin-bottom: 0.4;
-  }
-  .topic {
-    font-size: 1;
-    color: #8fd0ff;
-    margin-bottom: 0.6;
-  }
-  .excerpt {
-    font-size: 1;
-    color: #c9c9c9;
-  }
-  .hint {
-    font-size: 0.8;
-    color: #6f7580;
-    margin-top: 0.6;
-  }
+  .panel-root { flex-direction: column; width: 46; height: 15; padding-top: 1.3; padding-bottom: 1.3; padding-left: 2; padding-right: 2; background-color: #0a1019ee; border-color: #5fc9ff; border-width: 0.12; border-radius: 0.8; }
+  .id { font-size: 1.3; font-weight: 700; color: #f2f6fa; margin-bottom: 0.3; }
+  .topic { font-size: 1; color: #8fd0ff; margin-bottom: 0.5; }
+  .excerpt { font-size: 1; color: #c9d3dd; }
+  .hint { font-size: 0.8; color: #6f7f90; margin-top: 0.5; }
 </style>
 <div class="panel-root" id="preview-root" style="display: none">
   <span class="id" id="preview-id">memory</span>
   <span class="topic" id="preview-topic"></span>
   <span class="excerpt" id="preview-excerpt"></span>
-  <span class="hint">point and select to open the full record</span>
+  <span class="hint">short pinch opens the full record - hold the pinch to lift the core off the field</span>
 </div>

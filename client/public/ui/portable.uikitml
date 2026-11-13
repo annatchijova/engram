@@ -1,72 +1,19 @@
 <style>
-  .panel-root {
-    flex-direction: column;
-    width: 60;
-    padding-top: 2;
-    padding-bottom: 2;
-    padding-left: 2.5;
-    padding-right: 2.5;
-    background-color: #0f1f18;
-    border-color: #2a5a3a;
-    border-width: 0.15;
-    border-radius: 0.6;
-  }
-  .heading {
-    font-size: 1.8;
-    font-weight: 700;
-    color: #d8ffe8;
-    margin-bottom: 1;
-  }
-  .hint {
-    font-size: 1;
-    color: #88b898;
-    margin-bottom: 1.2;
-  }
-  .btn-row {
-    flex-direction: row;
-    margin-bottom: 1;
-  }
-  .btn {
-    height: 1.8;
-    padding-left: 1;
-    padding-right: 1;
-    background-color: #2a6a4a;
-    border-radius: 0.3;
-    justify-content: center;
-    align-items: center;
-    color: #e8ffe8;
-    font-size: 1;
-    cursor: pointer;
-    margin-right: 1;
-  }
-  .btn-disabled {
-    height: 1.8;
-    padding-left: 1;
-    padding-right: 1;
-    background-color: #2a3a30;
-    border-radius: 0.3;
-    justify-content: center;
-    align-items: center;
-    color: #6a8a78;
-    font-size: 1;
-  }
-  .result {
-    font-size: 1;
-    color: #b8e8c8;
-  }
-  .gloss {
-    font-size: 0.85;
-    color: #6a9a7a;
-    margin-left: 0.6;
-  }
+  .panel-root { flex-direction: column; width: 56; padding-top: 1.8; padding-bottom: 1.8; padding-left: 2.2; padding-right: 2.2; background-color: #0a1510f2; border-color: #4be0a0; border-width: 0.12; border-radius: 0.8; }
+  .eyebrow { font-size: 0.9; font-weight: 700; color: #4be0a0; margin-bottom: 0.3; }
+  .heading { font-size: 1.8; font-weight: 700; color: #e8fff2; margin-bottom: 0.6; }
+  .hint { font-size: 1; color: #88b898; margin-bottom: 0.8; }
+  .btn { width: 100%; height: 2.8; background-color: #1f6a4a; border-radius: 1.4; justify-content: center; align-items: center; color: #e8ffe8; font-size: 1.15; font-weight: 700; cursor: pointer; margin-bottom: 0.6; }
+  .btn-disabled { width: 100%; height: 2.4; background-color: #1a2a22; border-radius: 1.2; justify-content: center; align-items: center; color: #6a8a78; font-size: 1.1; cursor: pointer; }
+  .result { font-size: 1; color: #b8e8c8; margin-top: 0.8; }
+  .gloss { font-size: 0.85; color: #6a9a7a; }
 </style>
 <div class="panel-root" id="portable-root" style="display: none">
-  <div class="heading">portable instrument</div>
-  <span class="hint" id="pi-hint">export the field as a sealed bundle, verified by a genuinely independent process</span>
-  <div class="btn-row">
-    <button class="btn" id="pi-export">Export &amp; Verify Bundle</button>
-    <button class="btn-disabled" id="pi-download">Download bundle.json</button>
-  </div>
+  <span class="eyebrow">VERIFICATION INSTRUMENT</span>
+  <span class="heading">Export and verify</span>
+  <span class="hint" id="pi-hint">export the field as a sealed bundle; the verdict shown is what an independent verifier process printed</span>
+  <button class="btn" id="pi-export">Export &amp; Verify Bundle</button>
+  <button class="btn-disabled" id="pi-download">Download bundle.json</button>
   <span class="gloss">a second, separate program checks this file - not the one that made it</span>
   <span class="result" id="pi-result"></span>
 </div>

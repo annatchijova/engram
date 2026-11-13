@@ -53,6 +53,54 @@ board (the XR view stays at `/index.html`). Guides:
 `docs/DEMO-SCENARIO.md`, `docs/XR-INTERACTION-VALIDATION.md`,
 `docs/SECURITY-ROUND4.md`. Spanish summary: `README.es.md`.
 
+## The XR observatory
+
+The XR client is **ENGRAM — The Memory Observatory**: a seated room where
+the recorded field, its provenance, a staged intervention, a sealed
+hypothetical and the verification instrument are five physically distinct
+places rather than five panels.
+
+![The observatory](visual/observatory/01-observatory.png)
+
+Nine memory cores on the lit bench are the real memories in MNEME. Colour
+comes only from `custody_status`; every core is the same size and shape,
+because size must never mean authority.
+
+![Inspecting a record](visual/observatory/02-inspect.png)
+
+Selecting a core raises its real custody chain above it as hash-linked
+blocks, in the server's own `seq` order, each labelled with the event, the
+actor and the `entry_hash` prefix.
+
+![Tracing impact](visual/observatory/03-trace.png)
+
+Trace draws MNEME's own `causality.impact()` result. DIRECT, DERIVED,
+DERIVED (unattested) and POSSIBLE differ on colour, form, thickness and
+motion at once, and every edge carries its class as text — a POSSIBLE link
+can never be mistaken for a cause.
+
+![Staging an intervention](visual/observatory/04-intervention-cradle.png)
+
+Containment is physical: place an actor totem in the intervention cradle
+and the field shows an amber PREVIEW ring on exactly the memories a sweep
+would flag. Nothing has changed yet. Commit is a separate, authorized
+click, and MNEME refuses it outright for an actor without the grant.
+
+![The counterfactual chamber](visual/observatory/05-counterfactual-chamber.png)
+
+The counterfactual chamber is a separate sealed column, never a recolour
+of the field: two rails show exactly what world A and world B served, with
+both receipts and the delta hash.
+
+![The verification instrument](visual/observatory/06-verification-vault.png)
+
+The vault holds the exported bundle, coloured by what an independent
+verifier process actually printed.
+
+Round report with the full PASS / FAIL / NOT TESTED tables:
+[`docs/XR-OBSERVATORY-ROUND9.md`](docs/XR-OBSERVATORY-ROUND9.md).
+**Verified in the IWER Meta Quest 3 emulator, not on a headset.**
+
 ## Visual demo
 
 ENGRAM is an evidence investigation surface for researchers, scientists,

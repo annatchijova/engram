@@ -11,7 +11,7 @@
     "reference:status": "iwsdk reference status",
     "reference:warmup": "iwsdk reference warmup",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/canvas-invariants.test.mjs tests/onboarding-gating.test.mjs",
+    "test": "node --test tests/canvas-invariants.test.mjs tests/onboarding-gating.test.mjs tests/observatory-invariants.test.mjs",
     "build": "vite build",
     "preview": "vite preview"
   },

@@ -1,4 +1,4 @@
-# ENGRAM client — Nivel 1-5
+# ENGRAM client — Nivel 1-5 (XR: The Memory Observatory)
 
 Seated WebXR/IWSDK client. Fetches a real MNEME field from `server/app.py`
 and renders it. One real mutation path exists: log in, stage a quarantine,
@@ -28,6 +28,39 @@ Use the Runtime and Editor controls in the managed browser to switch between
 the running experience and its authored scene. On desktop, `canvasPointerEvents`
 (set in `iwsdk.config.json`) lets mouse-click select a memory node — emulated
 input, not a Quest hand-tracking claim.
+
+## The XR observatory
+
+`src/index.ts` builds a seated room (`src/observatory/`) and registers the
+systems that place real MNEME data into its zones. The room is entirely
+procedural — geometry, materials, lighting and every in-world glyph are
+generated in code, so the scene needs no external art.
+
+| Zone | Built by | Fed by |
+|---|---|---|
+| Factual field (bench of memory cores) | `observatory/observatory-environment.ts`, `observatory/memory-core.ts` | `field-system.ts` |
+| Provenance (custody tower, SUPERSEDED_BY lineage) | `custody-chain-system.ts` | the record `selection-system.ts` already fetched |
+| Causal field (typed volumetric edges) | `trace-system.ts` | `/memories/{id}/impact` |
+| Intervention station (console + physical cradle) | `containment-system.ts` | `/actors/{id}/quarantine-preview`, then an explicit Commit |
+| Counterfactual chamber (violet containment column) | `counterfactual-system.ts` | `/counterfactual/*` |
+| Verification instrument (vault column + sealed bundle) | `portable-system.ts` | `/bundle/export` |
+| Actor registry (grabbable totems + authority chain) | `actor-system.ts` | `/actors`, `/actors/{id}/authority` |
+
+Interaction grammar, one pointer: **short pinch selects**, **held pinch
+carries** (cores and totems are `DistanceGrabbable`, `MoveFromTarget`).
+A UIKit button only fires inside `@pmndrs/pointer-events`' 300 ms click
+threshold, so a long hold on a panel is deliberately inert. Placing an
+actor totem in the cradle **stages a preview only** — committing is a
+separate, authorized click, per the architecture document's rule that no
+drop may execute a mutation.
+
+Presentation rules the tests pin (`tests/observatory-invariants.test.mjs`):
+custody colours are the only evidence-bearing palette; transport states
+(LOADING / READ FAILED), supersession lineage and counterfactual ghosts
+use colours that appear in no custody map; the four causal edge classes
+differ on colour, form, radius and motion; the chamber never overlaps the
+field; every wired control exists in a panel; every button is at least
+2.4 cm tall.
 
 ## Layout
 

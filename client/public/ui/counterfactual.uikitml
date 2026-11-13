@@ -1,68 +1,18 @@
 <style>
-  .panel-root {
-    flex-direction: column;
-    width: 62;
-    padding-top: 2;
-    padding-bottom: 2;
-    padding-left: 2.5;
-    padding-right: 2.5;
-    background-color: #1a1430;
-    border-color: #4a3a7a;
-    border-width: 0.15;
-    border-radius: 0.6;
-  }
-  .heading {
-    font-size: 1.8;
-    font-weight: 700;
-    color: #e8dcff;
-    margin-bottom: 1;
-  }
-  .hint {
-    font-size: 1;
-    color: #9888c0;
-    margin-bottom: 1.2;
-  }
-  .btn-row {
-    flex-direction: row;
-    margin-bottom: 1;
-  }
-  .btn {
-    height: 1.8;
-    padding-left: 1;
-    padding-right: 1;
-    background-color: #4a3a7a;
-    border-radius: 0.3;
-    justify-content: center;
-    align-items: center;
-    color: #e8dcff;
-    font-size: 1;
-    cursor: pointer;
-    margin-right: 1;
-  }
-  .btn-collapse {
-    height: 1.8;
-    width: 10;
-    background-color: #3a3f47;
-    border-radius: 0.3;
-    justify-content: center;
-    align-items: center;
-    color: #e8e8e8;
-    font-size: 1;
-    cursor: pointer;
-  }
-  .result {
-    font-size: 1;
-    color: #c8b8e8;
-    margin-top: 1;
-  }
+  .panel-root { flex-direction: column; width: 58; padding-top: 1.8; padding-bottom: 1.8; padding-left: 2.2; padding-right: 2.2; background-color: #0f0a1af2; border-color: #b060ff; border-width: 0.12; border-radius: 0.8; }
+  .eyebrow { font-size: 0.9; font-weight: 700; color: #b060ff; margin-bottom: 0.3; }
+  .heading { font-size: 1.8; font-weight: 700; color: #f2e8ff; margin-bottom: 0.6; }
+  .hint { font-size: 1; color: #9888c0; margin-bottom: 0.8; }
+  .btn { width: 100%; height: 2.8; background-color: #5a3a9a; border-radius: 1.4; justify-content: center; align-items: center; color: #f2e8ff; font-size: 1.15; font-weight: 700; cursor: pointer; margin-bottom: 0.6; }
+  .btn-collapse { width: 100%; height: 2.4; background-color: #1d2a3b; border-radius: 1.2; justify-content: center; align-items: center; color: #e8e8e8; font-size: 1.1; cursor: pointer; }
+  .result { font-size: 1; color: #d8c8f0; margin-top: 0.8; }
 </style>
 <div class="panel-root" id="counterfactual-root" style="display: none">
-  <div class="heading">counterfactual chamber</div>
-  <span class="hint" id="cf-hint">exclusion needs no login; containment needs an operator session</span>
-  <div class="btn-row">
-    <button class="btn" id="cf-exclusion">Exclusion forecast (mem-gate)</button>
-    <button class="btn" id="cf-containment">Containment effect (mem-poison)</button>
-  </div>
+  <span class="eyebrow">COUNTERFACTUAL CHAMBER - sealed, never executed</span>
+  <span class="heading">Compare two worlds</span>
+  <span class="hint" id="cf-hint">exclusion needs no login; containment effect needs an operator session - MNEME's authority gate decides, not this panel</span>
+  <button class="btn" id="cf-exclusion">Exclusion forecast (mem-gate)</button>
+  <button class="btn" id="cf-containment">Containment effect (mem-poison)</button>
   <button class="btn-collapse" id="cf-collapse">Collapse chamber</button>
   <span class="result" id="cf-result"></span>
 </div>

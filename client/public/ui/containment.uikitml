@@ -1,112 +1,26 @@
 <style>
-  .panel-root {
-    flex-direction: column;
-    width: 55;
-    padding-top: 2;
-    padding-bottom: 2;
-    padding-left: 2.5;
-    padding-right: 2.5;
-    background-color: #1a1410;
-    border-color: #4a3a2a;
-    border-width: 0.15;
-    border-radius: 0.6;
-  }
-  .heading {
-    font-size: 1.8;
-    font-weight: 700;
-    color: #f2e8d8;
-    margin-bottom: 1;
-  }
-  .hint {
-    font-size: 1;
-    color: #a89878;
-    margin-bottom: 1.2;
-  }
-  .actor-row {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.8;
-  }
-  .actor-label {
-    font-size: 1.2;
-    color: #e8dcc8;
-  }
-  .stage-btn {
-    width: 10;
-    height: 1.8;
-    background-color: #7a5a2a;
-    border-radius: 0.3;
-    justify-content: center;
-    align-items: center;
-    color: #f2e8d8;
-    font-size: 1;
-    cursor: pointer;
-  }
-  .preview {
-    margin-top: 1.5;
-    padding-top: 1;
-    border-color: #4a3a2a;
-    border-width: 0.1;
-    flex-direction: column;
-  }
-  .preview-text {
-    font-size: 1.1;
-    color: #f2d8a8;
-    margin-bottom: 1;
-  }
-  .commit-row {
-    flex-direction: row;
-  }
-  .commit-btn {
-    width: 10;
-    height: 1.8;
-    background-color: #a53a3a;
-    border-radius: 0.3;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    font-size: 1;
-    cursor: pointer;
-    margin-right: 1;
-  }
-  .cancel-btn {
-    width: 10;
-    height: 1.8;
-    background-color: #3a3f47;
-    border-radius: 0.3;
-    justify-content: center;
-    align-items: center;
-    color: #e8e8e8;
-    font-size: 1;
-    cursor: pointer;
-  }
-  .result-text {
-    margin-top: 1;
-    font-size: 1;
-    color: #a8d8a8;
-  }
-  .gloss {
-    font-size: 0.85;
-    color: #8a7a5a;
-    margin-top: 0.3;
-  }
+  .panel-root { flex-direction: column; width: 56; padding-top: 1.8; padding-bottom: 1.8; padding-left: 2.2; padding-right: 2.2; background-color: #0a1019f2; border-color: #e0a62b; border-width: 0.12; border-radius: 0.8; }
+  .eyebrow { font-size: 0.9; font-weight: 700; color: #e0a62b; margin-bottom: 0.3; }
+  .heading { font-size: 1.8; font-weight: 700; color: #f2f6fa; margin-bottom: 0.6; }
+  .hint { font-size: 1; color: #b8a888; margin-bottom: 0.8; }
+  .target { font-size: 1.2; color: #f2e8d8; margin-bottom: 0.6; }
+  .stage-btn { width: 100%; height: 2.8; background-color: #a3741e; border-radius: 1.4; justify-content: center; align-items: center; color: #fff6e0; font-size: 1.2; font-weight: 700; cursor: pointer; }
+  .gloss { font-size: 0.85; color: #8a7a5a; margin-top: 0.4; margin-bottom: 0.4; }
+  .preview-text { font-size: 1.05; color: #f2d8a8; margin-top: 0.8; margin-bottom: 0.8; }
+  .commit-btn { width: 100%; height: 2.8; background-color: #b02e2e; border-radius: 1.4; justify-content: center; align-items: center; color: white; font-size: 1.2; font-weight: 700; cursor: pointer; margin-bottom: 0.6; }
+  .cancel-btn { width: 100%; height: 2.4; background-color: #1d2a3b; border-radius: 1.2; justify-content: center; align-items: center; color: #e8e8e8; font-size: 1.1; cursor: pointer; }
+  .result-text { margin-top: 0.8; font-size: 1; color: #a8d8a8; }
 </style>
 <div class="panel-root" id="containment-root" style="display: none">
-  <div class="heading">containment console</div>
-  <span class="hint" id="containment-hint">log in to stage a quarantine</span>
-  <div class="actor-row">
-    <span class="actor-label" id="actor-row-label">pipeline-logs (ACTIVE)</span>
-    <button class="stage-btn" id="stage-btn">Stage quarantine</button>
-  </div>
-  <span class="gloss">preview only - nothing changes yet</span>
-  <div class="preview" id="preview-section" style="display: none">
-    <span class="preview-text" id="preview-text"></span>
-    <div class="commit-row">
-      <button class="commit-btn" id="commit-btn">Commit</button>
-      <button class="cancel-btn" id="cancel-btn">Cancel</button>
-    </div>
-    <span class="gloss">Commit is the one action that actually changes the field</span>
-    <span class="result-text" id="result-text"></span>
-  </div>
+  <span class="eyebrow">INTERVENTION STATION - the one mutation path</span>
+  <span class="heading">Quarantine an actor</span>
+  <span class="hint" id="containment-hint">log in to commit; staging a preview needs no session</span>
+  <span class="target" id="actor-row-label">target: pipeline-logs (ACTIVE)</span>
+  <button class="stage-btn" id="stage-btn">Stage quarantine</button>
+  <span class="gloss">preview only - nothing changes yet. Staged memories get an amber PREVIEW ring on the field.</span>
+  <span class="preview-text" id="preview-text" style="display: none"></span>
+  <button class="commit-btn" id="commit-btn" style="display: none">Commit (writes to MNEME)</button>
+  <button class="cancel-btn" id="cancel-btn" style="display: none">Cancel</button>
+  <span class="gloss" id="commit-gloss" style="display: none">Commit is the one action that actually changes the field</span>
+  <span class="result-text" id="result-text"></span>
 </div>

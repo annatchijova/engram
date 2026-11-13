@@ -1,52 +1,14 @@
 <style>
-  .panel-root {
-    flex-direction: column;
-    width: 48;
-    padding-top: 1.5;
-    padding-bottom: 1.5;
-    padding-left: 2;
-    padding-right: 2;
-    background-color: #0f1822;
-    border-color: #5fc9ff;
-    border-width: 0.12;
-    border-radius: 0.5;
-  }
-  .eyebrow {
-    font-size: 1;
-    font-weight: 700;
-    color: #5fc9ff;
-    margin-bottom: 0.4;
-  }
-  .instruction {
-    font-size: 1.5;
-    color: #f2f2f2;
-  }
-  .skip-btn {
-    margin-top: 1;
-    height: 1.6;
-    padding-left: 1;
-    padding-right: 1;
-    background-color: #263240;
-    border-radius: 0.3;
-    justify-content: center;
-    align-items: center;
-    color: #9fb7c9;
-    font-size: 0.9;
-    cursor: pointer;
-  }
-  .checklist {
-    margin-top: 1;
-    flex-direction: column;
-  }
-  .checklist-row {
-    font-size: 0.9;
-    color: #4a5a68;
-    margin-bottom: 0.2;
-  }
+  .panel-root { flex-direction: column; width: 56; padding-top: 1.5; padding-bottom: 1.5; padding-left: 2.2; padding-right: 2.2; background-color: #0a1019f2; border-color: #5fc9ff; border-width: 0.12; border-radius: 0.8; }
+  .eyebrow { font-size: 1; font-weight: 700; color: #5fc9ff; margin-bottom: 0.4; }
+  .instruction { font-size: 1.45; color: #f2f6fa; }
+  .checklist { margin-top: 1; flex-direction: row; justify-content: space-between; }
+  .checklist-row { font-size: 0.9; color: #4a5a68; }
+  .skip-btn { margin-top: 1; height: 2.4; padding-left: 1.2; padding-right: 1.2; background-color: #1d2a3b; border-radius: 0.85; justify-content: center; align-items: center; color: #9fb7c9; font-size: 0.9; cursor: pointer; }
 </style>
 <div class="panel-root" id="next-step-root">
-  <span class="eyebrow">NEXT</span>
-  <span class="instruction" id="next-step-text">These spheres are real memories. Point and select one.</span>
+  <span class="eyebrow">ENGRAM · THE MEMORY OBSERVATORY</span>
+  <span class="instruction" id="next-step-text">These cores are real memories. Point and select one.</span>
   <div class="checklist">
     <span class="checklist-row" id="checklist-select">[ ] Found it</span>
     <span class="checklist-row" id="checklist-trace">[ ] Traced it</span>

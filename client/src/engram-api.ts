@@ -123,6 +123,24 @@ export type CounterfactualDelta = {
   read_audit?: string;
 };
 
+export type AuthorityEntry = {
+  subject_id: string;
+  seq: number;
+  event_type: string;
+  issuer_id: string;
+  reason: string;
+  created_at: string;
+  payload_json: string;
+  prev_hash: string;
+  entry_hash: string;
+};
+
+export type AuthorityChain = {
+  actor_id: string;
+  effective_capabilities: string[];
+  chain: AuthorityEntry[];
+};
+
 export type ActorSummary = {
   actor_id: string;
   display_name: string;
@@ -318,6 +336,8 @@ export const EngramApi = {
   getImpact: (id: string) =>
     request<ImpactReport>(`/api/v1/memories/${encodeURIComponent(id)}/impact`),
   listActors: () => request<{ actors: ActorSummary[] }>('/api/v1/actors'),
+  getAuthority: (actorId: string) =>
+    request<AuthorityChain>(`/api/v1/actors/${encodeURIComponent(actorId)}/authority`),
   previewQuarantine: (actorId: string) =>
     request<QuarantinePreview>(`/api/v1/actors/${encodeURIComponent(actorId)}/quarantine-preview`),
   login,

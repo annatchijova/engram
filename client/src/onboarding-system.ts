@@ -32,21 +32,21 @@ import {
 } from './onboarding-stage-machine.js';
 
 const NEXT_STEP_TEXT: Record<string, string> = {
-  [OnboardingStageValue.WELCOME]: 'ACT I — Discovery. These slabs are real memories. A memory was trusted; should it have been? Point and select the suspicious one.',
+  [OnboardingStageValue.WELCOME]: 'ACT I - Observe. Every core on the field is a real memory in MNEME. A memory was trusted; should it have been? Point at the suspicious one and pinch.',
   [OnboardingStageValue.SELECT_DONE]:
-    "ACT II — Provenance. This is the record's real custody history. Try 'Trace impact'.",
+    'ACT II - Inspect. The tower above the core is its real custody chain, event by event. Now press \'Trace impact\' on the inspector to your left.',
   [OnboardingStageValue.TRACE_DONE]:
-    'ACT III — Impact. You saw what this memory actually touches; possible links are not proof. Now stage a containment preview (nothing commits yet).',
+    'ACT III - Impact. You saw what this memory actually touches; a POSSIBLE link is not proof. Now stage a containment preview: place an actor totem in the cradle on your right, or use the console.',
   [OnboardingStageValue.PREVIEW_DONE]:
-    'ACT IV — Counterfactual. The preview is staged, nothing was committed. Compare the recorded field against a sealed hypothetical that was never executed.',
+    'ACT IV - Compare. The preview is staged and nothing was committed. Open the counterfactual chamber on your left and compare the recorded field against a sealed hypothetical.',
   [OnboardingStageValue.CONTAINMENT_DONE]:
-    'ACT IV — Counterfactual. Compare the recorded field against a sealed hypothetical that was never executed.',
+    'ACT IV - Compare. MNEME recorded your sweep. Now open the counterfactual chamber on your left: a sealed hypothetical that was never executed.',
   [OnboardingStageValue.COUNTERFACTUAL_UNLOCKED]:
-    "Now export what you've seen as a portable, independently-verifiable record.",
+    'ACT V - Verify. Export what you have seen as a portable bundle and read the independent verifier\'s own verdict.',
   [OnboardingStageValue.PORTABLE_UNLOCKED]:
-    "Now export what you've seen as a portable, independently-verifiable record.",
+    'ACT V - Verify. Export what you have seen as a portable bundle and read the independent verifier\'s own verdict.',
   [OnboardingStageValue.COMPLETE]:
-    "You've completed the full loop. Everything here is still live - explore freely.",
+    'You completed the full loop. Everything here is still live - explore freely, and pick up a totem to read an actor\'s grants.',
 };
 
 const TRACE_LEGEND_IDS = [
