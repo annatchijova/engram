@@ -162,11 +162,6 @@ counterfactual is explicitly sealed as never executed.
 ![ENGRAM architecture diagram](visual/mermaid-diagram.png)
 
 
-## Live
-
-- **Client**: https://client-six-mu-93.vercel.app
-- **Adapter**: https://engram-mneme-adapter.fly.dev
-
 Both are deployed and talking to each other for real — not a local-only
 demo. See `server/README.md` / `client/README.md` for redeploy commands.
 **Known limitation**: the backend has no persistent volume, so it
