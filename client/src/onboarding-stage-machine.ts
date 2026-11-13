@@ -1,69 +1,125 @@
 /**
- * ENGRAM — Nivel 6 guided-tour stage machine.
+ * ENGRAM — Guided First Contact: the stage machine.
  *
  * Pure stage logic with no IWSDK imports, so node --test can drive it
  * directly. OnboardingSystem owns the rendering; this module owns only
- * the question "given where the tour is and what the server just
- * confirmed, where does the tour move to, and what may be revealed".
+ * the question "given where the investigation is and what the server
+ * just confirmed, where does it move to, and what may be revealed".
  *
- * Stages advance monotonically: a stage is never un-reached. Events come
- * from onboarding-events.ts and fire only from real success paths.
+ * The tour is a sequence of questions, each answered by one real
+ * operation whose success path emits an OnboardingEvent. Events advance
+ * stages monotonically: a stage is never un-reached by an event. The two
+ * non-event transitions are explicit operator choices — "Explore freely"
+ * jumps to COMPLETE, "Restart the investigation" returns to DISCOVER —
+ * and exist only as functions a button calls, never as a timer.
+ *
+ * Nothing in the tour requires a mutation: a staged containment preview
+ * (read-only) is the intervention step, and a commit only ticks a
+ * milestone, it does not gate progress.
  */
 import type { OnboardingEvent } from './onboarding-events.js';
 
 export const OnboardingStageValue = {
+  /** Welcome card shown; the room is visible behind it, nothing else. */
   WELCOME: 'WELCOME',
-  SELECT_DONE: 'SELECT_DONE',
-  TRACE_DONE: 'TRACE_DONE',
-  PREVIEW_DONE: 'PREVIEW_DONE',
-  CONTAINMENT_DONE: 'CONTAINMENT_DONE',
-  COUNTERFACTUAL_UNLOCKED: 'COUNTERFACTUAL_UNLOCKED',
-  PORTABLE_UNLOCKED: 'PORTABLE_UNLOCKED',
+  /** Q1: which memory deserves attention? Answered by selecting it. */
+  DISCOVER: 'DISCOVER',
+  /** Q2: where did it come from? Answered by the custody record on screen. */
+  ORIGIN: 'ORIGIN',
+  /** Q3: what depended on it? Answered by Trace impact. */
+  CONSEQUENCES: 'CONSEQUENCES',
+  /** Q4: what changes without it? Answered by a counterfactual comparison. */
+  ALTERNATIVES: 'ALTERNATIVES',
+  /** Q5: what would an intervention do, and who may do it? Answered by a staged preview. */
+  INTERVENTION: 'INTERVENTION',
+  /** Q6 answered: the bundle was exported and independently verified. */
   COMPLETE: 'COMPLETE',
 } as const;
 
+export type OnboardingStage = (typeof OnboardingStageValue)[keyof typeof OnboardingStageValue];
+
 export const STAGE_ORDER: readonly string[] = [
   OnboardingStageValue.WELCOME,
-  OnboardingStageValue.SELECT_DONE,
-  OnboardingStageValue.TRACE_DONE,
-  OnboardingStageValue.PREVIEW_DONE,
-  OnboardingStageValue.CONTAINMENT_DONE,
-  OnboardingStageValue.COUNTERFACTUAL_UNLOCKED,
-  OnboardingStageValue.PORTABLE_UNLOCKED,
+  OnboardingStageValue.DISCOVER,
+  OnboardingStageValue.ORIGIN,
+  OnboardingStageValue.CONSEQUENCES,
+  OnboardingStageValue.ALTERNATIVES,
+  OnboardingStageValue.INTERVENTION,
   OnboardingStageValue.COMPLETE,
 ];
 
-// Event -> the stage it proves was reached. The Counterfactual Chamber
-// is read-only investigation, so a staged containment preview
-// ('stage-done') is enough to reveal it: the guided tour must never push
-// the operator into a real mutation just to compare worlds. Only the
-// 'Contained it' checklist milestone requires the actual commit
-// ('commit-done'); staging a preview never claims containment happened.
+// Event -> the stage it proves was reached. Every event fires only from
+// an existing server-confirmed success path (see onboarding-events.ts).
+// 'commit-done' is deliberately absent: a real quarantine is never a tour
+// requirement, it only ticks the "contained" milestone below.
 export const EVENT_STAGE: Partial<Record<OnboardingEvent, string>> = {
-  'detail-shown': OnboardingStageValue.SELECT_DONE,
-  'trace-run': OnboardingStageValue.TRACE_DONE,
-  'stage-done': OnboardingStageValue.PREVIEW_DONE,
-  'commit-done': OnboardingStageValue.CONTAINMENT_DONE,
-  'exclusion-run': OnboardingStageValue.COUNTERFACTUAL_UNLOCKED,
-  'containment-cf-run': OnboardingStageValue.COUNTERFACTUAL_UNLOCKED,
+  'detail-shown': OnboardingStageValue.ORIGIN,
+  'trace-run': OnboardingStageValue.CONSEQUENCES,
+  'exclusion-run': OnboardingStageValue.ALTERNATIVES,
+  'containment-cf-run': OnboardingStageValue.ALTERNATIVES,
+  'stage-done': OnboardingStageValue.INTERVENTION,
   'bundle-verified': OnboardingStageValue.COMPLETE,
 };
 
 /** Monotonic advance: returns `current` unchanged when the event proves
- * nothing new or would move the tour backwards. */
+ * nothing new or would move the tour backwards. An event never leaves
+ * WELCOME: the operator chooses Begin or Explore first. */
 export function advanceStage(current: string, event: OnboardingEvent): string {
+  if (current === OnboardingStageValue.WELCOME) return current;
   const target = EVENT_STAGE[event];
   if (!target) return current;
   return STAGE_ORDER.indexOf(target) > STAGE_ORDER.indexOf(current) ? target : current;
+}
+
+/** "Begin investigation": the welcome card gives way to the first question. */
+export function beginTour(current: string): string {
+  return current === OnboardingStageValue.WELCOME ? OnboardingStageValue.DISCOVER : current;
+}
+
+/** "Explore freely": every zone and panel, no questions. */
+export function exploreFreely(): string {
+  return OnboardingStageValue.COMPLETE;
+}
+
+/** "Restart the investigation": the one backwards transition, and only
+ * because the operator asked for it. Nothing in MNEME is touched. */
+export function restartTour(): string {
+  return OnboardingStageValue.DISCOVER;
 }
 
 export function stageAtLeast(stage: string, threshold: string): boolean {
   return STAGE_ORDER.indexOf(stage) >= STAGE_ORDER.indexOf(threshold);
 }
 
-/** Whether the Counterfactual Chamber may be revealed at this stage.
- * Revealed once a containment preview has been staged (PREVIEW_DONE);
- * a real commit is not required to investigate a sealed hypothetical. */
+/** Which surfaces are revealed at a stage. Revealed means "may be used";
+ * the inspector and the authority card additionally open only when the
+ * operator selects something, which their own systems handle. */
+export type Reveal = {
+  welcome: boolean;
+  guide: boolean;
+  legend: boolean;
+  traceLegend: boolean;
+  counterfactual: boolean;
+  containment: boolean;
+  login: boolean;
+  portable: boolean;
+};
+
+export function revealedAt(stage: string): Reveal {
+  const at = (t: string) => stageAtLeast(stage, t);
+  return {
+    welcome: stage === OnboardingStageValue.WELCOME,
+    guide: stage !== OnboardingStageValue.WELCOME,
+    legend: at(OnboardingStageValue.DISCOVER),
+    traceLegend: at(OnboardingStageValue.CONSEQUENCES),
+    counterfactual: at(OnboardingStageValue.CONSEQUENCES),
+    containment: at(OnboardingStageValue.ALTERNATIVES),
+    login: at(OnboardingStageValue.ALTERNATIVES),
+    portable: at(OnboardingStageValue.INTERVENTION),
+  };
+}
+
+/** Kept for callers and tests from earlier rounds. */
 export function counterfactualRevealed(stage: string): boolean {
-  return stageAtLeast(stage, OnboardingStageValue.PREVIEW_DONE);
+  return revealedAt(stage).counterfactual;
 }

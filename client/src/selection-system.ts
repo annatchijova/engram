@@ -18,12 +18,25 @@ import { FieldSystem } from './field-system.js';
 import { MemoryNode } from './memory-node-component.js';
 import { AudioCues } from './observatory/audio-cues.js';
 import { OnboardingEvents } from './onboarding-events.js';
+import { requireElement } from './observatory/wiring.js';
 import { SelectedMemory } from './selected-memory.js';
+import { CUSTODY_GLOSS } from './tour-script.js';
 
 export class SelectionSystem extends createSystem({
   selected: { required: [MemoryNode, Pressed] },
 }) {
   private busy = false;
+  private fullRecord = false;
+
+  private applyFullRecord(panel: UIKitMLAsset | undefined): void {
+    const display = this.fullRecord ? 'flex' : 'none';
+    for (const id of ['detail-hash', 'detail-confidence', 'detail-chain']) {
+      panel?.getElementById(id)?.setProperties({ display });
+    }
+    panel?.getElementById('detail-more')?.setProperties({
+      text: this.fullRecord ? 'Hide full record' : 'Show full record (hash, confidence, chain)',
+    });
+  }
 
   init(): void {
     this.queries.selected.subscribe('qualify', (entity) => {
@@ -32,13 +45,25 @@ export class SelectionSystem extends createSystem({
     });
 
     const panel = this.world.getSceneObject<UIKitMLAsset>('detail-panel');
-    const close = panel?.getElementById('detail-close');
+    const close = requireElement(panel, 'detail-panel', 'detail-close');
+    const more = requireElement(panel, 'detail-panel', 'detail-more');
     const hide = () => {
       panel?.getElementById('detail-root')?.setProperties({ display: 'none' });
       SelectedMemory.set(null);
     };
+    // Progressive disclosure: identity, state and content first; hash,
+    // exact confidence and the event-by-event chain text on request. The
+    // data is fetched and present either way, only its display toggles.
+    const toggleFull = () => {
+      this.fullRecord = !this.fullRecord;
+      this.applyFullRecord(panel);
+    };
     close?.addEventListener('click', hide);
-    this.cleanupFuncs.push(() => close?.removeEventListener('click', hide));
+    more?.addEventListener('click', toggleFull);
+    this.cleanupFuncs.push(
+      () => close?.removeEventListener('click', hide),
+      () => more?.removeEventListener('click', toggleFull),
+    );
   }
 
   private async showDetail(memoryId: string): Promise<void> {
@@ -67,6 +92,12 @@ export class SelectionSystem extends createSystem({
       panel?.getElementById('detail-title')?.setProperties({
         text: `${memory.memory_id} - ${memory.custody_status}`,
       });
+      panel?.getElementById('detail-plain')?.setProperties({
+        text: (CUSTODY_GLOSS[memory.custody_status] ?? 'status not in this client\'s vocabulary') +
+          (memory.superseded_by ? ` - replaced by ${memory.superseded_by}` : '') +
+          ` - stored by ${memory.created_by}`,
+      });
+      this.applyFullRecord(panel);
       panel?.getElementById('detail-content')?.setProperties({ text: memory.content });
       panel?.getElementById('detail-hash')?.setProperties({
         text: `sha256 ${memory.content_sha256}`,

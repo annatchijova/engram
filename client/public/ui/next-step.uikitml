@@ -1,19 +1,24 @@
 <style>
-  .panel-root { flex-direction: column; width: 56; padding-top: 1.5; padding-bottom: 1.5; padding-left: 2.2; padding-right: 2.2; background-color: #0a1019f2; border-color: #5fc9ff; border-width: 0.12; border-radius: 0.8; }
-  .eyebrow { font-size: 1; font-weight: 700; color: #5fc9ff; margin-bottom: 0.4; }
-  .instruction { font-size: 1.45; color: #f2f6fa; }
-  .checklist { margin-top: 1; flex-direction: row; justify-content: space-between; }
+  .panel-root { flex-direction: column; width: 60; padding-top: 1.6; padding-bottom: 1.6; padding-left: 2.4; padding-right: 2.4; background-color: #070b12f2; border-color: #5fc9ff; border-width: 0.12; border-radius: 0.9; }
+  .eyebrow { font-size: 0.95; font-weight: 700; color: #5fc9ff; margin-bottom: 0.4; }
+  .question { font-size: 2.2; font-weight: 700; color: #f2f6fa; margin-bottom: 0.7; }
+  .body { font-size: 1.2; color: #c9d6e3; margin-bottom: 0.9; }
+  .action { font-size: 1.35; font-weight: 700; color: #ffd27a; margin-bottom: 0.9; }
+  .progress { font-size: 1.1; color: #7fd4a8; margin-bottom: 0.9; }
   .checklist-row { font-size: 0.9; color: #4a5a68; }
-  .skip-btn { margin-top: 1; height: 2.4; padding-left: 1.2; padding-right: 1.2; background-color: #1d2a3b; border-radius: 0.85; justify-content: center; align-items: center; color: #9fb7c9; font-size: 0.9; cursor: pointer; }
+  .skip-btn { width: 100%; height: 2.4; background-color: #1d2a3b; border-radius: 1.2; justify-content: center; align-items: center; color: #cfd8e3; font-size: 1.05; cursor: pointer; margin-bottom: 0.6; }
+  .restart-btn { width: 100%; height: 2.4; background-color: #121a26; border-radius: 1.2; justify-content: center; align-items: center; color: #8fa3b8; font-size: 1; cursor: pointer; }
 </style>
 <div class="panel-root" id="next-step-root">
-  <span class="eyebrow">ENGRAM · THE MEMORY OBSERVATORY</span>
-  <span class="instruction" id="next-step-text">These cores are real memories. Point and select one.</span>
-  <div class="checklist">
-    <span class="checklist-row" id="checklist-select">[ ] Found it</span>
-    <span class="checklist-row" id="checklist-trace">[ ] Traced it</span>
-    <span class="checklist-row" id="checklist-containment">[ ] Contained it</span>
-    <span class="checklist-row" id="checklist-verify">[ ] Verified it</span>
-  </div>
-  <button class="skip-btn" id="next-step-skip">Show everything</button>
+  <span class="eyebrow" id="guide-eyebrow">INVESTIGATION - STEP 1 OF 5</span>
+  <span class="question" id="guide-question">Which memory deserves our attention?</span>
+  <span class="body" id="next-step-text"></span>
+  <span class="action" id="guide-action"></span>
+  <span class="progress" id="guide-progress"></span>
+  <span class="checklist-row" id="checklist-select" style="display: none">[ ] Found it</span>
+  <span class="checklist-row" id="checklist-trace" style="display: none">[ ] Traced it</span>
+  <span class="checklist-row" id="checklist-containment" style="display: none">[ ] Contained it</span>
+  <span class="checklist-row" id="checklist-verify" style="display: none">[ ] Verified it</span>
+  <button class="skip-btn" id="next-step-skip">Explore freely</button>
+  <button class="restart-btn" id="guide-restart">Restart the investigation</button>
 </div>

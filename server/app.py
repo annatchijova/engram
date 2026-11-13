@@ -326,6 +326,17 @@ def list_actors() -> dict[str, Any]:
 DEMO_USERS: dict[str, dict[str, str]] = {
     "omar": {"actor_id": "analyst-omar", "display_name": "Analyst Omar"},
     "ada": {"actor_id": "agent-ada", "display_name": "Agent Ada"},
+    # Juror account for the hackathon demo. It carries its OWN published
+    # password on purpose: judges must be able to log in from the README
+    # without an operator setting a secret, and everything it can reach
+    # is the declared synthetic field. It acts as analyst-omar, so the
+    # authority gate it meets is the real one. The two operator accounts
+    # above still require ENGRAM_DEMO_PASSWORD.
+    "meta": {
+        "actor_id": "analyst-omar",
+        "display_name": "Juror (as Analyst Omar)",
+        "password": "metavr",
+    },
 }
 # Fail-closed: no default password. If the variable is unset, login refuses
 # with 503 instead of authenticating against a value published in the README.
@@ -379,17 +390,20 @@ def require_session(
 
 @app.post("/api/v1/auth/login")
 def login(payload: dict[str, str] = Body(...)) -> dict[str, Any]:
-    if DEMO_PASSWORD is None:
-        raise HTTPException(
-            503,
-            "Login is not configured on this server "
-            "(ENGRAM_DEMO_PASSWORD unset) — refusing rather than "
-            "authenticating against a default credential.",
-        )
     username = payload.get("username", "")
     password = payload.get("password", "")
     user = DEMO_USERS.get(username)
-    if user is None or not secrets.compare_digest(password, DEMO_PASSWORD):
+    expected = user.get("password") if user else None
+    if expected is None:
+        if DEMO_PASSWORD is None:
+            raise HTTPException(
+                503,
+                "Login is not configured on this server "
+                "(ENGRAM_DEMO_PASSWORD unset) — refusing rather than "
+                "authenticating against a default credential.",
+            )
+        expected = DEMO_PASSWORD
+    if user is None or not secrets.compare_digest(password, expected):
         raise HTTPException(401, "Invalid username or password.")
 
     _sweep_sessions()

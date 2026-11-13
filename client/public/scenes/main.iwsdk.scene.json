@@ -48,6 +48,30 @@
   "resources": {},
   "nodes": [
     {
+      "id": "welcome-panel",
+      "name": "Welcome Panel",
+      "content": {
+        "type": "asset",
+        "asset": "welcome-panel"
+      },
+      "transform": {
+        "position": [
+          0,
+          1.42,
+          -1.25
+        ],
+        "rotationDeg": [
+          -4,
+          0,
+          0
+        ],
+        "scale": 1.15
+      },
+      "components": {
+        "RayInteractable": {}
+      }
+    },
+    {
       "id": "next-step-panel",
       "name": "Next Step Panel",
       "content": {
@@ -200,13 +224,13 @@
       },
       "transform": {
         "position": [
-          -1.82,
-          1.0,
-          -1.05
+          -1.95,
+          1.06,
+          -1.28
         ],
         "rotationDeg": [
-          -16,
-          52,
+          -14,
+          50,
           0
         ],
         "scale": 1.3
@@ -224,13 +248,13 @@
       },
       "transform": {
         "position": [
-          1.82,
-          1.0,
-          -1.05
+          1.95,
+          1.06,
+          -1.28
         ],
         "rotationDeg": [
-          -16,
-          -52,
+          -14,
+          -50,
           0
         ],
         "scale": 1.3

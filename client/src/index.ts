@@ -12,6 +12,7 @@ import { ContainmentSystem } from './containment-system.js';
 import { CounterfactualSystem } from './counterfactual-system.js';
 import { CustodyChainSystem } from './custody-chain-system.js';
 import { FieldSystem } from './field-system.js';
+import { GuideSystem } from './guide-system.js';
 import { HoverPreviewSystem } from './hover-preview-system.js';
 import { buildObservatory } from './observatory/observatory-environment.js';
 import { ObservatoryScene } from './observatory/observatory-handles.js';
@@ -61,6 +62,7 @@ World.create(
   world.registerSystem(CounterfactualSystem);
   world.registerSystem(PortableSystem);
   world.registerSystem(AmbienceSystem);
+  world.registerSystem(GuideSystem);
   // Last: it reaches into panels (containment/counterfactual/portable,
   // legend's trace section) that the systems above already resolved via
   // getSceneObject in their own init() — registration order is the only

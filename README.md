@@ -97,7 +97,23 @@ both receipts and the delta hash.
 The vault holds the exported bundle, coloured by what an independent
 verifier process actually printed.
 
-Round report with the full PASS / FAIL / NOT TESTED tables:
+### First contact
+
+Opening the observatory shows one question over the field, *Can this
+memory be trusted?*, and two choices: begin a five-step investigation or
+explore freely. Each step is a question answered by one real operation,
+with a marker in the room on the object that answers it, and the
+technical surfaces appear as they become relevant. Nothing advances on a
+timer, and the whole tour completes without writing to MNEME.
+
+![First contact](visual/observatory/tour-01-welcome.png)
+
+![Step 1: start here](visual/observatory/tour-02-step1-discover.png)
+
+Juror login for the committing steps: user `meta`, password `metavr`.
+Round report: [`docs/XR-GUIDED-FIRST-CONTACT-ROUND10.md`](docs/XR-GUIDED-FIRST-CONTACT-ROUND10.md).
+
+Round 9 report with the full PASS / FAIL / NOT TESTED tables:
 [`docs/XR-OBSERVATORY-ROUND9.md`](docs/XR-OBSERVATORY-ROUND9.md).
 **Verified in the IWER Meta Quest 3 emulator, not on a headset.**
 

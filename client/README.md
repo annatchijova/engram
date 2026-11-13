@@ -54,6 +54,11 @@ actor totem in the cradle **stages a preview only** — committing is a
 separate, authorized click, per the architecture document's rule that no
 drop may execute a mutation.
 
+Guided first contact: `src/tour-script.ts` holds the five questions,
+`src/onboarding-stage-machine.ts` the reveal schedule and the three
+operator choices (Begin, Explore freely, Restart), `src/guide-system.ts`
+the START HERE / NEXT marker. Stages move only on `OnboardingEvents`.
+
 Presentation rules the tests pin (`tests/observatory-invariants.test.mjs`):
 custody colours are the only evidence-bearing palette; transport states
 (LOADING / READ FAILED), supersession lineage and counterfactual ghosts

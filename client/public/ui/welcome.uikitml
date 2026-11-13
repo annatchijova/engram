@@ -1,0 +1,20 @@
+<style>
+  .panel-root { flex-direction: column; width: 78; padding-top: 3; padding-bottom: 3; padding-left: 4; padding-right: 4; background-color: #070b12f4; border-color: #5fc9ff; border-width: 0.16; border-radius: 1.2; }
+  .eyebrow { font-size: 1.2; font-weight: 700; color: #5fc9ff; margin-bottom: 0.8; }
+  .question { font-size: 4; font-weight: 700; color: #f2f6fa; margin-bottom: 1.4; }
+  .body { font-size: 1.55; color: #c9d6e3; margin-bottom: 0.9; }
+  .task { font-size: 1.55; color: #e8f0f8; margin-bottom: 2; }
+  .begin { width: 100%; height: 3.6; background-color: #2b5f8a; border-radius: 1.8; justify-content: center; align-items: center; color: #eaf6ff; font-size: 1.7; font-weight: 700; cursor: pointer; margin-bottom: 0.9; }
+  .explore { width: 100%; height: 2.8; background-color: #1d2a3b; border-radius: 1.4; justify-content: center; align-items: center; color: #cfd8e3; font-size: 1.3; cursor: pointer; }
+  .foot { font-size: 1; color: #6f8196; margin-top: 1.4; }
+</style>
+<div class="panel-root" id="welcome-root">
+  <span class="eyebrow">ENGRAM - THE MEMORY OBSERVATORY</span>
+  <span class="question">Can this memory be trusted?</span>
+  <span class="body">A recorded decision relied on a memory whose source was later quarantined. The field in front of you is that memory system, as it is right now.</span>
+  <span class="task">Your task: find out what happened, trace what depended on it, and see what the evidence actually supports.</span>
+  <button class="begin" id="welcome-begin">Begin investigation</button>
+  <button class="explore" id="welcome-explore">Explore freely</button>
+  <span class="foot" id="welcome-status">connecting to the memory field...</span>
+  <span class="foot">Synthetic field, real engine. Nothing you do here invents evidence, and nothing changes without authorization.</span>
+</div>

@@ -10,7 +10,7 @@
   .status-line { font-size: 1.1; color: #ff8080; margin-top: 1; }
   .section { font-size: 1.3; font-weight: 700; color: #5fc9ff; margin-top: 1.4; margin-bottom: 0.6; }
 </style>
-<div class="panel-root">
+<div class="panel-root" id="legend-root" style="display: none">
   <span class="eyebrow">PROVENANCE</span>
   <span class="heading">custody_status</span>
   <span class="sub" id="legend-field">loading field...</span>

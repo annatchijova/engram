@@ -41,6 +41,7 @@ import { OBS, OBSERVATORY } from './observatory/palette.js';
 import { CustodyStatus, MemoryNode } from './memory-node-component.js';
 import { SelectedMemory } from './selected-memory.js';
 import { CUSTODY_PRESENTATION } from './shared-projection.js';
+import { CUSTODY_GLOSS } from './tour-script.js';
 
 // Declared once, referenced everywhere a status needs a color — this is
 // the single place the custody_status -> appearance mapping is allowed
@@ -162,6 +163,10 @@ export class FieldSystem extends createSystem({
       const hovered = entity.hasComponent(Hovered);
       const selected = p.memoryId === selectedId;
       if (selected) selectedCore = core;
+      // Focus: while one memory is open, the other labels step back so the
+      // provenance tower and edges have room to read. Cores themselves stay
+      // fully visible; only text yields.
+      core.label.visible = selectedId === null || selected || hovered;
       const targetScale = selected ? 1.22 : hovered ? 1.1 : 1;
       const targetLift = selected ? 0.1 : 0;
       const bob = Math.sin(time * 1.1 + core.phase) * 0.01;
@@ -325,18 +330,21 @@ export class FieldSystem extends createSystem({
       };
 
       const presentation = CUSTODY_PRESENTATION[m.custody_status];
+      // Identity and state only: topic and excerpt belong to the hover
+      // card and the inspector (progressive disclosure), so the field reads
+      // as objects, not as a wall of text.
       const label = makeLabel(
         [
-          { text: m.memory_id, color: '#f2f6fa', size: 30, weight: '700' },
+          { text: m.memory_id, color: '#f2f6fa', size: 32, weight: '700' },
           {
             text: presentation ? `${presentation.glyph} ${m.custody_status}` : `? ${m.custody_status} (unmapped)`,
             color: knownStatus ? CUSTODY_COLOR[m.custody_status] : UNKNOWN_STATUS_COLOR,
-            size: 24,
+            size: 25,
             weight: '600',
           },
-          { text: m.topic ? `topic: ${m.topic}` : (m.content_preview ?? ''), color: '#9fb3c8', size: 19 },
+          { text: CUSTODY_GLOSS[m.custody_status] ?? 'status not in this client\'s vocabulary', color: '#9fb3c8', size: 18 },
         ],
-        { width: 0.24, background: '#0b121bd9', border: '#2a3a4d' },
+        { width: 0.26, background: '#0b121bd9', border: '#2a3a4d' },
       );
 
       const core = buildMemoryCore(
@@ -406,6 +414,10 @@ export class FieldSystem extends createSystem({
       text: `${overview.total_memories} memories / field_version ${overview.field_version}`,
     });
     legend.getElementById('legend-status')?.setProperties({ display: 'none' });
+    this.world.getSceneObject<UIKitMLAsset>('welcome-panel')?.getElementById('welcome-status')?.setProperties({
+      text: `Live field: ${overview.total_memories} memories, field_version ${overview.field_version}.`,
+      color: '#7fd4a8',
+    });
   }
 
   private reportLoadError(legend: UIKitMLAsset | undefined, err: unknown): void {
@@ -418,6 +430,12 @@ export class FieldSystem extends createSystem({
       text: `FAILED to load field: ${(err as Error).message ?? err}`,
       color: '#ff8080',
       display: 'flex',
+    });
+    // The welcome card is the first thing a newcomer reads: it must carry
+    // the failure too, or the room looks merely empty.
+    this.world.getSceneObject<UIKitMLAsset>('welcome-panel')?.getElementById('welcome-status')?.setProperties({
+      text: `FAILED to load the field: ${(err as Error).message ?? err}`,
+      color: '#ff8080',
     });
   }
 }
