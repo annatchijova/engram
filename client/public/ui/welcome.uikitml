@@ -15,6 +15,7 @@
   <span class="task">Your task: find out what happened, trace what depended on it, and see what the evidence actually supports.</span>
   <button class="begin" id="welcome-begin">Begin investigation</button>
   <button class="explore" id="welcome-explore">Explore freely</button>
+  <span class="body">Look around by dragging (flat screen) or turning your head (headset). Point and pinch, or click, to pick something up.</span>
   <span class="foot" id="welcome-status">connecting to the memory field...</span>
   <span class="foot">Synthetic field, real engine. Nothing you do here invents evidence, and nothing changes without authorization.</span>
 </div>

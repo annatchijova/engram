@@ -62,6 +62,14 @@ const TRACE_STYLE: Record<EdgeClass, {
 // `linewidth` is ignored by every browser, so an edge that must be visible
 // across the room has to be geometry, not a line primitive.
 const DASH_SEGMENTS = 14;
+// Where each class's one label rides its edge, and how far it lifts off
+// it. Distinct per class so the four never collide.
+const LABEL_FRACTION: Record<EdgeClass, number> = {
+  DIRECT: 0.56, DERIVED: 0.44, DERIVED_UNATTESTED: 0.66, POSSIBLE: 0.34,
+};
+const LABEL_LIFT: Record<EdgeClass, number> = {
+  DIRECT: 0.06, DERIVED: 0.1, DERIVED_UNATTESTED: -0.07, POSSIBLE: -0.11,
+};
 const UNIT_CYLINDER = new CylinderGeometry(1, 1, 1, 8, 1);
 const UP = new Vector3(0, 1, 0);
 
@@ -82,6 +90,7 @@ type TraceLine = {
   cls: EdgeClass;
   elapsed: number;
   label: Sprite;
+  labelled: boolean;
   pulse: Mesh | null;
   pulseOffset: number;
 };
@@ -180,15 +189,27 @@ export class TraceSystem extends createSystem({}) {
           });
         }
       }
-      l.label.position.lerpVectors(this.a, this.b, 0.5);
-      l.label.position.y += 0.035;
-      l.label.visible = alpha >= 1;
+      if (l.labelled) {
+        // Each class reads its own edge at a different fraction and
+        // height, so two labels can never land on one another.
+        l.label.position.lerpVectors(this.a, this.b, LABEL_FRACTION[l.cls]);
+        l.label.position.y += LABEL_LIFT[l.cls];
+        l.label.visible = alpha >= 1;
+      }
       if (l.pulse) {
         const t = (time * 0.45 + l.pulseOffset) % 1;
         l.pulse.position.lerpVectors(this.a, this.b, t * alpha);
       }
     }
   }
+
+  /** Classes already carrying a label in this trace. The audit found four
+   * POSSIBLE labels stacking into an unreadable clump, which made the
+   * class of any one edge ambiguous — the opposite of what the label is
+   * for. One labelled exemplar per class, staggered along its own edge,
+   * plus the always-visible class legend, keeps the distinction readable
+   * without repeating it once per line. */
+  private labelledClasses = new Set<EdgeClass>();
 
   private drawLine(from: Endpoint, to: Endpoint, cls: EdgeClass): void {
     const style = TRACE_STYLE[cls];
@@ -213,14 +234,22 @@ export class TraceSystem extends createSystem({}) {
       }
       this.traceEntities.push(this.world.createTransformEntity(group));
     }
+    const first = !this.labelledClasses.has(cls);
+    this.labelledClasses.add(cls);
     const label = makeLabel(
-      [{ text: EDGE_LABEL[cls].split(' — ')[0], color: TRACE_STYLE[cls].color, size: 22, weight: '700' },
-       { text: EDGE_LABEL[cls].split(' — ')[1] ?? '', color: '#9fb3c8', size: 17 }],
-      { width: 0.2, background: '#0b121bcc', border: `${TRACE_STYLE[cls].color}66` },
+      first
+        ? [{ text: EDGE_LABEL[cls].split(' — ')[0], color: TRACE_STYLE[cls].color, size: 26, weight: '700' },
+           { text: EDGE_LABEL[cls].split(' — ')[1] ?? '', color: '#c3d0dd', size: 19 }]
+        : [{ text: '', color: '#000000', size: 1 }],
+      { width: first ? 0.26 : 0.01, background: first ? '#0b121bf2' : undefined, border: first ? `${TRACE_STYLE[cls].color}88` : undefined },
     );
     label.visible = false;
-    this.labels.push(label);
-    this.traceEntities.push(this.world.createTransformEntity(label));
+    if (first) {
+      this.labels.push(label);
+      this.traceEntities.push(this.world.createTransformEntity(label));
+    } else {
+      disposeLabel(label);
+    }
     let pulse: Mesh | null = null;
     if (TRACE_STYLE[cls].pulse) {
       pulse = new Mesh(PULSE_GEO, this.pulseMaterials[cls]);
@@ -228,7 +257,7 @@ export class TraceSystem extends createSystem({}) {
     }
     this.lines.push({
       geometry, line, segments, group, from, to, cls,
-      elapsed: 0, label, pulse, pulseOffset: Math.random(),
+      elapsed: 0, label, labelled: first, pulse, pulseOffset: Math.random(),
     });
   }
 
@@ -253,6 +282,7 @@ export class TraceSystem extends createSystem({}) {
     for (const entity of this.traceEntities) entity.dispose();
     this.traceEntities = [];
     this.lines = [];
+    this.labelledClasses.clear();
     this.rootId = null;
     const panel = this.world.getSceneObject<UIKitMLAsset>('detail-panel');
     panel?.getElementById('detail-impact')?.setProperties({ text: '' });

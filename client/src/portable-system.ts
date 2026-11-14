@@ -117,7 +117,7 @@ export class PortableSystem extends createSystem({}) {
     }
     if (this.artifact) {
       this.artifact.rotation.y += delta * 0.5;
-      this.artifact.position.y = OBSERVATORY.vault.y + 1.1 + Math.sin(time * 1.2) * 0.015;
+      this.artifact.position.y = OBSERVATORY.vault.y + 1.42 + Math.sin(time * 1.2) * 0.015;
     }
   }
 
@@ -142,7 +142,7 @@ export class PortableSystem extends createSystem({}) {
     group.add(label);
     this.label = label;
     const v = OBSERVATORY.vault;
-    group.position.set(v.x, v.y + 1.1, v.z);
+    group.position.set(v.x, v.y + 1.42, v.z);
     this.artifact = group;
     this.artifactEntity = this.world.createTransformEntity(group);
     this.glowTarget = status === 'VERIFIED' ? 1.4 : 0.9;

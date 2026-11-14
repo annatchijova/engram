@@ -11,6 +11,7 @@ import { ActorSystem } from './actor-system.js';
 import { ContainmentSystem } from './containment-system.js';
 import { CounterfactualSystem } from './counterfactual-system.js';
 import { CustodyChainSystem } from './custody-chain-system.js';
+import { DesktopLookSystem } from './desktop-look-system.js';
 import { FieldSystem } from './field-system.js';
 import { GuideSystem } from './guide-system.js';
 import { HoverPreviewSystem } from './hover-preview-system.js';
@@ -63,6 +64,7 @@ World.create(
   world.registerSystem(PortableSystem);
   world.registerSystem(AmbienceSystem);
   world.registerSystem(GuideSystem);
+  world.registerSystem(DesktopLookSystem);
   // Last: it reaches into panels (containment/counterfactual/portable,
   // legend's trace section) that the systems above already resolved via
   // getSceneObject in their own init() — registration order is the only

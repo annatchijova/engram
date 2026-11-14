@@ -111,6 +111,10 @@ timer, and the whole tour completes without writing to MNEME.
 ![Step 1: start here](visual/observatory/tour-02-step1-discover.png)
 
 Juror login for the committing steps: user `meta`, password `metavr`.
+On a flat screen, drag to look around and click to select; in a headset,
+turn your head and pinch. Round 11 audited that first contact on both
+surfaces and lists what only a physical Quest can settle:
+[`docs/XR-AUDIT-ROUND11.md`](docs/XR-AUDIT-ROUND11.md).
 Round report: [`docs/XR-GUIDED-FIRST-CONTACT-ROUND10.md`](docs/XR-GUIDED-FIRST-CONTACT-ROUND10.md).
 
 Round 9 report with the full PASS / FAIL / NOT TESTED tables:

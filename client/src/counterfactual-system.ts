@@ -214,8 +214,8 @@ export class CounterfactualSystem extends createSystem({}) {
       this.labels.push(head);
       this.place(head);
     };
-    row(delta.served_a, 1.46, this.tokenA, 'WORLD A · the recorded field', WORLD_A_COLOR, delta.receipt_a_sha256);
-    row(delta.served_b, 1.08, this.tokenB, 'WORLD B · sealed hypothetical, never executed', WORLD_B_COLOR, delta.receipt_b_sha256);
+    row(delta.served_a, 1.74, this.tokenA, 'WORLD A · the recorded field', WORLD_A_COLOR, delta.receipt_a_sha256);
+    row(delta.served_b, 1.36, this.tokenB, 'WORLD B · sealed hypothetical, never executed', WORLD_B_COLOR, delta.receipt_b_sha256);
 
     // ---- Ghost cores for everything whose serving changed ------------------
     const changed = Array.from(changedSet);
@@ -241,7 +241,7 @@ export class CounterfactualSystem extends createSystem({}) {
       this.labels.push(label);
       ghost.position.set(
         c.x + (n <= 1 ? 0 : (i - (n - 1) / 2) * 0.46),
-        1.94,
+        2.18,
         c.z,
       );
       this.ghosts.push(ghost);
@@ -265,7 +265,7 @@ export class CounterfactualSystem extends createSystem({}) {
       ],
       { width: 1.25, background: '#120b1ff7', border: '#b060ffcc' },
     );
-    summary.position.set(c.x, 2.42, c.z);
+    summary.position.set(c.x, 2.62, c.z);
     this.labels.push(summary);
     this.place(summary);
 

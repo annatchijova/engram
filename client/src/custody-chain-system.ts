@@ -70,6 +70,11 @@ export class CustodyChainSystem extends createSystem({}) {
   private scratch = new Vector3();
   private scratchB = new Vector3();
   private riseElapsed = 0;
+  // +1 or -1: which side the chain's event labels sit on. Cores on the
+  // left of the field put their labels further left, cores on the right
+  // further right, so a tower never writes over the actor registry, the
+  // legend or its neighbour's tower.
+  private labelSide = 1;
 
   init(): void {
     this.cleanupFuncs.push(
@@ -120,6 +125,10 @@ export class CustodyChainSystem extends createSystem({}) {
     this.clear();
     if (!chain) return;
     const tower = new Group();
+    const field = this.world.getSystem(FieldSystem);
+    this.labelSide = field?.getCoreWorldPosition(chain.memory_id, this.scratch)
+      ? (this.scratch.x < 0 ? -1 : 1)
+      : 1;
     const entries = [...chain.entries].sort((a, b) => a.seq - b.seq);
 
     if (entries.length === 0) {
@@ -155,7 +164,7 @@ export class CustodyChainSystem extends createSystem({}) {
         ],
         { width: 0.26, background: '#0b1a14d9', border: '#2a5a3a', align: 'left' },
       );
-      label.position.set(0.19, y, 0);
+      label.position.set(0.19 * this.labelSide, y, 0);
       tower.add(label);
       this.labels.push(label);
     });
@@ -180,7 +189,6 @@ export class CustodyChainSystem extends createSystem({}) {
     // Supersession lineage: only when MNEME itself reported a successor AND
     // that successor is a core currently on the bench.
     const successor = detail?.superseded_by ?? null;
-    const field = this.world.getSystem(FieldSystem);
     if (successor && field?.getCoreWorldPosition(successor, this.scratchB)) {
       const geometry = new BufferGeometry().setFromPoints([new Vector3(), new Vector3()]);
       const line = new Line(geometry, this.lineageMaterial);

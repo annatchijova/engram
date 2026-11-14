@@ -40,6 +40,7 @@ import { buildMemoryCore, CoreMaterials, MemoryCore } from './observatory/memory
 import { OBS, OBSERVATORY } from './observatory/palette.js';
 import { CustodyStatus, MemoryNode } from './memory-node-component.js';
 import { SelectedMemory } from './selected-memory.js';
+import { TourState } from './tour-state.js';
 import { CUSTODY_PRESENTATION } from './shared-projection.js';
 import { CUSTODY_GLOSS } from './tour-script.js';
 
@@ -155,6 +156,7 @@ export class FieldSystem extends createSystem({
 
   update(delta: number, time: number): void {
     const selectedId = SelectedMemory.get();
+    const welcome = TourState.get() === 'WELCOME';
     const smoothing = 1 - Math.exp(-delta * 9);
     let selectedCore: MemoryCore | null = null;
 
@@ -165,8 +167,9 @@ export class FieldSystem extends createSystem({
       if (selected) selectedCore = core;
       // Focus: while one memory is open, the other labels step back so the
       // provenance tower and edges have room to read. Cores themselves stay
-      // fully visible; only text yields.
-      core.label.visible = selectedId === null || selected || hovered;
+      // fully visible; only text yields. On the welcome card no label is
+      // shown at all: first contact is one question, not nine captions.
+      core.label.visible = !welcome && (selectedId === null || selected || hovered);
       const targetScale = selected ? 1.22 : hovered ? 1.1 : 1;
       const targetLift = selected ? 0.1 : 0;
       const bob = Math.sin(time * 1.1 + core.phase) * 0.01;
