@@ -26,13 +26,21 @@ can verify offline.
 ## Run it
 
 ```sh
-./scripts/dev-local.sh                 # adapter :8000 + Canvas :8081
+./scripts/dev-local.sh                 # adapter :17347 + client :8081
 python3 scripts/verify-fixture.py      # fixture reproducibility 8/8
 python3 scripts/test-adapter.py        # adapter regressions 8/8
 python3 scripts/readiness.py           # five-state readiness
 ```
 
-Open `https://localhost:8081/canvas.html`, use the five guided steps
-(Observe, Trace, Understand, Compare, Preserve) in the left rail.
+Open `https://localhost:8081/` for the XR observatory, the primary
+surface: it opens on the question this scenario asks, and walks the same
+five steps as a guided investigation. On a flat screen, drag to look
+around and click to select; in a headset, open the LAN URL Vite prints
+and press Enter XR. The juror login for the committing steps is
+`meta` / `metavr`.
+
+`https://localhost:8081/canvas.html` is the 2D investigation board, with
+the same five guided steps (Observe, Trace, Understand, Compare,
+Preserve) in the left rail.
 Reset the live demo field only deliberately:
 `cd server && python3 seed_demo_field.py --reset`.

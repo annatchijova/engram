@@ -40,7 +40,14 @@ if [ -z "${ADAPTER_PID:-}" ]; then
 fi
 echo "Adapter healthy: $(health_now)"
 ENGRAM_READ_TOKEN="$ENGRAM_READ_TOKEN" python3 "$ROOT/scripts/readiness.py" "http://localhost:$PORT" || true
-echo "Open https://localhost:8081/canvas.html (accept the local dev certificate once)."
+echo
+echo "  Observatory (XR, the primary surface): https://localhost:8081/"
+echo "     flat screen: drag to look around, click to select, Home to recentre"
+echo "     headset: open the LAN URL printed by Vite in Quest Browser, press Enter XR"
+echo "     juror login for the committing steps: meta / metavr"
+echo "  Investigation canvas (2D board):       https://localhost:8081/canvas.html"
+echo "  Accept the local dev certificate once on first open."
+echo
 # A previous IWSDK dev runtime for this workspace blocks a fresh one.
 (cd "$ROOT/client" && npm run dev:down >/dev/null 2>&1 || true)
 cd "$ROOT/client" && npm run dev:runtime

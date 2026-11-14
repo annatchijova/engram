@@ -16,7 +16,7 @@
  */
 import { createSystem, Object3D, UIKitMLAsset } from '@iwsdk/core';
 import { AudioCues } from './observatory/audio-cues.js';
-import { requireElement } from './observatory/wiring.js';
+import { requireElement, setPanelVisible } from './observatory/wiring.js';
 import { OnboardingEvents } from './onboarding-events.js';
 import type { OnboardingEvent } from './onboarding-events.js';
 import { OnboardingStage } from './onboarding-stage-component.js';
@@ -122,8 +122,7 @@ export class OnboardingSystem extends createSystem({}) {
 
   private applyVisibility(welcome: UIKitMLAsset | undefined, guide: UIKitMLAsset | undefined, stage: string): void {
     const r = revealedAt(stage);
-    const show = (asset: UIKitMLAsset | undefined, rootId: string, visible: boolean) =>
-      asset?.getElementById(rootId)?.setProperties({ display: visible ? 'flex' : 'none' });
+    const show = setPanelVisible;
     show(welcome, 'welcome-root', r.welcome);
     show(guide, 'next-step-root', r.guide);
     const legend = this.world.getSceneObject<UIKitMLAsset>('legend-panel');

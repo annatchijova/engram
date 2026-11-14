@@ -23,6 +23,7 @@
 import {
   CapsuleGeometry,
   Color,
+  MeshBasicMaterial,
   createSystem,
   CylinderGeometry,
   DistanceGrabbable,
@@ -35,6 +36,7 @@ import {
   MovementMode,
   Pressed,
   RayInteractable,
+  SphereGeometry,
   Sprite,
   TorusGeometry,
   UIKitMLAsset,
@@ -46,6 +48,7 @@ import { FieldEvents } from './field-events.js';
 import { InterventionStore } from './intervention-store.js';
 import { AudioCues } from './observatory/audio-cues.js';
 import { disposeLabel, makeLabel } from './observatory/labels.js';
+import { setPanelVisible } from './observatory/wiring.js';
 import { OBSERVATORY } from './observatory/palette.js';
 
 export const ACTOR_STATUS_COLOR: Record<string, string> = {
@@ -53,6 +56,15 @@ export const ACTOR_STATUS_COLOR: Record<string, string> = {
   QUARANTINED: '#c13030',
 };
 const UNKNOWN_ACTOR_COLOR = '#999999';
+
+// An actor totem's visible body is a 9 cm capsule sitting 8 cm above its
+// entity origin, so a ray aimed at the object's own position grazed the
+// very bottom of it: repeated trials grabbed it 4 times in 6. The body
+// keeps its size — it is a registry totem, not a target — and gets an
+// invisible, generous pick volume centred on what the eye actually sees.
+// Rendered as fully transparent rather than `visible = false`, because
+// the ray intersector filters invisible objects out.
+const GRAB_PROXY_GEO = new SphereGeometry(0.115, 12, 10);
 
 const GEO = {
   HUMAN: new CapsuleGeometry(0.045, 0.09, 6, 16),
@@ -79,6 +91,9 @@ export class ActorSystem extends createSystem({
   private totems: Totem[] = [];
   private materials: Record<string, MeshStandardMaterial> = {};
   private fallback = new MeshStandardMaterial({ color: new Color(UNKNOWN_ACTOR_COLOR) });
+  private grabProxyMaterial = new MeshBasicMaterial({
+    transparent: true, opacity: 0, depthWrite: false,
+  });
   private cageMaterial = new MeshStandardMaterial({
     color: new Color(ACTOR_STATUS_COLOR.QUARANTINED),
     emissive: new Color(ACTOR_STATUS_COLOR.QUARANTINED),
@@ -101,7 +116,8 @@ export class ActorSystem extends createSystem({
     });
     const panel = this.world.getSceneObject<UIKitMLAsset>('authority-panel');
     const close = panel?.getElementById('authority-close');
-    const hide = () => panel?.getElementById('authority-root')?.setProperties({ display: 'none' });
+    const hide = () => setPanelVisible(panel, 'authority-root', false);
+    hide();
     close?.addEventListener('click', hide);
     this.cleanupFuncs.push(
       () => close?.removeEventListener('click', hide),
@@ -138,7 +154,7 @@ export class ActorSystem extends createSystem({
     this.busy = true;
     const panel = this.world.getSceneObject<UIKitMLAsset>('authority-panel');
     panel?.getElementById('authority-title')?.setProperties({ text: `${actorId} — reading grants...` });
-    panel?.getElementById('authority-root')?.setProperties({ display: 'flex' });
+    setPanelVisible(panel, 'authority-root', true);
     AudioCues.play('select');
     try {
       const authority = await EngramApi.getAuthority(actorId);
@@ -200,6 +216,9 @@ export class ActorSystem extends createSystem({
       const mesh = new Mesh(geometry, material);
       mesh.position.y = 0.08;
       group.add(mesh);
+      const grabProxy = new Mesh(GRAB_PROXY_GEO, this.grabProxyMaterial);
+      grabProxy.position.y = 0.08;
+      group.add(grabProxy);
       const ring = new Mesh(GEO.ring, material);
       ring.rotation.x = Math.PI / 2;
       ring.position.y = -0.04;

@@ -148,3 +148,36 @@ test('O8. audio cues stay discreet and never replace on-screen information', () 
   for (const g of gains) assert.ok(g <= 0.06, `cue gain ${g} is too loud for an instrument cue`);
   assert.ok(/setEnabled/.test(audio), 'audio must be switchable off');
 });
+
+test('O9. hiding a panel also takes it out of the pointer\'s way', () => {
+  // A UIKit root collapsed with display:none leaves its scene node in
+  // place, and the XR ray intersector filters on object visibility, so a
+  // "hidden" panel went on swallowing rays: the welcome card made the
+  // actor registry behind it unreachable. Every gating site must go
+  // through the helper that moves both together.
+  const wiring = read('src/observatory/wiring.ts');
+  assert.match(wiring, /export function setPanelVisible/);
+  assert.match(wiring, /node\.visible = visible/);
+
+  const srcDir = path.join(here, '..', 'src');
+  const offenders = [];
+  for (const file of fs.readdirSync(srcDir).filter((f) => f.endsWith('.ts') && f !== 'wiring.ts')) {
+    const code = fs.readFileSync(path.join(srcDir, file), 'utf8');
+    for (const m of code.matchAll(/getElementById\(['`]([a-z0-9-]*-root)['`]\)\?\.setProperties\(\{\s*display/g)) {
+      offenders.push(`${file}:${m[1]}`);
+    }
+  }
+  assert.deepEqual(offenders, [],
+    `these toggle a panel root's display without hiding its node: ${offenders.join(', ')}`);
+});
+
+test('O10. an actor totem carries a pick volume larger than its drawn body', () => {
+  // The body sits 8 cm above the entity origin, so a ray aimed at the
+  // object grazed its lower edge and the grab failed 2 times in 6.
+  const actors = read('src/actor-system.ts');
+  const proxy = /const GRAB_PROXY_GEO = new SphereGeometry\(([\d.]+)/.exec(actors);
+  assert.ok(proxy, 'no grab proxy declared');
+  assert.ok(Number(proxy[1]) >= 0.1, 'the pick volume is no more forgiving than the body');
+  assert.match(actors, /opacity: 0, depthWrite: false/,
+    'the proxy must be transparent, not invisible: the intersector drops invisible objects');
+});

@@ -18,7 +18,7 @@ import { FieldSystem } from './field-system.js';
 import { MemoryNode } from './memory-node-component.js';
 import { AudioCues } from './observatory/audio-cues.js';
 import { OnboardingEvents } from './onboarding-events.js';
-import { requireElement } from './observatory/wiring.js';
+import { requireElement, setPanelVisible } from './observatory/wiring.js';
 import { SelectedMemory } from './selected-memory.js';
 import { CUSTODY_GLOSS } from './tour-script.js';
 
@@ -48,9 +48,12 @@ export class SelectionSystem extends createSystem({
     const close = requireElement(panel, 'detail-panel', 'detail-close');
     const more = requireElement(panel, 'detail-panel', 'detail-more');
     const hide = () => {
-      panel?.getElementById('detail-root')?.setProperties({ display: 'none' });
+      setPanelVisible(panel, 'detail-root', false);
       SelectedMemory.set(null);
     };
+    // The inspector starts closed, and a closed panel must not stand in
+    // the ray's way: it sits between the seat and the chamber console.
+    setPanelVisible(panel, 'detail-root', false);
     // Progressive disclosure: identity, state and content first; hash,
     // exact confidence and the event-by-event chain text on request. The
     // data is fetched and present either way, only its display toggles.
@@ -109,7 +112,7 @@ export class SelectionSystem extends createSystem({
       panel?.getElementById('detail-chain')?.setProperties({
         text: `custody chain (${custody.chain_length} events):\n\n${chainText}`,
       });
-      panel?.getElementById('detail-root')?.setProperties({ display: 'flex' });
+      setPanelVisible(panel, 'detail-root', true);
       field?.setCoreState(memoryId, 'idle');
       SelectedMemory.setRecord(custody, memory);
       AudioCues.play('open');
@@ -125,7 +128,7 @@ export class SelectionSystem extends createSystem({
       panel?.getElementById('detail-content')?.setProperties({
         text: String((err as Error).message ?? err),
       });
-      panel?.getElementById('detail-root')?.setProperties({ display: 'flex' });
+      setPanelVisible(panel, 'detail-root', true);
     } finally {
       this.busy = false;
     }

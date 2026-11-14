@@ -48,8 +48,9 @@ python3 scripts/verify-fixture.py   # synthetic scenario, reproducible
 python3 scripts/test-adapter.py     # adapter regressions on a temp field
 ```
 
-Open `https://localhost:8081/canvas.html` for the desktop investigation
-board (the XR view stays at `/index.html`). Guides:
+Open `https://localhost:8081/` for the XR observatory, the primary
+surface. `https://localhost:8081/canvas.html` is the 2D investigation
+board. Guides:
 `docs/DEMO-SCENARIO.md`, `docs/XR-INTERACTION-VALIDATION.md`,
 `docs/SECURITY-ROUND4.md`. Spanish summary: `README.es.md`.
 
@@ -114,7 +115,11 @@ Juror login for the committing steps: user `meta`, password `metavr`.
 On a flat screen, drag to look around and click to select; in a headset,
 turn your head and pinch. Round 11 audited that first contact on both
 surfaces and lists what only a physical Quest can settle:
-[`docs/XR-AUDIT-ROUND11.md`](docs/XR-AUDIT-ROUND11.md).
+[`docs/XR-AUDIT-ROUND11.md`](docs/XR-AUDIT-ROUND11.md). Round 12 is the
+release-candidate assessment, with evidence separated into what tests
+prove, what was observed in the emulator, what needs a headset, and what
+needs real users:
+[`docs/XR-RELEASE-CANDIDATE-ROUND12.md`](docs/XR-RELEASE-CANDIDATE-ROUND12.md).
 Round report: [`docs/XR-GUIDED-FIRST-CONTACT-ROUND10.md`](docs/XR-GUIDED-FIRST-CONTACT-ROUND10.md).
 
 Round 9 report with the full PASS / FAIL / NOT TESTED tables:
@@ -171,8 +176,15 @@ counterfactual is explicitly sealed as never executed.
 - **Client**: https://client-six-mu-93.vercel.app
 - **Adapter**: https://engram-mneme-adapter.fly.dev
 
-Both are deployed and talking to each other for real — not a local-only
-demo. See `server/README.md` / `client/README.md` for redeploy commands.
+**Check before judging from these links.** As of 2026-11-14 the deployed
+client still serves the build that predates the observatory
+(`<title>client</title>`), so the link shows the earlier experience, not
+this one; redeploy with the commands in `client/README.md` before
+relying on it. The deployed adapter could not be reached from the
+development machine either, though that machine has no IPv6 route and
+the Fly hostname resolves only to IPv6 there, so its state is unverified
+rather than known-down. Run the local commands above for the current
+experience. See `server/README.md` / `client/README.md` for redeploy commands.
 **Known limitation**: the backend has no persistent volume, so it
 reseeds a fresh demo field on every restart — a live quarantine/export
 someone runs against the public link resets on the next redeploy, not
