@@ -15,5 +15,5 @@
   <button class="btn" id="pi-export">Export &amp; Verify Bundle</button>
   <button class="btn-disabled" id="pi-download">Download bundle.json</button>
   <span class="gloss">a second, separate program checks this file - not the one that made it</span>
-  <span class="result" id="pi-result"></span>
+  <span class="result" id="pi-result">-</span>
 </div>

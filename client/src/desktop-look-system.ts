@@ -25,6 +25,8 @@ const PITCH_LIMIT = MathUtils.degToRad(26);
 // centre in one gesture, slow enough to stop on a button.
 const DRAG_SENSITIVITY = 0.0013;
 const KEY_SPEED = MathUtils.degToRad(70);
+// One tap of an arrow key.
+const KEY_NUDGE = MathUtils.degToRad(9);
 // A press that moves less than this stays a click, so selecting a memory
 // by clicking it keeps working exactly as before.
 const DRAG_THRESHOLD_PX = 6;
@@ -67,7 +69,12 @@ export class DesktopLookSystem extends createSystem({
       this.lastX = e.clientX;
       this.lastY = e.clientY;
       this.moved += Math.abs(dx) + Math.abs(dy);
-      if (this.moved < DRAG_THRESHOLD_PX || this.blocked !== false) return;
+      if (this.moved < DRAG_THRESHOLD_PX) return;
+      // Decide here if the frame after the press has not come round yet:
+      // a quick flick can begin and end inside one frame, and waiting for
+      // update() to classify it threw the whole gesture away.
+      if (this.blocked === null) this.blocked = this.pressLandedOnSomething();
+      if (this.blocked) return;
       this.capture();
       this.yaw = clamp(this.yaw - dx * DRAG_SENSITIVITY, -YAW_LIMIT, YAW_LIMIT);
       this.pitch = clamp(this.pitch - dy * DRAG_SENSITIVITY, -PITCH_LIMIT, PITCH_LIMIT);
@@ -75,7 +82,15 @@ export class DesktopLookSystem extends createSystem({
     };
     const onUp = () => { this.dragging = false; this.blocked = null; };
     const onKeyDown = (e: KeyboardEvent) => {
-      if (LOOK_KEYS.has(e.key)) { this.keys.add(e.key); e.preventDefault(); }
+      if (LOOK_KEYS.has(e.key)) {
+        this.keys.add(e.key);
+        e.preventDefault();
+        // A tap nudges; holding keeps turning. Without this a short press
+        // was released before the next frame and did nothing at all.
+        this.capture();
+        this.nudge(e.key, KEY_NUDGE);
+        this.apply();
+      }
       if (e.key === 'Home') { this.yaw = 0; this.pitch = 0; this.capture(); this.apply(); }
     };
     const onKeyUp = (e: KeyboardEvent) => this.keys.delete(e.key);
@@ -98,19 +113,31 @@ export class DesktopLookSystem extends createSystem({
     // Resolve, one frame after the press, whether this drag belongs to an
     // object. The pointer-events system has by then tagged what was hit.
     if (this.dragging && this.blocked === null) {
-      this.blocked = this.queries.held.entities.size > 0
-        || this.queries.pressed.entities.size > 0;
+      this.blocked = this.pressLandedOnSomething();
     }
-    if (this.keys.size === 0 || this.presenting()) return;
+    if (this.presenting()) return;
+    // Hold the chosen view every frame, against whatever else writes the
+    // camera or the rig while no immersive session is presenting.
+    if (this.captured) this.apply();
+    if (this.keys.size === 0) return;
     const step = KEY_SPEED * delta;
-    if (this.keys.has('ArrowLeft')) this.yaw += step;
-    if (this.keys.has('ArrowRight')) this.yaw -= step;
-    if (this.keys.has('ArrowUp')) this.pitch += step * 0.6;
-    if (this.keys.has('ArrowDown')) this.pitch -= step * 0.6;
-    this.yaw = clamp(this.yaw, -YAW_LIMIT, YAW_LIMIT);
-    this.pitch = clamp(this.pitch, -PITCH_LIMIT, PITCH_LIMIT);
+    for (const key of this.keys) this.nudge(key, step);
     this.capture();
     this.apply();
+  }
+
+  private nudge(key: string, step: number): void {
+    if (key === 'ArrowLeft') this.yaw += step;
+    if (key === 'ArrowRight') this.yaw -= step;
+    if (key === 'ArrowUp') this.pitch += step * 0.6;
+    if (key === 'ArrowDown') this.pitch -= step * 0.6;
+    this.yaw = clamp(this.yaw, -YAW_LIMIT, YAW_LIMIT);
+    this.pitch = clamp(this.pitch, -PITCH_LIMIT, PITCH_LIMIT);
+  }
+
+  /** Whether the press that started this drag belongs to an object. */
+  private pressLandedOnSomething(): boolean {
+    return this.queries.held.entities.size > 0 || this.queries.pressed.entities.size > 0;
   }
 
   /** True while an immersive session is presenting: the headset's pose is
@@ -119,23 +146,36 @@ export class DesktopLookSystem extends createSystem({
     return this.world.session !== undefined;
   }
 
-  /** The authored hero view is applied after level load, so the rest pose
-   * is taken from wherever the camera is at the first look input. */
+  /** The authored hero view is applied after the level loads, so the rest
+   * pose is taken from wherever the rig and camera sit at the first look
+   * input. */
   private capture(): void {
     if (this.captured) return;
     const camera = this.world.camera;
     camera.rotation.reorder('YXZ');
-    this.baseYaw = camera.rotation.y;
+    this.baseYaw = (this.world.player as unknown as { rotation: { y: number } }).rotation.y;
     this.basePitch = camera.rotation.x;
     this.captured = true;
   }
 
+  /**
+   * Yaw turns the player rig and pitch tilts the camera, and both are
+   * re-applied every frame.
+   *
+   * Writing the camera's yaw once per input event worked on the dev
+   * server and did nothing in the production build: outside an immersive
+   * session something re-syncs the camera from the rig each frame, so a
+   * one-shot write was overwritten before it was ever drawn. Turning the
+   * rig is also the honest lever — it is the same thing snap-turn
+   * locomotion moves, and it leaves the camera's relationship to the
+   * player intact.
+   */
   private apply(): void {
+    const rig = this.world.player as unknown as { rotation: { y: number } };
+    rig.rotation.y = this.baseYaw + this.yaw;
     const camera = this.world.camera;
     camera.rotation.order = 'YXZ';
-    camera.rotation.y = this.baseYaw + this.yaw;
     camera.rotation.x = this.basePitch + this.pitch;
-    camera.rotation.z = 0;
   }
 }
 

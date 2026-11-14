@@ -18,9 +18,9 @@
   <span class="target" id="actor-row-label">target: pipeline-logs (ACTIVE)</span>
   <button class="stage-btn" id="stage-btn">Stage quarantine</button>
   <span class="gloss">preview only - nothing changes yet. Staged memories get an amber PREVIEW ring on the field.</span>
-  <span class="preview-text" id="preview-text" style="display: none"></span>
+  <span class="preview-text" id="preview-text" style="display: none">preview</span>
   <button class="commit-btn" id="commit-btn" style="display: none">Commit (writes to MNEME)</button>
   <button class="cancel-btn" id="cancel-btn" style="display: none">Cancel</button>
   <span class="gloss" id="commit-gloss" style="display: none">Commit is the one action that actually changes the field</span>
-  <span class="result-text" id="result-text"></span>
+  <span class="result-text" id="result-text">-</span>
 </div>

@@ -14,5 +14,5 @@
   <button class="btn" id="cf-exclusion">Exclusion forecast (mem-gate)</button>
   <button class="btn" id="cf-containment">Containment effect (mem-poison)</button>
   <button class="btn-collapse" id="cf-collapse">Collapse chamber</button>
-  <span class="result" id="cf-result"></span>
+  <span class="result" id="cf-result">-</span>
 </div>

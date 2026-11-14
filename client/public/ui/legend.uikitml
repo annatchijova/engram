@@ -55,5 +55,5 @@
     <span class="label" id="text-POSSIBLE">POSSIBLE (not causal)</span>
     <span class="gloss">touched the same context - not a cause</span>
   </div>
-  <span class="status-line" id="legend-status" style="display: none"></span>
+  <span class="status-line" id="legend-status" style="display: none">field status</span>
 </div>

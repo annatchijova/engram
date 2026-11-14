@@ -12,9 +12,9 @@
 <div class="panel-root" id="next-step-root">
   <span class="eyebrow" id="guide-eyebrow">INVESTIGATION - STEP 1 OF 5</span>
   <span class="question" id="guide-question">Which memory deserves our attention?</span>
-  <span class="body" id="next-step-text"></span>
-  <span class="action" id="guide-action"></span>
-  <span class="progress" id="guide-progress"></span>
+  <span class="body" id="next-step-text">Every capsule on the bench is a real memory MNEME holds, coloured by its custody state.</span>
+  <span class="action" id="guide-action">Next: point at the marked memory and pinch, or click, to open it.</span>
+  <span class="progress" id="guide-progress">o o o o o</span>
   <span class="checklist-row" id="checklist-select" style="display: none">[ ] Found it</span>
   <span class="checklist-row" id="checklist-trace" style="display: none">[ ] Traced it</span>
   <span class="checklist-row" id="checklist-containment" style="display: none">[ ] Contained it</span>

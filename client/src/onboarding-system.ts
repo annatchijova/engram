@@ -68,8 +68,12 @@ export class OnboardingSystem extends createSystem({}) {
       this.stage = stage;
       entity.setValue(OnboardingStage, 'stage', stage);
       TourState.set(stage);
-      this.applyGuideCard(guide, stage);
+      // Show first, then write. UIKit drops a text update aimed at a
+      // hidden panel, and an element that starts empty never materialises
+      // a text node to receive one — between them, step one of the guided
+      // tour rendered its question with no explanation and no next action.
       this.applyVisibility(welcome, guide, stage);
+      this.applyGuideCard(guide, stage);
       this.applyMilestones(guide, stage);
     };
 

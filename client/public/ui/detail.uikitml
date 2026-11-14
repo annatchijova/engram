@@ -15,13 +15,13 @@
 <div class="panel-root" id="detail-root" style="display: none">
   <span class="eyebrow">MEMORY RECORD - read-only</span>
   <span class="title" id="detail-title">memory</span>
-  <span class="plain" id="detail-plain"></span>
-  <span class="field" id="detail-content"></span>
+  <span class="plain" id="detail-plain">reading custody state...</span>
+  <span class="field" id="detail-content">reading record...</span>
   <button class="trace-btn" id="detail-trace">Trace impact</button>
   <button class="more-btn" id="detail-more">Show full record (hash, confidence, chain)</button>
-  <span class="hash" id="detail-hash" style="display: none"></span>
-  <span class="meta" id="detail-confidence" style="display: none"></span>
-  <span class="chain" id="detail-chain" style="display: none"></span>
-  <span class="impact" id="detail-impact"></span>
+  <span class="hash" id="detail-hash" style="display: none">sha256</span>
+  <span class="meta" id="detail-confidence" style="display: none">confidence</span>
+  <span class="chain" id="detail-chain" style="display: none">custody chain</span>
+  <span class="impact" id="detail-impact">-</span>
   <button class="close" id="detail-close">Close record</button>
 </div>

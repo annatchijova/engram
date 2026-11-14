@@ -7,7 +7,7 @@
 </style>
 <div class="panel-root" id="preview-root" style="display: none">
   <span class="id" id="preview-id">memory</span>
-  <span class="topic" id="preview-topic"></span>
-  <span class="excerpt" id="preview-excerpt"></span>
+  <span class="topic" id="preview-topic">topic</span>
+  <span class="excerpt" id="preview-excerpt">excerpt</span>
   <span class="hint">short pinch opens the full record - hold the pinch to lift the core off the field</span>
 </div>

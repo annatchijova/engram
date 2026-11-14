@@ -12,6 +12,6 @@
   <input class="field" id="login-user" type="text" placeholder="username" autocomplete="username" />
   <input class="field" id="login-pass" type="password" placeholder="password" autocomplete="current-password" />
   <button class="submit-btn" id="login-submit">Log in</button>
-  <span class="status" id="login-status"></span>
+  <span class="status" id="login-status">not signed in</span>
   <span class="status" id="login-hint">juror account: meta / metavr (acts as analyst-omar). Agent Ada (ada) holds fewer grants and is refused by MNEME.</span>
 </div>

@@ -176,7 +176,9 @@ counterfactual is explicitly sealed as never executed.
 - **Client**: https://client-six-mu-93.vercel.app
 - **Adapter**: https://engram-mneme-adapter.fly.dev
 
-**Check before judging from these links.** As of 2026-11-14 the deployed
+**Check before judging from these links.** Deployment readiness, with the
+exact commands, post-publish checks and rollback, is in
+[`docs/DEPLOYMENT-READINESS-ROUND13.md`](docs/DEPLOYMENT-READINESS-ROUND13.md). As of 2026-11-14 the deployed
 client still serves the build that predates the observatory
 (`<title>client</title>`), so the link shows the earlier experience, not
 this one; redeploy with the commands in `client/README.md` before

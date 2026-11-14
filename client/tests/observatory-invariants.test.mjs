@@ -181,3 +181,31 @@ test('O10. an actor totem carries a pick volume larger than its drawn body', () 
   assert.match(actors, /opacity: 0, depthWrite: false/,
     'the proxy must be transparent, not invisible: the intersector drops invisible objects');
 });
+
+test('O11. every element the code writes text into can receive it', () => {
+  // UIKit drops a text update aimed at an element that never had text:
+  // no text node is created to receive it. Step one of the guided tour
+  // rendered its question with no explanation and no next action for
+  // exactly this reason, and no functional test caught it because the
+  // questions came from markup defaults that happened to match.
+  const uiDir = path.join(here, '..', 'public', 'ui');
+  const content = new Map();
+  for (const file of fs.readdirSync(uiDir).filter((f) => f.endsWith('.uikitml'))) {
+    const text = fs.readFileSync(path.join(uiDir, file), 'utf8');
+    for (const m of text.matchAll(/<(span|button|div)[^>]*\sid="([^"]+)"[^>]*>([\s\S]*?)<\/\1>/g)) {
+      content.set(m[2], m[3].trim());
+    }
+  }
+  const srcDir = path.join(here, '..', 'src');
+  const written = new Set();
+  for (const file of fs.readdirSync(srcDir).filter((f) => f.endsWith('.ts'))) {
+    const code = fs.readFileSync(path.join(srcDir, file), 'utf8');
+    for (const m of code.matchAll(/getElementById\(['`]([a-z0-9-]+)['`]\)\?\.setProperties\(\{\s*\n?\s*text:/g)) {
+      written.add(m[1]);
+    }
+  }
+  assert.ok(written.size > 8, `expected the written controls, found ${written.size}`);
+  const blank = [...written].filter((id) => content.has(id) && content.get(id) === '');
+  assert.deepEqual(blank, [],
+    `these are written from code but ship empty, so the first write is lost: ${blank.join(', ')}`);
+});
