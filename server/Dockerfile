@@ -23,10 +23,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app.py seed_demo_field.py ./
 
+# Fly sets 8080 in fly.toml; other container hosts inject their own PORT
+# (Hugging Face Spaces uses 7860, Cloud Run and Render pass $PORT). One
+# image has to serve all of them, so the port is read at start and only
+# defaults to 8080.
+ENV PORT=8080
 EXPOSE 8080
 
 # The field reseeds fresh on every boot (idempotent — refuses to touch a
 # non-empty field) rather than relying on a persistent volume: a live
 # demo quarantine/export resets on redeploy or restart. Named tradeoff,
 # not hidden — see server/README.md.
-CMD ["sh", "-c", "python3 seed_demo_field.py; exec uvicorn app:app --host 0.0.0.0 --port 8080"]
+CMD ["sh", "-c", "python3 seed_demo_field.py; exec uvicorn app:app --host 0.0.0.0 --port ${PORT:-8080}"]
