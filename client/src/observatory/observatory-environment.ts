@@ -1,38 +1,48 @@
 /**
- * ENGRAM Memory Lab — the room itself. Pure presentation: benches, consoles,
- * the counterfactual chamber shell, the evidence vault pedestal, lights and
- * drifting dust. Nothing here reads MNEME data; the systems that do place
- * their evidence objects INTO these zones (field-system, actor-system,
- * counterfactual-system, portable-system).
+ * ENGRAM Memory Observatory — the room itself.
  *
- * Zones are physically distinct on purpose (README: "the spaces must remain
- * physically and semantically distinct"): the factual evidence bench is in
- * front, the counterfactual chamber is a separate raised ring to the left,
- * the evidence vault a separate pedestal to the right.
+ * The room is an instrument, not a set: a graphite dais under an open dome,
+ * engraved like the limb of an astrolabe, with the recorded field standing
+ * on a single arc in front of the seated observer. Everything here is ink
+ * or ivory (see palette.ts: hue is evidence, structure is neutral), so the
+ * only saturated colour in view is whatever MNEME returned.
+ *
+ * Pure presentation. Nothing here reads MNEME data; the systems that do
+ * place their objects INTO these zones (field-system, actor-system,
+ * counterfactual-system, portable-system). No line drawn here connects two
+ * zones or two memories: the engraving is concentric and radial-free on
+ * purpose, so the architecture can never be read as a relationship.
+ *
+ * Zones are physically distinct (README: "the spaces must remain physically
+ * and semantically distinct"): the factual field is in front, the sealed
+ * hypothetical is a separate violet column to the left, the verification
+ * instrument a separate pedestal to the right.
  */
 import {
   AdditiveBlending,
-  BoxGeometry,
+  BackSide,
   BufferAttribute,
   BufferGeometry,
+  CanvasTexture,
   CircleGeometry,
   Color,
   CylinderGeometry,
   DirectionalLight,
   DoubleSide,
+  ExtrudeGeometry,
   FogExp2,
   Group,
   HemisphereLight,
+  LineBasicMaterial,
+  LineSegments,
   Mesh,
-  MeshPhysicalMaterial,
+  MeshBasicMaterial,
   MeshStandardMaterial,
-  PlaneGeometry,
   PointLight,
-  Points,
-  PointsMaterial,
   RingGeometry,
   Scene,
-  SpotLight,
+  Shape,
+  SRGBColorSpace,
   TorusGeometry,
 } from '@iwsdk/core';
 import { makeLabel } from './labels.js';
@@ -43,185 +53,169 @@ export type ObservatoryHandles = {
   chamberLight: PointLight;
   vaultRing: MeshStandardMaterial;
   vaultLight: PointLight;
-  benchStrip: MeshStandardMaterial;
-  dust: Points;
-  dustVelocity: Float32Array;
+  /** Ivory edge of the field arc and its graduations: lit by field presence. */
+  limb: MeshBasicMaterial;
+  graduations: MeshBasicMaterial;
 };
 
-const DUST_COUNT = 420;
 /** Interior height of the counterfactual containment column. */
 export const CHAMBER_HEIGHT = 2.5;
 
+const BENCH_TOP = 0.86;
+const BENCH_INNER = 0.95;
+const BENCH_OUTER = 1.35;
+const LIMB_REST = 0.14;
+
 export function buildObservatory(scene: Scene): ObservatoryHandles {
   scene.background = new Color(OBS.background);
-  scene.fog = new FogExp2(OBS.background, 0.085);
+  scene.fog = new FogExp2(OBS.background, 0.045);
 
   const root = new Group();
-  root.name = 'lab-architecture';
+  root.name = 'observatory-architecture';
   scene.add(root);
 
-  // ---- Lighting rig -------------------------------------------------------
-  root.add(new HemisphereLight('#3d5878', '#0a0d12', 0.55));
-  const key = new DirectionalLight('#dfeaf5', 1.0);
-  key.position.set(1.5, 3.2, 1.0);
-  root.add(key);
-  const fill = new DirectionalLight('#4e6f94', 0.3);
-  fill.position.set(-2, 1.8, 0.6);
-  root.add(fill);
-  const benchPool = new SpotLight('#eaf3ff', 4.5, 6, Math.PI / 4.2, 0.5, 1.2);
-  benchPool.position.set(0, 2.9, -0.6);
-  benchPool.target.position.set(0, 1.0, -1.1);
-  root.add(benchPool, benchPool.target);
+  const { benchCenter, benchSpanDeg } = OBSERVATORY;
+  const cx = benchCenter.x;
+  const cz = benchCenter.z;
 
-  // ---- Floor --------------------------------------------------------------
-  const floor = new Mesh(
-    new CircleGeometry(5.5, 64),
-    new MeshStandardMaterial({ color: OBS.floor, roughness: 0.6, metalness: 0.25 }),
+  // ---- Light: one key, one rim, sky fill ------------------------------------
+  // Three static lights for the whole room (the two zone lamps below are the
+  // only others), so every lit material pays for five lights, not eight.
+  root.add(new HemisphereLight('#d7dcea', '#0b0d12', 0.55));
+  const key = new DirectionalLight('#fff4e2', 1.25);
+  key.position.set(1.2, 3.6, 1.6);
+  root.add(key);
+  const rim = new DirectionalLight('#aab8d8', 0.55);
+  rim.position.set(-1.6, 1.4, -3.2);
+  root.add(rim);
+
+  // ---- Ground and dais --------------------------------------------------------
+  const ground = new Mesh(
+    new CircleGeometry(14, 48),
+    new MeshBasicMaterial({ color: '#07080b' }),
   );
-  floor.rotation.x = -Math.PI / 2;
-  floor.position.set(0, -0.001, -1.2);
-  root.add(floor);
-  // Concentric floor rings instead of a square grid: the room reads as a
-  // circular lab around the seated investigator.
-  const ringMat = new MeshStandardMaterial({
-    color: OBS.floorGrid, emissive: OBS.floorGrid, emissiveIntensity: 0.6, side: DoubleSide,
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.set(cx, -0.012, cz);
+  root.add(ground);
+
+  const graphite = new MeshStandardMaterial({ color: OBS.floor, roughness: 0.82, metalness: 0.15 });
+  const dais = new Mesh(new CircleGeometry(3.45, 96), graphite);
+  dais.rotation.x = -Math.PI / 2;
+  dais.position.set(cx, 0, cz);
+  root.add(dais);
+
+  // Engraving: concentric rings only. The ring at 2.59 m is the one both
+  // side instruments stand on; it relates them to the observer's seat, not
+  // to each other.
+  const engraving = new MeshBasicMaterial({
+    color: OBS.ivory, transparent: true, opacity: 0.16, depthWrite: false,
   });
-  for (let r = 0.8; r <= 4.4; r += 0.6) {
-    const ring = new Mesh(new RingGeometry(r - 0.006, r + 0.006, 96), ringMat);
+  const instrumentRadius = Math.hypot(OBSERVATORY.chamber.x - cx, OBSERVATORY.chamber.z - cz);
+  for (const [r, w] of [[0.6, 0.003], [instrumentRadius, 0.004], [3.45, 0.008]] as const) {
+    const ring = new Mesh(new RingGeometry(r - w, r + w, 128), engraving);
     ring.rotation.x = -Math.PI / 2;
-    ring.position.set(0, 0.002, -1.2);
+    ring.position.set(cx, 0.002, cz);
     root.add(ring);
   }
 
-  // ---- Walls / ceiling trim -----------------------------------------------
-  const wallMat = new MeshStandardMaterial({ color: OBS.wall, roughness: 0.9, metalness: 0.05, side: DoubleSide });
-  const back = new Mesh(new PlaneGeometry(12, 4.8), wallMat);
-  back.position.set(0, 2.3, -4.2);
-  root.add(back);
-  const left = new Mesh(new PlaneGeometry(10, 4.8), wallMat);
-  left.rotation.y = Math.PI / 2;
-  left.position.set(-4.5, 2.3, -1.2);
-  root.add(left);
-  const right = new Mesh(new PlaneGeometry(10, 4.8), wallMat);
-  right.rotation.y = -Math.PI / 2;
-  right.position.set(4.5, 2.3, -1.2);
-  root.add(right);
-  const ceiling = new Mesh(new PlaneGeometry(12, 10), wallMat);
-  ceiling.rotation.x = Math.PI / 2;
-  ceiling.position.set(0, 3.6, -1.2);
-  root.add(ceiling);
-
-  // Light strips across the ceiling and a halo over the bench.
-  const stripMat = new MeshStandardMaterial({
-    color: '#9fc8ff', emissive: '#9fc8ff', emissiveIntensity: 1.6, roughness: 0.4,
+  // The limb scale: graduations every 2 degrees just outside the field arc,
+  // longer every 10. Unnumbered: a number here would look like a
+  // measurement, and nothing is being measured by position.
+  const graduations = new MeshBasicMaterial({
+    color: OBS.ivory, transparent: true, opacity: LIMB_REST, depthWrite: false, side: DoubleSide,
   });
-  for (const x of [-2.4, -1.2, 0, 1.2, 2.4]) {
-    const strip = new Mesh(new BoxGeometry(0.06, 0.02, 7.5), stripMat);
-    strip.position.set(x, 3.58, -1.2);
-    root.add(strip);
-  }
-  // Columns anchoring the back wall.
-  const columnMat = new MeshStandardMaterial({ color: OBS.trim, roughness: 0.5, metalness: 0.6 });
-  for (const x of [-3.2, -1.6, 1.6, 3.2]) {
-    const column = new Mesh(new BoxGeometry(0.18, 3.6, 0.18), columnMat);
-    column.position.set(x, 1.8, -4.05);
-    root.add(column);
-  }
+  const ticks = new Mesh(buildTicks(BENCH_OUTER + 0.07, 2, 0.022, 0.06, 0.0028), graduations);
+  ticks.position.set(cx, 0.003, cz);
+  root.add(ticks);
 
-  // ---- Evidence bench (factual zone, front) --------------------------------
+  // ---- Dome ---------------------------------------------------------------------
+  // Meridians and parallels of an observatory dome at the edge of fog. They
+  // give the eye a far surface to converge on (depth comfort) and a horizon.
+  const domeLines = new LineSegments(
+    buildDomeLines(11, 24, 4),
+    new LineBasicMaterial({ color: OBS.ivory, transparent: true, opacity: 0.07, fog: false, depthWrite: false }),
+  );
+  domeLines.position.set(cx, 0, cz);
+  root.add(domeLines);
+  const horizon = new Mesh(
+    new CylinderGeometry(11.5, 11.5, 5, 64, 1, true),
+    new MeshBasicMaterial({
+      map: horizonTexture(), transparent: true, blending: AdditiveBlending,
+      side: BackSide, depthWrite: false, fog: false,
+    }),
+  );
+  horizon.position.set(cx, 2.3, cz);
+  root.add(horizon);
+
+  // ---- The field arc (factual zone, front) ----------------------------------------
+  const spanRad = ((benchSpanDeg + 14) * Math.PI) / 180;
   const bench = new Group();
-  const { benchCenter, benchRadius, benchSpanDeg } = OBSERVATORY;
-  const benchMat = new MeshStandardMaterial({ color: '#111925', roughness: 0.35, metalness: 0.5 });
-  const spanRad = (benchSpanDeg * Math.PI) / 180;
-  // RingGeometry lies in XY; rotated -90deg about X, its +Y maps to -Z, so a
-  // span centred on +90deg faces away from the seated player.
-  const thetaStart = Math.PI / 2 - spanRad / 2;
-  const top = new Mesh(
-    new RingGeometry(benchRadius - 0.22, benchRadius + 0.2, 72, 1, thetaStart, spanRad),
-    benchMat,
-  );
-  top.rotation.x = -Math.PI / 2;
-  top.position.set(benchCenter.x, 0.86, benchCenter.z);
-  bench.add(top);
-  const benchStrip = new MeshStandardMaterial({
-    color: OBS.evidence, emissive: OBS.evidence, emissiveIntensity: 1.2, side: DoubleSide,
+  const slabMat = new MeshStandardMaterial({ color: '#171a22', roughness: 0.55, metalness: 0.35 });
+  const baseMat = new MeshStandardMaterial({ color: '#0d0f14', roughness: 0.9, metalness: 0.1 });
+  // A 6 cm slab cantilevered over a recessed base: the shadow gap under it
+  // is what makes it read as a made object rather than an extruded shape.
+  const slab = new Mesh(arcSolid(BENCH_INNER, BENCH_OUTER, spanRad, 0.06), slabMat);
+  slab.position.set(cx, BENCH_TOP - 0.06, cz);
+  bench.add(slab);
+  const base = new Mesh(arcSolid(BENCH_INNER + 0.07, BENCH_OUTER - 0.07, spanRad - 0.05, BENCH_TOP - 0.075), baseMat);
+  base.position.set(cx, 0, cz);
+  bench.add(base);
+
+  const limb = new MeshBasicMaterial({
+    color: OBS.ivory, transparent: true, opacity: LIMB_REST, side: DoubleSide,
   });
-  const strip = new Mesh(
-    new RingGeometry(benchRadius + 0.2, benchRadius + 0.225, 72, 1, thetaStart, spanRad),
-    benchStrip,
+  // RingGeometry lies in XY; rotated -90deg about X, its +Y maps to -Z, so a
+  // span centred on +90deg faces away from the seated observer.
+  const thetaStart = Math.PI / 2 - spanRad / 2;
+  const limbTop = new Mesh(new RingGeometry(BENCH_INNER, BENCH_INNER + 0.005, 96, 1, thetaStart, spanRad), limb);
+  limbTop.rotation.x = -Math.PI / 2;
+  limbTop.position.set(cx, BENCH_TOP + 0.0012, cz);
+  bench.add(limbTop);
+  const limbFace = new Mesh(
+    new CylinderGeometry(BENCH_INNER - 0.0008, BENCH_INNER - 0.0008, 0.004, 96, 1, true, Math.PI - spanRad / 2, spanRad),
+    limb,
   );
-  strip.rotation.x = -Math.PI / 2;
-  strip.position.set(benchCenter.x, 0.862, benchCenter.z);
-  bench.add(strip);
-  // Bench legs along the arc.
-  for (let i = 0; i <= 6; i++) {
-    const a = thetaStart + (spanRad * i) / 6;
-    const leg = new Mesh(new CylinderGeometry(0.03, 0.03, 0.86, 12), columnMat);
-    leg.position.set(benchCenter.x + Math.cos(a) * benchRadius, 0.43, benchCenter.z + Math.sin(a) * benchRadius);
-    bench.add(leg);
-  }
+  limbFace.position.set(cx, BENCH_TOP - 0.002, cz);
+  bench.add(limbFace);
+
   const benchLabel = makeLabel(
-    [{ text: 'FACTUAL FIELD', color: OBS.evidence, size: 30, weight: '700' },
-     { text: 'the recorded field · live MNEME snapshot', color: '#9fb3c8', size: 20 }],
-    { width: 0.5, background: '#0b121bcc', border: '#5fc9ff66' },
+    [{ text: 'FACTUAL FIELD', color: OBS.ivory, size: 24, weight: '700' },
+     { text: 'the recorded field · live MNEME snapshot', color: OBS.ivoryDim, size: 21 }],
+    { width: 0.46 },
   );
-  benchLabel.position.set(0, 0.72, -0.52);
+  benchLabel.position.set(cx, 0.6, cz - BENCH_INNER + 0.1);
   bench.add(benchLabel);
   root.add(bench);
 
-  // ---- Consoles (left: provenance, right: containment) --------------------
-  const consoleMat = new MeshStandardMaterial({ color: '#0f1724', roughness: 0.4, metalness: 0.45 });
-  const makeConsole = (x: number, z: number, rotY: number, accent: string) => {
-    const g = new Group();
-    const body = new Mesh(new BoxGeometry(0.9, 0.08, 0.42), consoleMat);
-    body.position.y = 0.78;
-    g.add(body);
-    const lip = new Mesh(
-      new BoxGeometry(0.9, 0.012, 0.012),
-      new MeshStandardMaterial({ color: accent, emissive: accent, emissiveIntensity: 1.4 }),
-    );
-    lip.position.set(0, 0.826, 0.21);
-    g.add(lip);
-    const stem = new Mesh(new CylinderGeometry(0.05, 0.09, 0.76, 16), columnMat);
-    stem.position.y = 0.38;
-    g.add(stem);
-    g.position.set(x, 0, z);
-    g.rotation.y = rotY;
-    return g;
-  };
-  root.add(makeConsole(-1.62, -1.05, Math.PI / 4.3, OBS.provenance));
-  root.add(makeConsole(1.62, -1.05, -Math.PI / 4.3, OBS.containment));
-  const leftLight = new PointLight(OBS.provenance, 1.6, 3.5, 2);
-  leftLight.position.set(-1.6, 1.7, -1.0);
-  root.add(leftLight);
-  const rightLight = new PointLight(OBS.containment, 1.6, 3.5, 2);
-  rightLight.position.set(1.6, 1.7, -1.0);
-  root.add(rightLight);
-
-  // ---- Actor rack (back wall shelf) ---------------------------------------
-  const rack = new Group();
-  const shelf = new Mesh(new BoxGeometry(OBSERVATORY.actorRack.spread + 0.5, 0.04, 0.3), consoleMat);
-  shelf.position.set(OBSERVATORY.actorRack.x, OBSERVATORY.actorRack.y - 0.2, OBSERVATORY.actorRack.z);
-  rack.add(shelf);
-  const rackLabel = makeLabel(
-    [{ text: 'ACTOR REGISTRY', color: '#9fb3c8', size: 28, weight: '700' },
-     { text: 'who wrote into the field · pick one up to read its grants', color: '#6f8196', size: 19 }],
-    { width: 0.6, background: '#0b121bcc', border: '#36465a' },
+  // ---- Actor registry (behind and above the field) -----------------------------------
+  const rackY = OBSERVATORY.actorRack.y;
+  const rackZ = OBSERVATORY.actorRack.z;
+  const rail = new Mesh(
+    new CylinderGeometry(0.003, 0.003, OBSERVATORY.actorRack.spread + 0.5, 8),
+    new MeshBasicMaterial({ color: OBS.ivory, transparent: true, opacity: 0.35 }),
   );
-  rackLabel.position.set(OBSERVATORY.actorRack.x, OBSERVATORY.actorRack.y + 0.42, OBSERVATORY.actorRack.z);
-  rack.add(rackLabel);
-  root.add(rack);
+  rail.rotation.z = Math.PI / 2;
+  rail.position.set(OBSERVATORY.actorRack.x, rackY - 0.09, rackZ);
+  root.add(rail);
+  const rackLabel = makeLabel(
+    [{ text: 'ACTOR REGISTRY', color: OBS.ivory, size: 40, weight: '700' },
+     { text: 'who wrote into the field · pick one up to read its grants', color: OBS.ivoryDim, size: 36 }],
+    { width: 1.1 },
+  );
+  rackLabel.position.set(OBSERVATORY.actorRack.x, rackY - 0.19, rackZ);
+  root.add(rackLabel);
 
-  // ---- Counterfactual chamber (hypothetical zone, left, raised) -----------
+  // ---- Counterfactual chamber (hypothetical zone, left) -------------------------------
   const chamber = new Group();
   const c = OBSERVATORY.chamber;
-  const platform = new Mesh(new CylinderGeometry(c.radius, c.radius + 0.08, 0.12, 48), consoleMat);
+  const plinthMat = new MeshStandardMaterial({ color: '#12141b', roughness: 0.6, metalness: 0.3 });
+  const platform = new Mesh(new CylinderGeometry(c.radius, c.radius + 0.06, 0.12, 64), plinthMat);
   platform.position.set(c.x, 0.06, c.z);
   chamber.add(platform);
   const chamberRing = new MeshStandardMaterial({
-    color: OBS.chamber, emissive: OBS.chamber, emissiveIntensity: 0.35, side: DoubleSide,
+    color: '#000000', emissive: OBS.chamber, emissiveIntensity: 0.35, side: DoubleSide,
   });
-  const chamberRingMesh = new Mesh(new TorusGeometry(c.radius, 0.012, 12, 96), chamberRing);
+  const chamberRingMesh = new Mesh(new TorusGeometry(c.radius, 0.009, 10, 96), chamberRing);
   chamberRingMesh.rotation.x = Math.PI / 2;
   chamberRingMesh.position.set(c.x, 0.125, c.z);
   chamber.add(chamberRingMesh);
@@ -229,23 +223,22 @@ export function buildObservatory(scene: Scene): ObservatoryHandles {
   // volume the comparison can actually live inside at reading height, and
   // it has to read as sealed from across the room.
   const column = new Mesh(
-    new CylinderGeometry(c.radius, c.radius, CHAMBER_HEIGHT, 48, 1, true),
-    new MeshPhysicalMaterial({
-      color: OBS.chamber, transparent: true, opacity: 0.07, roughness: 0.15, metalness: 0,
-      side: DoubleSide, depthWrite: false,
+    new CylinderGeometry(c.radius, c.radius, CHAMBER_HEIGHT, 64, 1, true),
+    new MeshBasicMaterial({
+      color: OBS.chamber, transparent: true, opacity: 0.045, side: DoubleSide, depthWrite: false,
     }),
   );
   column.position.set(c.x, 0.12 + CHAMBER_HEIGHT / 2, c.z);
   chamber.add(column);
-  const topRim = new Mesh(new TorusGeometry(c.radius, 0.01, 12, 96), chamberRing);
+  const topRim = new Mesh(new TorusGeometry(c.radius, 0.007, 10, 96), chamberRing);
   topRim.rotation.x = Math.PI / 2;
   topRim.position.set(c.x, 0.12 + CHAMBER_HEIGHT, c.z);
   chamber.add(topRim);
   // Four uprights so the column reads as a built instrument rather than fog.
-  const strutMat = new MeshStandardMaterial({ color: OBS.trim, roughness: 0.4, metalness: 0.6 });
+  const strutMat = new MeshStandardMaterial({ color: OBS.trim, roughness: 0.45, metalness: 0.6 });
   for (let i = 0; i < 4; i++) {
     const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
-    const strut = new Mesh(new CylinderGeometry(0.012, 0.012, CHAMBER_HEIGHT, 8), strutMat);
+    const strut = new Mesh(new CylinderGeometry(0.009, 0.009, CHAMBER_HEIGHT, 8), strutMat);
     strut.position.set(c.x + Math.cos(a) * c.radius, 0.12 + CHAMBER_HEIGHT / 2, c.z + Math.sin(a) * c.radius);
     chamber.add(strut);
   }
@@ -253,84 +246,156 @@ export function buildObservatory(scene: Scene): ObservatoryHandles {
   chamberLight.position.set(c.x, 1.5, c.z);
   chamber.add(chamberLight);
   const chamberLabel = makeLabel(
-    [{ text: 'COUNTERFACTUAL CHAMBER', color: OBS.chamber, size: 30, weight: '700' },
-     { text: 'sealed hypothetical  ·  never executed  ·  never merged', color: '#b8a6d8', size: 19 }],
-    { width: 0.72, background: '#120b1fcc', border: '#b060ff66' },
+    [{ text: 'COUNTERFACTUAL CHAMBER', color: OBS.chamber, size: 38, weight: '700' },
+     { text: 'sealed hypothetical · never executed · never merged', color: OBS.ivoryDim, size: 33 }],
+    { width: 0.98, background: '#000000d0', border: OBS.chamber },
   );
   chamberLabel.position.set(c.x, 0.5, c.z + c.radius * 0.1);
   chamber.add(chamberLabel);
   root.add(chamber);
 
-  // ---- Evidence vault (portable instrument, right) ------------------------
+  // ---- Verification instrument (right) ---------------------------------------------
+  // Neutral ivory at rest: the only colour this zone ever shows is the
+  // verifier's own verdict, on the bundle artifact (portable-system.ts).
   const vault = new Group();
   const v = OBSERVATORY.vault;
-  const pedestal = new Mesh(new CylinderGeometry(0.28, 0.36, 0.9, 32), consoleMat);
+  const pedestal = new Mesh(new CylinderGeometry(0.28, 0.34, 0.9, 48), plinthMat);
   pedestal.position.set(v.x, 0.45, v.z);
   vault.add(pedestal);
   const vaultRing = new MeshStandardMaterial({
-    color: OBS.vault, emissive: OBS.vault, emissiveIntensity: 0.35, side: DoubleSide,
+    color: '#000000', emissive: OBS.ivory, emissiveIntensity: 0.35, side: DoubleSide,
   });
-  const vaultRingMesh = new Mesh(new TorusGeometry(0.3, 0.01, 12, 64), vaultRing);
+  const vaultRingMesh = new Mesh(new TorusGeometry(0.3, 0.007, 10, 64), vaultRing);
   vaultRingMesh.rotation.x = Math.PI / 2;
   vaultRingMesh.position.set(v.x, 0.905, v.z);
   vault.add(vaultRingMesh);
   const vaultColumn = new Mesh(
-    new CylinderGeometry(0.3, 0.3, 0.9, 32, 1, true),
-    new MeshPhysicalMaterial({
-      color: OBS.vault, transparent: true, opacity: 0.06, roughness: 0.2, metalness: 0,
-      side: DoubleSide, depthWrite: false,
+    new CylinderGeometry(0.3, 0.3, 0.9, 48, 1, true),
+    new MeshBasicMaterial({
+      color: OBS.ivory, transparent: true, opacity: 0.035, side: DoubleSide, depthWrite: false,
     }),
   );
   vaultColumn.position.set(v.x, 1.35, v.z);
   vault.add(vaultColumn);
-  const vaultTopRim = new Mesh(new TorusGeometry(0.3, 0.008, 10, 64), vaultRing);
+  const vaultTopRim = new Mesh(new TorusGeometry(0.3, 0.006, 10, 64), vaultRing);
   vaultTopRim.rotation.x = Math.PI / 2;
   vaultTopRim.position.set(v.x, 1.8, v.z);
   vault.add(vaultTopRim);
-  const vaultLight = new PointLight(OBS.vault, 0.5, 3.0, 2);
+  const vaultLight = new PointLight(OBS.ivory, 0.5, 3.0, 2);
   vaultLight.position.set(v.x, 1.4, v.z);
   vault.add(vaultLight);
   const vaultLabel = makeLabel(
-    [{ text: 'VERIFICATION INSTRUMENT', color: OBS.vault, size: 30, weight: '700' },
-     { text: 'sealed bundle · checked by an independent verifier process', color: '#a6d8c0', size: 19 }],
-    { width: 0.6, background: '#0a1a14cc', border: '#4be0a066' },
+    [{ text: 'VERIFICATION INSTRUMENT', color: OBS.ivory, size: 38, weight: '700' },
+     { text: 'sealed bundle · checked by an independent verifier process', color: OBS.ivoryDim, size: 33 }],
+    { width: 0.98, background: '#000000d0', border: OBS.ivory },
   );
-  vaultLabel.position.set(v.x, 0.52, v.z);
+  vaultLabel.position.set(v.x, 0.52, v.z + 0.36);
   vault.add(vaultLabel);
   root.add(vault);
 
-  // ---- Drifting dust (cheap atmosphere) -----------------------------------
-  const positions = new Float32Array(DUST_COUNT * 3);
-  const dustVelocity = new Float32Array(DUST_COUNT);
-  for (let i = 0; i < DUST_COUNT; i++) {
-    positions[i * 3] = (Math.random() - 0.5) * 7;
-    positions[i * 3 + 1] = Math.random() * 3.2;
-    positions[i * 3 + 2] = -1.2 + (Math.random() - 0.5) * 6;
-    dustVelocity[i] = 0.02 + Math.random() * 0.05;
-  }
-  const dustGeo = new BufferGeometry();
-  dustGeo.setAttribute('position', new BufferAttribute(positions, 3));
-  const dust = new Points(
-    dustGeo,
-    new PointsMaterial({
-      color: '#9fd0ff', size: 0.012, transparent: true, opacity: 0.45,
-      blending: AdditiveBlending, depthWrite: false, sizeAttenuation: true,
-    }),
-  );
-  root.add(dust);
-
-  return { chamberRing, chamberLight, vaultRing, vaultLight, benchStrip, dust, dustVelocity };
+  return { chamberRing, chamberLight, vaultRing, vaultLight, limb, graduations };
 }
 
-/** Per-frame ambience: dust drift and the bench strip breathing. */
-export function tickObservatory(h: ObservatoryHandles, delta: number, time: number): void {
-  const pos = h.dust.geometry.getAttribute('position') as BufferAttribute;
-  const arr = pos.array as Float32Array;
-  for (let i = 0; i < DUST_COUNT; i++) {
-    let y = arr[i * 3 + 1] + h.dustVelocity[i] * delta;
-    if (y > 3.3) y = 0;
-    arr[i * 3 + 1] = y;
+/** Per-frame room state: the limb eases toward the real field presence. */
+export function tickObservatory(h: ObservatoryHandles, delta: number, fieldPresence: number): void {
+  const k = 1 - Math.exp(-delta * 3.2);
+  const limbTarget = LIMB_REST + (0.95 - LIMB_REST) * fieldPresence;
+  h.limb.opacity += (limbTarget - h.limb.opacity) * k;
+  const gradTarget = LIMB_REST + (0.42 - LIMB_REST) * fieldPresence;
+  h.graduations.opacity += (gradTarget - h.graduations.opacity) * k;
+}
+
+/** A solid arc sector (Y-up, opening toward -Z) of the given height. */
+function arcSolid(inner: number, outer: number, spanRad: number, height: number): ExtrudeGeometry {
+  const a0 = Math.PI / 2 - spanRad / 2;
+  const a1 = Math.PI / 2 + spanRad / 2;
+  const shape = new Shape();
+  shape.moveTo(Math.cos(a0) * outer, Math.sin(a0) * outer);
+  shape.absarc(0, 0, outer, a0, a1, false);
+  shape.lineTo(Math.cos(a1) * inner, Math.sin(a1) * inner);
+  shape.absarc(0, 0, inner, a1, a0, true);
+  shape.closePath();
+  const geo = new ExtrudeGeometry(shape, { depth: height, bevelEnabled: false, curveSegments: 64 });
+  // Shape XY -> world XZ (shape +Y is world -Z), extrusion depth -> world +Y.
+  geo.rotateX(-Math.PI / 2);
+  return geo;
+}
+
+/** Radial tick marks as one mesh of thin quads lying in the XZ plane. */
+function buildTicks(radius: number, stepDeg: number, short: number, long: number, halfWidth: number): BufferGeometry {
+  const positions: number[] = [];
+  const indices: number[] = [];
+  let n = 0;
+  for (let deg = 0; deg < 360; deg += stepDeg) {
+    const a = (deg * Math.PI) / 180;
+    const len = deg % 10 === 0 ? long : short;
+    const dx = Math.sin(a);
+    const dz = -Math.cos(a);
+    const tx = -dz * halfWidth;
+    const tz = dx * halfWidth;
+    const r0 = radius;
+    const r1 = radius + len;
+    positions.push(
+      dx * r0 - tx, 0, dz * r0 - tz,
+      dx * r0 + tx, 0, dz * r0 + tz,
+      dx * r1 + tx, 0, dz * r1 + tz,
+      dx * r1 - tx, 0, dz * r1 - tz,
+    );
+    indices.push(n, n + 1, n + 2, n, n + 2, n + 3);
+    n += 4;
   }
-  pos.needsUpdate = true;
-  h.benchStrip.emissiveIntensity = 1.0 + Math.sin(time * 1.4) * 0.25;
+  const geo = new BufferGeometry();
+  geo.setAttribute('position', new BufferAttribute(new Float32Array(positions), 3));
+  geo.setIndex(indices);
+  return geo;
+}
+
+/** Meridians and parallels of a hemisphere as line segments. */
+function buildDomeLines(radius: number, meridians: number, parallels: number): BufferGeometry {
+  const pts: number[] = [];
+  const STEPS = 20;
+  for (let m = 0; m < meridians; m++) {
+    const a = (m / meridians) * Math.PI * 2;
+    for (let s = 0; s < STEPS; s++) {
+      const e0 = (s / STEPS) * (Math.PI / 2) * 0.96;
+      const e1 = ((s + 1) / STEPS) * (Math.PI / 2) * 0.96;
+      pts.push(
+        Math.sin(a) * Math.cos(e0) * radius, Math.sin(e0) * radius, Math.cos(a) * Math.cos(e0) * radius,
+        Math.sin(a) * Math.cos(e1) * radius, Math.sin(e1) * radius, Math.cos(a) * Math.cos(e1) * radius,
+      );
+    }
+  }
+  const SEG = 96;
+  for (let p = 1; p <= parallels; p++) {
+    const e = (p / (parallels + 1)) * (Math.PI / 2);
+    for (let s = 0; s < SEG; s++) {
+      const a0 = (s / SEG) * Math.PI * 2;
+      const a1 = ((s + 1) / SEG) * Math.PI * 2;
+      pts.push(
+        Math.sin(a0) * Math.cos(e) * radius, Math.sin(e) * radius, Math.cos(a0) * Math.cos(e) * radius,
+        Math.sin(a1) * Math.cos(e) * radius, Math.sin(e) * radius, Math.cos(a1) * Math.cos(e) * radius,
+      );
+    }
+  }
+  const geo = new BufferGeometry();
+  geo.setAttribute('position', new BufferAttribute(new Float32Array(pts), 3));
+  return geo;
+}
+
+/** A soft band of light at the horizon, fading to nothing above and below. */
+function horizonTexture(): CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 4;
+  canvas.height = 256;
+  const ctx = canvas.getContext('2d')!;
+  const g = ctx.createLinearGradient(0, 0, 0, 256);
+  g.addColorStop(0, 'rgba(0,0,0,0)');
+  g.addColorStop(0.72, 'rgba(46,52,74,0.0)');
+  g.addColorStop(0.9, 'rgba(58,64,92,0.55)');
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 4, 256);
+  const texture = new CanvasTexture(canvas);
+  texture.colorSpace = SRGBColorSpace;
+  return texture;
 }

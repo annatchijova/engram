@@ -29,7 +29,6 @@ import {
   Line,
   LineBasicMaterial,
   Mesh,
-  MeshPhysicalMaterial,
   MeshStandardMaterial,
   OctahedronGeometry,
   SphereGeometry,
@@ -47,10 +46,10 @@ import { OBS, OBSERVATORY } from './observatory/palette.js';
 import { OnboardingEvents } from './onboarding-events.js';
 import { SessionStore } from './session.js';
 
-const GHOST_COLOR = '#b060ff';
-const TIE_LINE_COLOR = '#7040a0';
-const WORLD_A_COLOR = '#cfe3ff';
-const WORLD_B_COLOR = '#d8b4ff';
+const GHOST_COLOR = '#B8A6EC';
+const TIE_LINE_COLOR = '#6f6490';
+const WORLD_A_COLOR = '#EEE9DF';
+const WORLD_B_COLOR = '#B8A6EC';
 
 const GHOST_GEO = new OctahedronGeometry(0.05, 0);
 const GHOST_RING_GEO = new TorusGeometry(0.065, 0.003, 8, 40);
@@ -64,9 +63,9 @@ export class CounterfactualSystem extends createSystem({}) {
   private ghosts: Group[] = [];
   private ties: Tie[] = [];
   private active = false;
-  private ghostMaterial = new MeshPhysicalMaterial({
+  private ghostMaterial = new MeshStandardMaterial({
     color: new Color(GHOST_COLOR), emissive: new Color(GHOST_COLOR), emissiveIntensity: 0.5,
-    transparent: true, opacity: 0.45, roughness: 0.2, clearcoat: 1,
+    transparent: true, opacity: 0.45, roughness: 0.2, flatShading: true,
   });
   private ghostRingMaterial = new MeshStandardMaterial({
     color: new Color(GHOST_COLOR), emissive: new Color(GHOST_COLOR), emissiveIntensity: 1.2,
@@ -207,7 +206,7 @@ export class CounterfactualSystem extends createSystem({}) {
       });
       const head = makeLabel(
         [{ text: title, color, size: 42, weight: '700' },
-         { text: `${n} served · receipt ${receipt.slice(0, 12)}…`, color: '#b8a6d8', size: 30 }],
+         { text: `${n} served · receipt ${receipt.slice(0, 12)}…`, color: '#a9a69e', size: 30 }],
         { width: 0.92, background: '#120b1ff2', border: `${color}88` },
       );
       head.position.set(c.x, y - 0.14, c.z);
@@ -231,10 +230,10 @@ export class CounterfactualSystem extends createSystem({}) {
       ghost.add(ring);
       const removed = delta.removed_from_serving.includes(memoryId);
       const label = makeLabel(
-        [{ text: memoryId, color: '#f2e8ff', size: 42, weight: '700' },
+        [{ text: memoryId, color: '#EEE9DF', size: 42, weight: '700' },
          { text: removed ? 'removed from serving in B' : 'entered top-k in B', color: GHOST_COLOR, size: 32, weight: '600' },
-         { text: 'hypothetical · not a custody status', color: '#9f8cc0', size: 26 }],
-        { width: 0.52, background: '#120b1ff2', border: '#b060ffaa' },
+         { text: 'hypothetical · not a custody status', color: '#8a8880', size: 26 }],
+        { width: 0.52, background: '#120b1ff2', border: GHOST_COLOR },
       );
       label.position.y = 0.26;
       ghost.add(label);
@@ -258,12 +257,12 @@ export class CounterfactualSystem extends createSystem({}) {
     const summary = makeLabel(
       [
         { text: kind === 'exclusion-run' ? 'EXCLUSION FORECAST' : 'CONTAINMENT EFFECT', color: GHOST_COLOR, size: 46, weight: '700' },
-        { text: delta.summary, color: '#f2e8ff', size: 32 },
-        { text: `reranked ${delta.rank_changed.length} · claims flipped ${delta.claim_outcome_changed.length} · interference ${delta.interference ? 'yes' : 'no'}`, color: '#c8b8e8', size: 29 },
-        { text: `delta ${delta.delta_sha256.slice(0, 20)}…`, color: '#9f8cc0', size: 27 },
-        { text: 'sealed comparison · the recorded field was not touched', color: '#8d7aa8', size: 26 },
+        { text: delta.summary, color: '#EEE9DF', size: 32 },
+        { text: `reranked ${delta.rank_changed.length} · claims flipped ${delta.claim_outcome_changed.length} · interference ${delta.interference ? 'yes' : 'no'}`, color: '#a9a69e', size: 29 },
+        { text: `delta ${delta.delta_sha256.slice(0, 20)}…`, color: '#8a8880', size: 27 },
+        { text: 'sealed comparison · the recorded field was not touched', color: '#8a8880', size: 26 },
       ],
-      { width: 1.25, background: '#120b1ff7', border: '#b060ffcc' },
+      { width: 1.25, background: '#120b1ff7', border: GHOST_COLOR },
     );
     summary.position.set(c.x, 2.62, c.z);
     this.labels.push(summary);

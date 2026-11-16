@@ -26,13 +26,15 @@ import { OnboardingStageValue } from './onboarding-stage-machine.js';
 import { GuideTarget, TOUR } from './tour-script.js';
 import { TourState } from './tour-state.js';
 
-const RING_GEO = new TorusGeometry(0.15, 0.007, 10, 56);
-// A pointer that cannot be mistaken for evidence: white, cone-shaped,
+/** Height of the marker above a core's origin: clear of the plate and its brackets. */
+const CORE_MARK_LIFT = 0.16;
+const RING_GEO = new TorusGeometry(0.1, 0.004, 10, 56);
+// A pointer that cannot be mistaken for evidence: ivory, cone-shaped,
 // aimed down at the one object the current question is answered with.
-// The audit found the QUARANTINED containment cage out-competing the
-// tour's target, so the marker needs a form of its own rather than more
-// brightness, which in this room is never allowed to mean anything.
-const CONE_GEO = new ConeGeometry(0.035, 0.08, 4);
+// The audit found the QUARANTINED plate out-competing the tour's target,
+// so the marker needs a form of its own rather than more brightness,
+// which in this room is never allowed to mean anything.
+const CONE_GEO = new ConeGeometry(0.03, 0.07, 4);
 
 export class GuideSystem extends createSystem({}) {
   private entity: Entity | null = null;
@@ -67,7 +69,7 @@ export class GuideSystem extends createSystem({}) {
       // Follow the core even if a hand moved it.
       const field = this.world.getSystem(FieldSystem);
       if (field?.getCoreWorldPosition(this.target.memoryId, this.scratch)) {
-        this.group.position.copy(this.scratch);
+        this.group.position.set(this.scratch.x, this.scratch.y + CORE_MARK_LIFT, this.scratch.z);
       }
     }
   }
@@ -96,13 +98,13 @@ export class GuideSystem extends createSystem({}) {
     ring.rotation.x = Math.PI / 2;
     // On a memory core the ring sits at its base, so the mark reads as
     // "this object", not as something hovering near it.
-    ring.position.y = onCore ? -0.26 : 0;
+    ring.position.y = onCore ? -CORE_MARK_LIFT : 0;
     group.add(ring);
     let cone: Mesh | null = null;
     if (onCore) {
       cone = new Mesh(CONE_GEO, this.material);
       cone.rotation.x = Math.PI;
-      this.coneBase = 0.16;
+      this.coneBase = 0.1;
       cone.position.y = this.coneBase;
       group.add(cone);
     }
@@ -111,12 +113,12 @@ export class GuideSystem extends createSystem({}) {
     // competed with the marker for a newcomer's attention.
     const head = stage === OnboardingStageValue.DISCOVER ? 'START HERE' : 'NEXT';
     const label = makeLabel(
-      [{ text: onCore ? `${head}: ${step.target.kind === 'core' ? step.target.memoryId : ''}` : head,
-         color: OBS.hover, size: 38, weight: '800' },
-       { text: step.action, color: '#e8f0f8', size: 24 }],
-      { width: 0.56, background: '#070b12f2', border: '#ffffffaa' },
+      [{ text: onCore && step.target.kind === 'core' ? `${head}: ${step.target.memoryId}` : head,
+         color: OBS.hover, size: 30, weight: '800' },
+       { text: step.action, color: '#d9d5cb', size: 22 }],
+      { width: 0.52, background: '#000000e6', border: OBS.hover },
     );
-    label.position.y = onCore ? 0.3 : 0.11;
+    label.position.y = 0.085;
     group.add(label);
     group.position.copy(pos);
     this.label = label;
@@ -131,7 +133,7 @@ export class GuideSystem extends createSystem({}) {
       const field = this.world.getSystem(FieldSystem);
       const p = field?.getCoreWorldPosition(target.memoryId, this.scratch);
       // The field may still be loading; the per-frame follow fixes it up.
-      return p ? p.clone() : new Vector3(-0.37, 1.08, -1.44);
+      return p ? p.clone().setY(p.y + CORE_MARK_LIFT) : new Vector3(-0.37, 0.98 + CORE_MARK_LIFT, -1.44);
     }
     if (target.kind === 'panel') {
       const panel = this.world.getSceneObject<UIKitMLAsset>(target.panelId) as unknown as

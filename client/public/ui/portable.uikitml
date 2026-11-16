@@ -1,12 +1,12 @@
 <style>
-  .panel-root { flex-direction: column; width: 56; padding-top: 1.8; padding-bottom: 1.8; padding-left: 2.2; padding-right: 2.2; background-color: #0a1510f2; border-color: #4be0a0; border-width: 0.12; border-radius: 0.8; }
-  .eyebrow { font-size: 0.9; font-weight: 700; color: #4be0a0; margin-bottom: 0.3; }
-  .heading { font-size: 1.8; font-weight: 700; color: #e8fff2; margin-bottom: 0.6; }
-  .hint { font-size: 1; color: #88b898; margin-bottom: 0.8; }
-  .btn { width: 100%; height: 2.8; background-color: #1f6a4a; border-radius: 1.4; justify-content: center; align-items: center; color: #e8ffe8; font-size: 1.15; font-weight: 700; cursor: pointer; margin-bottom: 0.6; }
-  .btn-disabled { width: 100%; height: 2.4; background-color: #1a2a22; border-radius: 1.2; justify-content: center; align-items: center; color: #6a8a78; font-size: 1.1; cursor: pointer; }
-  .result { font-size: 1; color: #b8e8c8; margin-top: 0.8; }
-  .gloss { font-size: 0.85; color: #6a9a7a; }
+  .panel-root { flex-direction: column; width: 62; padding-top: 2.4; padding-bottom: 2.4; padding-left: 2.8; padding-right: 2.8; background-color: #0b0d12f4; border-color: #4a4b4f; border-width: 0.1; border-radius: 0.5; }
+  .eyebrow { font-size: 1.3; font-weight: 700; color: #b9b5ab; margin-bottom: 0.5; }
+  .heading { font-size: 2.4; font-weight: 700; color: #EEE9DF; margin-bottom: 0.7; }
+  .hint { font-size: 1.6; color: #b9b5ab; margin-bottom: 1; }
+  .btn { width: 100%; height: 3.8; background-color: #EEE9DF; border-radius: 0.4; justify-content: center; align-items: center; color: #0b0d12; font-size: 1.7; font-weight: 700; cursor: pointer; margin-bottom: 0.7; }
+  .btn-disabled { width: 100%; height: 3.2; background-color: #1c2029; border-radius: 0.4; justify-content: center; align-items: center; color: #EEE9DF; font-size: 1.5; cursor: pointer; margin-bottom: 0.7; }
+  .result { font-size: 1.7; color: #EEE9DF; margin-top: 0.6; }
+  .gloss { font-size: 1.45; color: #8f8c85; }
 </style>
 <div class="panel-root" id="portable-root" style="display: none">
   <span class="eyebrow">VERIFICATION INSTRUMENT</span>
@@ -15,5 +15,5 @@
   <button class="btn" id="pi-export">Export &amp; Verify Bundle</button>
   <button class="btn-disabled" id="pi-download">Download bundle.json</button>
   <span class="gloss">a second, separate program checks this file - not the one that made it</span>
-  <span class="result" id="pi-result">-</span>
+  <span class="result" id="pi-result">​</span>
 </div>

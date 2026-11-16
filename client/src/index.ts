@@ -17,6 +17,7 @@ import { GuideSystem } from './guide-system.js';
 import { HoverPreviewSystem } from './hover-preview-system.js';
 import { buildObservatory } from './observatory/observatory-environment.js';
 import { ObservatoryScene } from './observatory/observatory-handles.js';
+import { loadTypography } from './observatory/typography.js';
 import { AmbienceSystem } from './ambience-system.js';
 import { LoginSystem } from './login-system.js';
 import { OnboardingSystem } from './onboarding-system.js';
@@ -43,11 +44,13 @@ function showBootError(label: string, detail: unknown): void {
 window.addEventListener('error', (e) => showBootError('uncaught error', e.error ?? e.message));
 window.addEventListener('unhandledrejection', (e) => showBootError('unhandled rejection', e.reason));
 
-World.create(
+// Labels are typeset on a canvas, which silently falls back to a system
+// face if the bundled fonts are not ready; wait for them (bounded) first.
+loadTypography().then(() => World.create(
   document.getElementById('scene-container') as HTMLDivElement,
   projectOptions,
-).then((world) => {
-  // The Memory Lab room: benches, consoles, chamber, vault, lights, dust.
+)).then((world) => {
+  // The observatory room: dais, dome, field arc, chamber, vault, lights.
   // Pure presentation — no evidence meaning rides on any of it; the
   // systems below place real MNEME data into its zones.
   ObservatoryScene.set(buildObservatory(world.scene));

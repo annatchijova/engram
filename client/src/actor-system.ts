@@ -52,7 +52,9 @@ import { setPanelVisible } from './observatory/wiring.js';
 import { OBSERVATORY } from './observatory/palette.js';
 
 export const ACTOR_STATUS_COLOR: Record<string, string> = {
-  ACTIVE: '#6fa8dc',
+  // ACTIVE is the unremarkable state, so it is drawn in the room's neutral
+  // ivory; only a quarantined actor carries a hue.
+  ACTIVE: '#cfcbc2',
   QUARANTINED: '#c13030',
 };
 const UNKNOWN_ACTOR_COLOR = '#999999';
@@ -106,8 +108,8 @@ export class ActorSystem extends createSystem({
   init(): void {
     for (const [status, hex] of Object.entries(ACTOR_STATUS_COLOR)) {
       this.materials[status] = new MeshStandardMaterial({
-        color: new Color(hex), emissive: new Color(hex), emissiveIntensity: 0.35,
-        roughness: 0.3, metalness: 0.5,
+        color: new Color(hex), emissive: new Color(hex), emissiveIntensity: 0.22,
+        roughness: 0.4, metalness: 0.4,
       });
     }
     this.queries.pressed.subscribe('qualify', (entity) => {
@@ -230,12 +232,12 @@ export class ActorSystem extends createSystem({
       }
       const label = makeLabel(
         [
-          { text: a.display_name, color: '#f2f6fa', size: 26, weight: '700' },
-          { text: `${a.kind} · ${a.status}`, color: ACTOR_STATUS_COLOR[a.status] ?? UNKNOWN_ACTOR_COLOR, size: 21, weight: '600' },
+          { text: a.display_name, color: '#EEE9DF', size: 44, weight: '600' },
+          { text: `${a.kind} · ${a.status}`, color: ACTOR_STATUS_COLOR[a.status] ?? UNKNOWN_ACTOR_COLOR, size: 34, weight: '700' },
         ],
-        { width: 0.26, background: '#0b121bd9', border: '#2a3a4d' },
+        { width: 0.5, background: '#000000b8' },
       );
-      label.position.y = 0.3;
+      label.position.y = 0.33;
       group.add(label);
       group.position.set(x, cy, cz);
 

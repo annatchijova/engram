@@ -7,6 +7,9 @@
  * docstring says "deliberately does NOT quarantine anything": this system
  * never calls a mutating endpoint.
  *
+ * Edges are drawn as arcs over the field (see ARC_SEGMENTS below), revealed
+ * in the order the report listed them.
+ *
  * Every edge carries a text label with its class at the midpoint, so the
  * meaning never rides on color or dash pattern alone. DIRECT and DERIVED
  * edges additionally carry a travelling pulse (toward the target) as a
@@ -21,10 +24,12 @@ import {
   createSystem,
   CylinderGeometry,
   Entity,
-  Group,
+  InstancedMesh,
   Line,
   LineBasicMaterial,
+  Matrix4,
   Mesh,
+  MeshBasicMaterial,
   MeshStandardMaterial,
   OctahedronGeometry,
   Quaternion,
@@ -37,6 +42,7 @@ import { EngramApi, ImpactReport } from './engram-api.js';
 import { FieldSystem } from './field-system.js';
 import { AudioCues } from './observatory/audio-cues.js';
 import { disposeLabel, makeLabel } from './observatory/labels.js';
+import { OBS } from './observatory/palette.js';
 import { OnboardingEvents } from './onboarding-events.js';
 import { requireElement } from './observatory/wiring.js';
 import { SelectedMemory } from './selected-memory.js';
@@ -58,37 +64,36 @@ const TRACE_STYLE: Record<EdgeClass, {
   DERIVED_UNATTESTED: { color: '#8a6a2a', dashed: true, opacity: 0.7, pulse: false, radius: 0.0022 },
   POSSIBLE: { color: '#8c97a6', dashed: false, opacity: 0.3, pulse: false, radius: 0 },
 };
-// Dashed classes are built from this many short segments; a WebGL line's
-// `linewidth` is ignored by every browser, so an edge that must be visible
-// across the room has to be geometry, not a line primitive.
-const DASH_SEGMENTS = 14;
-// Where each class's one label rides its edge, and how far it lifts off
-// it. Distinct per class so the four never collide.
-const LABEL_FRACTION: Record<EdgeClass, number> = {
-  DIRECT: 0.56, DERIVED: 0.44, DERIVED_UNATTESTED: 0.66, POSSIBLE: 0.34,
-};
-const LABEL_LIFT: Record<EdgeClass, number> = {
-  DIRECT: 0.06, DERIVED: 0.1, DERIVED_UNATTESTED: -0.07, POSSIBLE: -0.11,
-};
-const UNIT_CYLINDER = new CylinderGeometry(1, 1, 1, 8, 1);
+// Every edge is an arc over the field, not a chord through it: a straight
+// line between two plates on the same arc would run in front of every plate
+// between them. The arc's height depends only on the distance between its
+// two endpoints, by the same rule for every class, so it carries no meaning.
+// A WebGL line's `linewidth` is ignored by every browser, so an edge that
+// must be visible across the room is geometry: ARC_SEGMENTS instanced
+// cylinders along the curve, one draw call per edge. A solid class fills
+// each step; a dashed class fills DASH_FILL of it.
+const ARC_SEGMENTS = 20;
+const DASH_FILL = 0.52;
+const UNIT_CYLINDER = new CylinderGeometry(1, 1, 1, 6, 1);
 const UP = new Vector3(0, 1, 0);
 
-const DRAW_SECONDS = 0.45;
+const DRAW_SECONDS = 0.7;
 const PULSE_GEO = new SphereGeometry(0.011, 10, 8);
 
 type Endpoint = { memoryId: string } | { fixed: Vector3 };
 
 type TraceLine = {
-  /** Hairline fallback, used for POSSIBLE only. */
+  /** Hairline, used for POSSIBLE only. */
   geometry: BufferGeometry | null;
   line: Line | null;
-  /** Volumetric segments for the causal classes. */
-  segments: Mesh[];
-  group: Group | null;
+  /** Volumetric arc for the causal classes. */
+  tube: InstancedMesh | null;
   from: Endpoint;
   to: Endpoint;
   cls: EdgeClass;
   elapsed: number;
+  /** Seconds to wait before this edge starts drawing (reveal order only). */
+  delay: number;
   label: Sprite;
   labelled: boolean;
   pulse: Mesh | null;
@@ -100,10 +105,10 @@ export class TraceSystem extends createSystem({}) {
   private lines: TraceLine[] = [];
   private labels: Sprite[] = [];
   private lineMaterials: Record<EdgeClass, LineBasicMaterial> = {} as never;
-  private tubeMaterials: Record<EdgeClass, MeshStandardMaterial> = {} as never;
+  private tubeMaterials: Record<EdgeClass, MeshBasicMaterial> = {} as never;
   private qHelper = new Quaternion();
   private dirHelper = new Vector3();
-  private pulseMaterials: Record<EdgeClass, MeshStandardMaterial> = {} as never;
+  private pulseMaterials: Record<EdgeClass, MeshBasicMaterial> = {} as never;
   private markerMaterial = new MeshStandardMaterial({
     color: new Color(TRACE_STYLE.DIRECT.color), emissive: new Color(TRACE_STYLE.DIRECT.color),
     emissiveIntensity: 0.6, roughness: 0.3, metalness: 0.4,
@@ -112,20 +117,23 @@ export class TraceSystem extends createSystem({}) {
   private a = new Vector3();
   private b = new Vector3();
   private c = new Vector3();
+  private p0 = new Vector3();
+  private p1 = new Vector3();
+  private mid = new Vector3();
+  private scaleHelper = new Vector3();
+  private matrix = new Matrix4();
 
   init(): void {
     for (const [key, style] of Object.entries(TRACE_STYLE) as [EdgeClass, typeof TRACE_STYLE[EdgeClass]][]) {
       this.lineMaterials[key] = new LineBasicMaterial({
         color: new Color(style.color), transparent: true, opacity: style.opacity,
       });
-      this.tubeMaterials[key] = new MeshStandardMaterial({
-        color: new Color(style.color), emissive: new Color(style.color),
-        emissiveIntensity: 0.85, roughness: 0.35, metalness: 0.2,
-        transparent: style.opacity < 1, opacity: style.opacity,
+      // Unlit: an edge shows its declared class colour exactly, from any
+      // angle and under any lamp.
+      this.tubeMaterials[key] = new MeshBasicMaterial({
+        color: new Color(style.color), transparent: style.opacity < 1, opacity: style.opacity,
       });
-      this.pulseMaterials[key] = new MeshStandardMaterial({
-        color: new Color(style.color), emissive: new Color(style.color), emissiveIntensity: 1.2,
-      });
+      this.pulseMaterials[key] = new MeshBasicMaterial({ color: new Color(style.color) });
     }
     this.populateTraceLegend();
 
@@ -156,6 +164,15 @@ export class TraceSystem extends createSystem({}) {
     return field?.getCoreWorldPosition(ep.memoryId, target) !== undefined;
   }
 
+  /** Point at parameter t on the arc from a to b (control point in c). */
+  private arcPoint(t: number, target: Vector3): Vector3 {
+    const u = 1 - t;
+    return target
+      .copy(this.a).multiplyScalar(u * u)
+      .addScaledVector(this.c, 2 * u * t)
+      .addScaledVector(this.b, t * t);
+  }
+
   update(delta: number, time: number): void {
     for (const l of this.lines) {
       if (!this.resolve(l.from, this.a) || !this.resolve(l.to, this.b)) continue;
@@ -163,42 +180,52 @@ export class TraceSystem extends createSystem({}) {
       // The whole edge set came back in one server response; only the
       // reveal is staggered, and endpoints keep following cores a hand
       // may have moved.
-      const alpha = Math.min(1, l.elapsed / DRAW_SECONDS);
-      this.c.lerpVectors(this.a, this.b, alpha);
+      const alpha = Math.min(1, Math.max(0, (l.elapsed - l.delay) / DRAW_SECONDS));
+      // Control point: above the midpoint, by a height that depends only
+      // on how far apart the endpoints are.
+      const span = this.a.distanceTo(this.b);
+      this.c.lerpVectors(this.a, this.b, 0.5);
+      this.c.y += 0.16 + span * 0.42;
 
       if (l.geometry && l.line) {
         const pos = l.geometry.attributes.position;
-        pos.setXYZ(0, this.a.x, this.a.y, this.a.z);
-        pos.setXYZ(1, this.c.x, this.c.y, this.c.z);
-        pos.needsUpdate = true;
-      }
-      if (l.segments.length > 0) {
-        this.dirHelper.subVectors(this.c, this.a);
-        const length = this.dirHelper.length();
-        if (length > 1e-5) {
-          this.qHelper.setFromUnitVectors(UP, this.dirHelper.clone().normalize());
-          const n = l.segments.length;
-          const radius = TRACE_STYLE[l.cls].radius;
-          // One continuous bar, or n dashes spaced along the same path.
-          const span = n === 1 ? 1 : 0.58 / n;
-          l.segments.forEach((seg, i) => {
-            const t = n === 1 ? 0.5 : (i + 0.5) / n;
-            seg.position.copy(this.a).addScaledVector(this.dirHelper, t);
-            seg.quaternion.copy(this.qHelper);
-            seg.scale.set(radius, n === 1 ? length : length * span, radius);
-          });
+        for (let i = 0; i <= ARC_SEGMENTS; i++) {
+          this.arcPoint(i / ARC_SEGMENTS, this.p0);
+          pos.setXYZ(i, this.p0.x, this.p0.y, this.p0.z);
         }
+        pos.needsUpdate = true;
+        l.geometry.setDrawRange(0, Math.floor(alpha * ARC_SEGMENTS) + 1);
       }
+      if (l.tube) {
+        const style = TRACE_STYLE[l.cls];
+        const fill = style.dashed ? DASH_FILL : 1.02;
+        this.arcPoint(0, this.p0);
+        for (let i = 0; i < ARC_SEGMENTS; i++) {
+          this.arcPoint((i + 1) / ARC_SEGMENTS, this.p1);
+          this.dirHelper.subVectors(this.p1, this.p0);
+          const length = this.dirHelper.length();
+          this.mid.lerpVectors(this.p0, this.p1, 0.5);
+          if (length > 1e-6) this.qHelper.setFromUnitVectors(UP, this.dirHelper.multiplyScalar(1 / length));
+          this.scaleHelper.set(style.radius, length * fill, style.radius);
+          this.matrix.compose(this.mid, this.qHelper, this.scaleHelper);
+          l.tube.setMatrixAt(i, this.matrix);
+          this.p0.copy(this.p1);
+        }
+        l.tube.count = Math.floor(alpha * ARC_SEGMENTS);
+        l.tube.instanceMatrix.needsUpdate = true;
+      }
+      // One labelled exemplar per class, placed past the apex of its own
+      // arc: four captions instead of one per edge, which is what turned
+      // four POSSIBLE labels into an unreadable clump.
       if (l.labelled) {
-        // Each class reads its own edge at a different fraction and
-        // height, so two labels can never land on one another.
-        l.label.position.lerpVectors(this.a, this.b, LABEL_FRACTION[l.cls]);
-        l.label.position.y += LABEL_LIFT[l.cls];
+        this.arcPoint(0.66, l.label.position);
+        l.label.position.y += 0.035;
         l.label.visible = alpha >= 1;
       }
       if (l.pulse) {
-        const t = (time * 0.45 + l.pulseOffset) % 1;
-        l.pulse.position.lerpVectors(this.a, this.b, t * alpha);
+        l.pulse.visible = alpha > 0;
+        const t = (time * 0.4 + l.pulseOffset) % 1;
+        this.arcPoint(t * alpha, l.pulse.position);
       }
     }
   }
@@ -215,33 +242,34 @@ export class TraceSystem extends createSystem({}) {
     const style = TRACE_STYLE[cls];
     let geometry: BufferGeometry | null = null;
     let line: Line | null = null;
-    const segments: Mesh[] = [];
-    let group: Group | null = null;
+    let tube: InstancedMesh | null = null;
     if (style.radius === 0) {
       // POSSIBLE: a bare hairline, no volume, no motion.
-      geometry = new BufferGeometry().setFromPoints([new Vector3(), new Vector3()]);
+      geometry = new BufferGeometry().setFromPoints(
+        Array.from({ length: ARC_SEGMENTS + 1 }, () => new Vector3()),
+      );
       line = new Line(geometry, this.lineMaterials[cls]);
       line.frustumCulled = false;
+      line.raycast = () => {};
       this.traceEntities.push(this.world.createTransformEntity(line));
     } else {
-      group = new Group();
-      const count = style.dashed ? DASH_SEGMENTS : 1;
-      for (let i = 0; i < count; i++) {
-        const seg = new Mesh(UNIT_CYLINDER, this.tubeMaterials[cls]);
-        seg.frustumCulled = false;
-        segments.push(seg);
-        group.add(seg);
-      }
-      this.traceEntities.push(this.world.createTransformEntity(group));
+      tube = new InstancedMesh(UNIT_CYLINDER, this.tubeMaterials[cls], ARC_SEGMENTS);
+      tube.count = 0;
+      tube.frustumCulled = false;
+      tube.raycast = () => {};
+      this.traceEntities.push(this.world.createTransformEntity(tube));
     }
+    // One short line per edge: the class name, in the class colour. The
+    // sentence explaining each class is in the legend, once, instead of
+    // being repeated on every edge; POSSIBLE alone keeps its disclaimer on
+    // the edge itself, because it is the one class that must never be
+    // mistaken for a cause. Only the first edge of each class carries it.
     const first = !this.labelledClasses.has(cls);
     this.labelledClasses.add(cls);
+    const name = EDGE_LABEL[cls].split(' — ')[0].toUpperCase();
     const label = makeLabel(
-      first
-        ? [{ text: EDGE_LABEL[cls].split(' — ')[0], color: TRACE_STYLE[cls].color, size: 26, weight: '700' },
-           { text: EDGE_LABEL[cls].split(' — ')[1] ?? '', color: '#c3d0dd', size: 19 }]
-        : [{ text: '', color: '#000000', size: 1 }],
-      { width: first ? 0.26 : 0.01, background: first ? '#0b121bf2' : undefined, border: first ? `${TRACE_STYLE[cls].color}88` : undefined },
+      [{ text: cls === 'POSSIBLE' ? `${name} · NOT CAUSAL` : name, color: TRACE_STYLE[cls].color, size: 21, weight: '700' }],
+      { width: cls === 'DIRECT' ? 0.12 : 0.3, background: '#000000d9', padding: 10 },
     );
     label.visible = false;
     if (first) {
@@ -253,11 +281,14 @@ export class TraceSystem extends createSystem({}) {
     let pulse: Mesh | null = null;
     if (TRACE_STYLE[cls].pulse) {
       pulse = new Mesh(PULSE_GEO, this.pulseMaterials[cls]);
+      pulse.visible = false;
+      pulse.raycast = () => {};
       this.traceEntities.push(this.world.createTransformEntity(pulse));
     }
     this.lines.push({
-      geometry, line, segments, group, from, to, cls,
-      elapsed: 0, label, labelled: first, pulse, pulseOffset: Math.random(),
+      geometry, line, tube, from, to, cls,
+      elapsed: 0, delay: this.lines.length * 0.12, label, labelled: first,
+      pulse, pulseOffset: Math.random(),
     });
   }
 
@@ -267,11 +298,11 @@ export class TraceSystem extends createSystem({}) {
     mesh.position.copy(position);
     this.traceEntities.push(this.world.createTransformEntity(mesh));
     const label = makeLabel(
-      [{ text: kind === 'receipt' ? 'recall receipt' : 'recorded decision', color: TRACE_STYLE.DIRECT.color, size: 22, weight: '700' },
-       { text: id.length > 22 ? `${id.slice(0, 22)}…` : id, color: '#d8e6f5', size: 18 }],
-      { width: 0.22, background: '#0b121bd9', border: '#5fc9ff66' },
+      [{ text: kind === 'receipt' ? 'RECALL RECEIPT' : 'RECORDED DECISION', color: TRACE_STYLE.DIRECT.color, size: 21, weight: '700' },
+       { text: id.length > 22 ? `${id.slice(0, 22)}…` : id, color: OBS.ivory, size: 21, font: 'mono' }],
+      { width: 0.27, background: '#000000d9', border: TRACE_STYLE.DIRECT.color },
     );
-    label.position.copy(position).y += 0.075;
+    label.position.copy(position).y += 0.09;
     this.labels.push(label);
     this.traceEntities.push(this.world.createTransformEntity(label));
   }
@@ -329,7 +360,10 @@ export class TraceSystem extends createSystem({}) {
     const n = markerTargets.length;
     markerTargets.forEach((m, i) => {
       const offset = (i - (n - 1) / 2) * 0.22;
-      const markerPos = rootPos.clone().add(new Vector3(offset, 0.46, 0.2));
+      // Beside the plate, on the side away from the custody tower's captions
+      // (which extend to the right), so provenance and causality never stack.
+      const markerPos = rootPos.clone().add(new Vector3(-0.3 - i * 0.34, 0.3, 0.02));
+      void offset;
       this.drawMarker(m.kind, m.id, markerPos);
       this.drawLine(root, { fixed: markerPos }, 'DIRECT');
     });

@@ -50,7 +50,7 @@ import { SessionStore } from './session.js';
 /** The console button's target. The cradle can stage any actor the rack
  * shows; MNEME's own authority gate decides what a commit may do. */
 const DEFAULT_TARGET_ACTOR_ID = 'pipeline-logs';
-const STAGED_RING_GEO = new TorusGeometry(0.12, 0.004, 8, 48);
+const STAGED_RING_GEO = new TorusGeometry(0.115, 0.0035, 8, 48);
 const DOCK_RADIUS = 0.26;
 
 type StagedMark = { entity: Entity; object: Mesh | Sprite; memoryId: string; isLabel: boolean };
@@ -127,7 +127,7 @@ export class ContainmentSystem extends createSystem({}) {
     for (const m of this.marks) {
       if (field?.getCoreWorldPosition(m.memoryId, this.scratch)) {
         if (m.isLabel) {
-          m.object.position.set(this.scratch.x, this.scratch.y - 0.235, this.scratch.z + 0.06);
+          m.object.position.set(this.scratch.x, this.scratch.y + 0.2, this.scratch.z);
         } else {
           m.object.position.copy(this.scratch);
           m.object.rotation.z += delta * 0.6;
@@ -177,7 +177,7 @@ export class ContainmentSystem extends createSystem({}) {
     const group = new Group();
     const pedestal = new Mesh(
       new CylinderGeometry(0.17, 0.24, c.y - 0.06, 28),
-      new MeshStandardMaterial({ color: '#0f1724', roughness: 0.4, metalness: 0.5 }),
+      new MeshStandardMaterial({ color: '#12141b', roughness: 0.6, metalness: 0.3 }),
     );
     pedestal.position.y = (c.y - 0.06) / 2;
     group.add(pedestal);
@@ -188,12 +188,15 @@ export class ContainmentSystem extends createSystem({}) {
     const label = makeLabel(
       [
         { text: 'INTERVENTION CRADLE', color: OBS.containment, size: 26, weight: '700' },
-        { text: 'place an actor here to stage a containment preview', color: '#c8b08a', size: 18 },
-        { text: 'placing stages only · committing is a separate, authorized click', color: '#8a7a5a', size: 16 },
+        { text: 'place an actor here to stage a containment preview', color: '#a9a69e', size: 18 },
+        { text: 'placing stages only · committing is a separate, authorized click', color: '#8a8880', size: 16 },
       ],
-      { width: 0.34, background: '#1a1410d9', border: '#e0a62b66' },
+      { width: 0.42, background: '#000000d9', border: OBS.containment },
     );
-    label.position.set(0, c.y + 0.34, 0);
+    // Captions hang on the viewer-facing side of the pedestal, below the
+    // ring, so the air above the cradle stays clear for the totem being
+    // placed and for the console behind it.
+    label.position.set(-0.27, c.y - 0.25, 0.075);
     group.add(label);
     this.cradleLabel = label;
     group.position.set(c.x, 0, c.z);
@@ -206,7 +209,7 @@ export class ContainmentSystem extends createSystem({}) {
     this.cradleStatusEntity = null;
     if (!lines) return;
     const label = makeLabel(lines, { width: 0.4, background: '#1a1410e6', border: '#e0a62b99' });
-    label.position.set(this.cradleSlot.x, this.cradleSlot.y + 0.52, this.cradleSlot.z);
+    label.position.set(this.cradleSlot.x - 0.3, this.cradleSlot.y - 0.52, this.cradleSlot.z + 0.085);
     this.cradleStatus = label;
     this.cradleStatusEntity = this.world.createTransformEntity(label);
   }
@@ -240,7 +243,7 @@ export class ContainmentSystem extends createSystem({}) {
       if (preview.already_quarantined) {
         showPreview(`${actorId} is already QUARANTINED - nothing to stage.`);
         this.setCradleStatus([
-          { text: actorId, color: '#f2e8d8', size: 26, weight: '700' },
+          { text: actorId, color: '#EEE9DF', size: 26, weight: '700' },
           { text: 'already QUARANTINED - nothing to stage', color: OBS.staged, size: 19 },
         ]);
       } else {
@@ -253,8 +256,8 @@ export class ContainmentSystem extends createSystem({}) {
         );
         this.setCradleStatus([
           { text: `STAGED: ${actorId}`, color: OBS.staged, size: 26, weight: '700' },
-          { text: `would TAINT_FLAG ${preview.count} ${preview.count === 1 ? 'memory' : 'memories'}`, color: '#f2e8d8', size: 20 },
-          { text: `against field_version ${preview.field_version} · nothing committed`, color: '#c8b08a', size: 17 },
+          { text: `would TAINT_FLAG ${preview.count} ${preview.count === 1 ? 'memory' : 'memories'}`, color: '#EEE9DF', size: 20 },
+          { text: `against field_version ${preview.field_version} · nothing committed`, color: '#a9a69e', size: 17 },
         ]);
         this.markStaged(preview.would_flag_memory_ids, preview.field_version);
       }
@@ -268,7 +271,7 @@ export class ContainmentSystem extends createSystem({}) {
       this.showCommitControls?.(false);
       this.setCradleStatus([
         { text: 'PREVIEW FAILED', color: '#c3ccd8', size: 24, weight: '700' },
-        { text: String((err as Error).message ?? err), color: '#8d98a6', size: 17 },
+        { text: String((err as Error).message ?? err), color: '#8a8880', size: 17 },
       ]);
     } finally {
       this.busy = false;
@@ -311,9 +314,9 @@ export class ContainmentSystem extends createSystem({}) {
       this.clearMarks();
       panel?.getElementById('preview-text')?.setProperties({ display: 'none' });
       this.setCradleStatus([
-        { text: `COMMITTED: ${actorId}`, color: '#a8d8a8', size: 26, weight: '700' },
-        { text: `sweep ${result.sweep_id} · ${result.flagged_count} memories TAINT_FLAGGED`, color: '#d8f0d8', size: 18 },
-        { text: 'MNEME authorized and recorded this; the field below re-read itself', color: '#8aa89a', size: 16 },
+        { text: `COMMITTED: ${actorId}`, color: '#EEE9DF', size: 26, weight: '700' },
+        { text: `sweep ${result.sweep_id} · ${result.flagged_count} memories TAINT_FLAGGED`, color: '#EEE9DF', size: 18 },
+        { text: 'MNEME authorized and recorded this; the field below re-read itself', color: '#8a8880', size: 16 },
       ]);
       this.showCommitControls?.(false);
       const field = this.world.getSystem(FieldSystem);
@@ -326,8 +329,8 @@ export class ContainmentSystem extends createSystem({}) {
       resultText?.setProperties({ text: `FAILED to commit: ${(err as Error).message}` });
       this.setCradleStatus([
         { text: 'COMMIT REFUSED', color: '#c3ccd8', size: 24, weight: '700' },
-        { text: String((err as Error).message ?? err), color: '#8d98a6', size: 17 },
-        { text: 'the field is unchanged', color: '#8d98a6', size: 16 },
+        { text: String((err as Error).message ?? err), color: '#8a8880', size: 17 },
+        { text: 'the field is unchanged', color: '#8a8880', size: 16 },
       ]);
     }
   }
@@ -355,8 +358,8 @@ export class ContainmentSystem extends createSystem({}) {
       this.marks.push({ entity: this.world.createTransformEntity(ring), object: ring, memoryId, isLabel: false });
       const label = makeLabel(
         [{ text: 'PREVIEW · would be TAINT_FLAGGED', color: OBS.staged, size: 20, weight: '700' },
-         { text: `staged against field_version ${fieldVersion} · nothing committed`, color: '#c8b08a', size: 16 }],
-        { width: 0.26, background: '#1a1410e6', border: '#e0a62b88' },
+         { text: `staged against field_version ${fieldVersion} · nothing committed`, color: '#a9a69e', size: 16 }],
+        { width: 0.3, background: '#000000e6', border: OBS.staged },
       );
       this.marks.push({ entity: this.world.createTransformEntity(label), object: label, memoryId, isLabel: true });
     }

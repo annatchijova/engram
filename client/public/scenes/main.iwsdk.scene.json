@@ -57,15 +57,15 @@
       "transform": {
         "position": [
           0,
-          1.44,
-          -1.2
+          1.46,
+          -1.78
         ],
         "rotationDeg": [
-          -3,
+          0,
           0,
           0
         ],
-        "scale": 1.2
+        "scale": 1.4
       },
       "components": {
         "RayInteractable": {}
@@ -81,15 +81,15 @@
       "transform": {
         "position": [
           0,
-          1.8,
-          -1.52
+          2.04,
+          -1.95
         ],
         "rotationDeg": [
-          2,
-          0,
-          0
+          18.0,
+          0.0,
+          -0.0
         ],
-        "scale": 1.35
+        "scale": 1.8
       },
       "components": {
         "RayInteractable": {}
@@ -104,16 +104,16 @@
       },
       "transform": {
         "position": [
-          0.88,
-          1.88,
-          -1.62
+          1.5,
+          1.98,
+          -1.25
         ],
         "rotationDeg": [
-          -6,
-          -22,
-          0
+          22.43,
+          -43.75,
+          15.93
         ],
-        "scale": 1.45
+        "scale": 1.75
       },
       "components": {
         "RayInteractable": {}
@@ -128,16 +128,16 @@
       },
       "transform": {
         "position": [
-          -0.88,
-          1.88,
-          -1.62
+          -1.5,
+          1.98,
+          -1.25
         ],
         "rotationDeg": [
-          -6,
-          22,
-          0
+          22.43,
+          43.75,
+          -15.93
         ],
-        "scale": 1.45
+        "scale": 1.75
       },
       "components": {
         "RayInteractable": {}
@@ -152,16 +152,16 @@
       },
       "transform": {
         "position": [
-          -1.42,
-          1.02,
-          -0.72
+          -1.36,
+          1.2,
+          -0.36
         ],
         "rotationDeg": [
-          -14,
-          58,
-          0
+          -10.57,
+          67.66,
+          9.8
         ],
-        "scale": 1.12
+        "scale": 1.4
       },
       "components": {
         "RayInteractable": {}
@@ -177,15 +177,15 @@
       "transform": {
         "position": [
           0,
-          0.66,
-          -0.92
+          1.5,
+          -1.8
         ],
         "rotationDeg": [
-          -26,
+          0,
           0,
           0
         ],
-        "scale": 1.0
+        "scale": 1.25
       },
       "components": {
         "RayInteractable": {}
@@ -200,16 +200,16 @@
       },
       "transform": {
         "position": [
-          1.42,
-          1.02,
-          -0.72
+          1.36,
+          1.2,
+          -0.36
         ],
         "rotationDeg": [
-          -14,
-          -58,
-          0
+          -10.57,
+          -67.66,
+          -9.8
         ],
-        "scale": 1.12
+        "scale": 1.4
       },
       "components": {
         "RayInteractable": {}
@@ -225,15 +225,15 @@
       "transform": {
         "position": [
           -1.95,
-          1.06,
-          -1.28
+          1.1,
+          -1.22
         ],
         "rotationDeg": [
-          -14,
-          50,
-          0
+          -12.86,
+          51.29,
+          10.1
         ],
-        "scale": 1.32
+        "scale": 1.8
       },
       "components": {
         "RayInteractable": {}
@@ -249,15 +249,15 @@
       "transform": {
         "position": [
           1.95,
-          1.06,
-          -1.28
+          1.1,
+          -1.22
         ],
         "rotationDeg": [
-          -14,
-          -50,
-          0
+          -12.86,
+          -51.29,
+          -10.1
         ],
-        "scale": 1.32
+        "scale": 1.8
       },
       "components": {
         "RayInteractable": {}
@@ -272,16 +272,16 @@
       },
       "transform": {
         "position": [
-          -1.3,
-          1.75,
-          -1.35
+          -1.44,
+          1.9,
+          -0.62
         ],
         "rotationDeg": [
-          -6,
-          40,
-          0
+          33.19,
+          59.77,
+          -29.47
         ],
-        "scale": 1.12
+        "scale": 1.7
       },
       "components": {
         "RayInteractable": {}
