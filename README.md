@@ -173,24 +173,43 @@ counterfactual is explicitly sealed as never executed.
 
 ## Live
 
-- **Client**: https://client-six-mu-93.vercel.app
-- **Adapter**: https://engram-mneme-adapter.fly.dev
+- **The observatory — start here**: https://client-six-mu-93.vercel.app
+- **Adapter**: https://engram-adapter-1048644120951.southamerica-east1.run.app
 
-**Check before judging from these links.** Deployment readiness, with the
-exact commands, post-publish checks and rollback, is in
-[`docs/DEPLOYMENT-READINESS-ROUND13.md`](docs/DEPLOYMENT-READINESS-ROUND13.md). As of 2026-11-14 the deployed
-client still serves the build that predates the observatory
-(`<title>client</title>`), so the link shows the earlier experience, not
-this one; redeploy with the commands in `client/README.md` before
-relying on it. The deployed adapter could not be reached from the
-development machine either, though that machine has no IPv6 route and
-the Fly hostname resolves only to IPv6 there, so its state is unverified
-rather than known-down. Run the local commands above for the current
-experience. See `server/README.md` / `client/README.md` for redeploy commands.
-**Known limitation**: the backend has no persistent volume, so it
-reseeds a fresh demo field on every restart — a live quarantine/export
-someone runs against the public link resets on the next redeploy, not
-preserved indefinitely.
+Open the observatory link and let it load the field. On a Quest, open it in
+the headset browser and press **Enter XR**; on a laptop the same scene runs
+flat, where you look around by dragging and act by clicking. The first card
+asks one question and offers **Begin investigation**, which walks the whole
+case in five steps. **Explore freely** opens every surface at once instead.
+
+Nothing needs an account until the single step that changes the field. For
+that one, log in on the containment console:
+
+- username `meta`
+- password `metavr`
+
+That account acts as Analyst Omar, the one actor MNEME has granted
+`QUARANTINE_ACTOR`. Reading the field, opening a record and its custody
+chain, tracing impact, running the exclusion forecast, and exporting and
+verifying a sealed bundle all work with no login. The client carries a
+read-only token that the adapter refuses for every write, so the public link
+can inspect the field and cannot alter it.
+
+What you are looking at is a real MNEME field, not a mock: each memory was
+produced through MNEME's own authorized API, the custody chains are
+hash-linked, the causal classes come from `causality.impact()`, and the
+bundle is checked by an independent stdlib-only verifier running as a
+separate process.
+
+**Known limitations, stated plainly:**
+
+- The adapter runs as a single instance and keeps its field in the container,
+  so a cold start reseeds the demo field. A quarantine you commit is real and
+  immediately visible, but it does not survive the service going idle.
+- With every surface revealed at once, ten panels crowd the seated view. The
+  guided tour paces them; free exploration is still dense.
+- The experience has been validated in the IWER Quest 3 emulator, not on
+  physical hardware. Comfort and legibility in a headset are unproven.
 
 ## Project status
 

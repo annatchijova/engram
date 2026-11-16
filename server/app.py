@@ -38,6 +38,7 @@ from typing import Any
 
 from fastapi import Body, Depends, FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 MNEME_REPO_PATH = os.environ.get("MNEME_REPO_PATH", "/home/labestiadevigia/mneme")
@@ -123,6 +124,44 @@ CUSTODY_STATUS_MEANING = {
     "QUARANTINED": "Direct evidence against this memory - invisible, not rehabilitable",
     "SUPERSEDED": "Replaced by a newer memory - invisible, preserved",
 }
+
+
+@app.get("/", response_class=HTMLResponse)
+def root() -> str:
+    """A signpost for anyone who opens the adapter URL in a browser.
+
+    This service is an API, so the bare origin used to answer 404 and look
+    broken to a reader who had simply followed the link from the write-up.
+    It carries no field content and needs no credential: it only says what
+    this host is and points at the experience it serves.
+    """
+    observatory = DEV_ORIGINS[0] if DEV_ORIGINS else ""
+    link = (
+        f'<a href="{observatory}">{observatory}</a>' if observatory.startswith("https://")
+        else "see the project README"
+    )
+    return f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ENGRAM adapter</title>
+<style>
+ body {{ margin:0; min-height:100vh; display:flex; align-items:center;
+        justify-content:center; background:#0b0d12; color:#EEE9DF;
+        font:16px/1.6 ui-sans-serif,system-ui,-apple-system,sans-serif; }}
+ main {{ max-width:34rem; padding:2rem; }}
+ h1 {{ font-size:1.5rem; margin:0 0 .25rem; }}
+ p {{ color:#b9b5ab; }}
+ a {{ color:#EEE9DF; }}
+ code {{ color:#b9b5ab; }}
+</style></head>
+<body><main>
+<h1>ENGRAM adapter</h1>
+<p>This is the read adapter over MNEME. It serves data, not pages, so there
+is nothing to look at here.</p>
+<p>The experience it serves is at {link}.</p>
+<p>Liveness, with no credential required, is at <a href="/health">/health</a>.
+Every other endpoint needs a read token and refuses to write with it.</p>
+</main></body></html>"""
 
 
 @app.get("/health")

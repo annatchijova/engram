@@ -87,3 +87,7 @@ server/data/
 # impeccable-ignore-end
 .devpost-hackathon-state.json
 devpost-submission.md
+.vercel
+.env*
+# the template carries no secrets and is meant to be read before first run
+!client/.env.example
