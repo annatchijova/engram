@@ -143,7 +143,7 @@ export class OnboardingSystem extends createSystem({}) {
       const done = m.test(stage, this.contained);
       guide?.getElementById(m.elementId)?.setProperties({
         text: done ? `[x] ${m.label}` : `[ ] ${m.label}`,
-        color: done ? '#7fd4a8' : '#4a5a68',
+        color: done ? '#EEE9DF' : '#6d6c68',
         display: visible ? 'flex' : 'none',
       });
     }

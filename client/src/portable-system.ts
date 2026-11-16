@@ -20,7 +20,7 @@ import {
   LineBasicMaterial,
   LineSegments,
   Mesh,
-  MeshPhysicalMaterial,
+  MeshStandardMaterial,
   Sprite,
   UIKitMLAsset,
 } from '@iwsdk/core';
@@ -44,9 +44,9 @@ export class PortableSystem extends createSystem({}) {
   private artifactEntity: Entity | null = null;
   private artifact: Group | null = null;
   private label: Sprite | null = null;
-  private material = new MeshPhysicalMaterial({
+  private material = new MeshStandardMaterial({
     color: new Color(OBS.vault), emissive: new Color(OBS.vault), emissiveIntensity: 0.5,
-    transparent: true, opacity: 0.55, roughness: 0.15, clearcoat: 1,
+    transparent: true, opacity: 0.55, roughness: 0.15,
   });
   private edgeMaterial = new LineBasicMaterial({ color: new Color('#ffffff'), transparent: true, opacity: 0.6 });
   private glowTarget = 0.35;
@@ -132,9 +132,9 @@ export class PortableSystem extends createSystem({}) {
     group.add(new LineSegments(BUNDLE_EDGES, this.edgeMaterial));
     const label = makeLabel(
       [
-        { text: `bundle ${sha.slice(0, 16)}…`, color: '#f2f6fa', size: 40, weight: '700' },
+        { text: `bundle ${sha.slice(0, 16)}…`, color: '#EEE9DF', size: 40, weight: '700' },
         { text: `${count} memories · verifier ${status}${exitCode === null ? '' : ` (exit ${exitCode})`}`, color: hex, size: 34, weight: '600' },
-        { text: 'checked by a separate program, not the one that made it', color: '#9fb3c8', size: 26 },
+        { text: 'checked by a separate program, not the one that made it', color: '#a9a69e', size: 26 },
       ],
       { width: 0.66, background: '#0a1a14f7', border: `${hex}aa` },
     );

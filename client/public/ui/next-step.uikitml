@@ -1,24 +1,27 @@
 <style>
-  .panel-root { flex-direction: column; width: 60; padding-top: 1.6; padding-bottom: 1.6; padding-left: 2.4; padding-right: 2.4; background-color: #070b12f2; border-color: #5fc9ff; border-width: 0.12; border-radius: 0.9; }
-  .eyebrow { font-size: 0.95; font-weight: 700; color: #5fc9ff; margin-bottom: 0.4; }
-  .question { font-size: 2.2; font-weight: 700; color: #f2f6fa; margin-bottom: 0.7; }
-  .body { font-size: 1.2; color: #c9d6e3; margin-bottom: 0.9; }
-  .action { font-size: 1.35; font-weight: 700; color: #ffd27a; margin-bottom: 0.9; }
-  .progress { font-size: 1.1; color: #7fd4a8; margin-bottom: 0.9; }
-  .checklist-row { font-size: 0.9; color: #4a5a68; }
-  .skip-btn { width: 100%; height: 2.4; background-color: #1d2a3b; border-radius: 1.2; justify-content: center; align-items: center; color: #cfd8e3; font-size: 1.05; cursor: pointer; margin-bottom: 0.6; }
-  .restart-btn { width: 100%; height: 2.4; background-color: #121a26; border-radius: 1.2; justify-content: center; align-items: center; color: #8fa3b8; font-size: 1; cursor: pointer; }
+  .panel-root { flex-direction: column; width: 66; padding-top: 2.4; padding-bottom: 2.4; padding-left: 2.8; padding-right: 2.8; background-color: #0b0d12f4; border-color: #4a4b4f; border-width: 0.1; border-radius: 0.5; }
+  .eyebrow { font-size: 1.15; font-weight: 700; color: #b9b5ab; margin-bottom: 0.6; }
+  .question { font-size: 2.9; font-weight: 700; color: #EEE9DF; margin-bottom: 0.9; }
+  .body { font-size: 1.7; color: #b9b5ab; margin-bottom: 1.1; }
+  .action { font-size: 1.9; font-weight: 700; color: #EEE9DF; margin-bottom: 1; }
+  .progress { display: none; font-size: 1.5; color: #EEE9DF; }
+  .checklist { flex-direction: row; gap: 1.6; margin-bottom: 1; }
+  .checklist-row { font-size: 1.3; color: #8f8c85; }
+  .skip-btn { width: 100%; height: 3; background-color: #1c2029; border-radius: 0.4; justify-content: center; align-items: center; color: #EEE9DF; font-size: 1.45; cursor: pointer; margin-bottom: 0.7; }
+  .restart-btn { width: 100%; height: 2.6; background-color: #12141b; border-radius: 0.4; justify-content: center; align-items: center; color: #8f8c85; font-size: 1.3; cursor: pointer; }
 </style>
 <div class="panel-root" id="next-step-root">
   <span class="eyebrow" id="guide-eyebrow">INVESTIGATION - STEP 1 OF 5</span>
   <span class="question" id="guide-question">Which memory deserves our attention?</span>
-  <span class="body" id="next-step-text"></span>
-  <span class="action" id="guide-action"></span>
-  <span class="progress" id="guide-progress"></span>
-  <span class="checklist-row" id="checklist-select" style="display: none">[ ] Found it</span>
-  <span class="checklist-row" id="checklist-trace" style="display: none">[ ] Traced it</span>
-  <span class="checklist-row" id="checklist-containment" style="display: none">[ ] Contained it</span>
-  <span class="checklist-row" id="checklist-verify" style="display: none">[ ] Verified it</span>
+  <span class="body" id="next-step-text">​</span>
+  <span class="action" id="guide-action">​</span>
+  <span class="progress" id="guide-progress">​</span>
+  <div class="checklist">
+    <span class="checklist-row" id="checklist-select" style="display: none">[ ] Found it</span>
+    <span class="checklist-row" id="checklist-trace" style="display: none">[ ] Traced it</span>
+    <span class="checklist-row" id="checklist-containment" style="display: none">[ ] Contained it</span>
+    <span class="checklist-row" id="checklist-verify" style="display: none">[ ] Verified it</span>
+  </div>
   <button class="skip-btn" id="next-step-skip">Explore freely</button>
   <button class="restart-btn" id="guide-restart">Restart the investigation</button>
 </div>

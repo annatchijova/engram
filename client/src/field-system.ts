@@ -4,30 +4,41 @@
  * Fetches the real MNEME field from the read adapter (never invents data)
  * and places every memory as a physical "memory core" on the evidence bench
  * in front of the seated investigator — no locomotion, no gravity metaphor.
- * Each core's crystal/halo color comes ONLY from the fixed, declared
+ * Each core's mark/frame color comes ONLY from the fixed, declared
  * custody_status map below; the legend panel renders that exact map plus
  * the adapter's own stated meaning for each status.
  *
- * Interaction feedback (hover swell, selection lift and beam, the slow bob
- * and crystal spin) is presentation only and identical for every status:
- * motion, size and brightness never encode authority or truth.
+ * Motion policy: the field is still unless the system changed. A plate
+ * moves for exactly four reasons, each a real event:
+ *   - ARRIVAL: the field was read (or the observer entered the session);
+ *     plates stand up in the server's list order and the room's limb lights
+ *     with the fraction that has arrived. A failed read lights nothing.
+ *   - ATTENTION: a pointer rests on a plate; its sheets part slightly and
+ *     ivory focus brackets frame it.
+ *   - OPEN: the record is selected; the sheets open fully and the brackets
+ *     close on it.
+ *   - CUSTODY CHANGE: MNEME reported a different status after a refresh;
+ *     the mark's colour moves from the old declared hue to the new one.
+ * All four are identical for every custody status: motion, size and
+ * brightness never encode authority or truth. There is no idle animation.
  */
 import {
   Color,
   createSystem,
-  CylinderGeometry,
   Group,
   Entity,
   Hovered,
   LineBasicMaterial,
   Mesh,
   MeshBasicMaterial,
-  MeshPhysicalMaterial,
   MeshStandardMaterial,
   Object3D,
   DistanceGrabbable,
+  DoubleSide,
   MovementMode,
   RayInteractable,
+  Shape,
+  ShapeGeometry,
   Sprite,
   TorusGeometry,
   UIKitMLAsset,
@@ -36,7 +47,8 @@ import {
 import { EngramApi } from './engram-api.js';
 import { FieldEvents } from './field-events.js';
 import { disposeLabel, makeLabel } from './observatory/labels.js';
-import { buildMemoryCore, CoreMaterials, MemoryCore } from './observatory/memory-core.js';
+import { buildMemoryCore, CoreMaterials, MemoryCore, placeCaption, PLATE, setPlateSpread } from './observatory/memory-core.js';
+import { ObservatoryScene } from './observatory/observatory-handles.js';
 import { OBS, OBSERVATORY } from './observatory/palette.js';
 import { CustodyStatus, MemoryNode } from './memory-node-component.js';
 import { SelectedMemory } from './selected-memory.js';
@@ -58,11 +70,18 @@ const UNKNOWN_STATUS_COLOR = '#999999';
 // update(delta)'s delta is in seconds (three.js Clock convention, confirmed
 // by the reference examples); accumulating delta keeps this independent of
 // the absolute time epoch.
-const TRANSITION_SECONDS = 0.6;
+const TRANSITION_SECONDS = 0.9;
+
+// Arrival choreography. One plate every ARRIVAL_STAGGER seconds, in the
+// order the server listed them; each takes ARRIVAL_SECONDS to stand up.
+const ARRIVAL_STAGGER = 0.14;
+const ARRIVAL_SECONDS = 0.9;
+/** A beat of stillness before the first plate, so the dark room registers. */
+const ARRIVAL_LEAD_IN = 0.7;
 
 type ColorTransition = {
-  crystal: MeshPhysicalMaterial;
-  halo: MeshStandardMaterial;
+  crystal: MeshStandardMaterial;
+  halo: MeshBasicMaterial;
   from: Color;
   to: Color;
   toStatus: string;
@@ -70,7 +89,17 @@ type ColorTransition = {
   elapsed: number;
 };
 
-type PlacedCore = { entity: Entity; core: MemoryCore; memoryId: string };
+type PlacedCore = {
+  entity: Entity;
+  core: MemoryCore;
+  memoryId: string;
+  /** Identity + status. Always-on caption. */
+  caption: Sprite;
+  /** Identity + status + plain gloss. Shown while attended or open. */
+  captionFull: Sprite;
+  /** Seconds after the arrival clock's zero at which this plate starts. */
+  arrivalAt: number;
+};
 
 /** Request/transport states shown ON a core. Deliberately NOT custody
  * states: they are rendered in a neutral instrument grey that appears in
@@ -78,118 +107,151 @@ type PlacedCore = { entity: Entity; core: MemoryCore; memoryId: string };
 export type CoreState = 'idle' | 'loading' | 'failed';
 type StateMark = { entity: Entity; group: Group; ring: Mesh; label: Sprite; state: CoreState };
 
-const STATE_RING_GEO = new TorusGeometry(0.115, 0.0045, 8, 44);
-const SELECT_RING_GEO = new TorusGeometry(0.105, 0.0035, 8, 48);
+const STATE_RING_GEO = new TorusGeometry(0.075, 0.0035, 8, 44);
 // Neutral instrument grey: never a custody hue, so a transport failure can
 // never read as a MNEME state.
 const STATE_COLOR = '#c3ccd8';
 
+/** Four corner brackets framing a plate: the bracket of the ENGRAM mark,
+ * used as the room's one focus indicator. */
+function bracketGeometry(w: number, h: number, arm: number, t: number): ShapeGeometry {
+  const shapes: Shape[] = [];
+  for (const sx of [-1, 1]) for (const sy of [-1, 1]) {
+    const x = (sx * w) / 2;
+    const y = (sy * h) / 2;
+    const s = new Shape();
+    s.moveTo(x, y);
+    s.lineTo(x - sx * arm, y);
+    s.lineTo(x - sx * arm, y - sy * t);
+    s.lineTo(x - sx * t, y - sy * t);
+    s.lineTo(x - sx * t, y - sy * arm);
+    s.lineTo(x, y - sy * arm);
+    s.closePath();
+    shapes.push(s);
+  }
+  return new ShapeGeometry(shapes);
+}
+const BRACKET_GEO = bracketGeometry(PLATE.width + 0.05, PLATE.height + 0.05, 0.024, 0.0034);
+
+type Focus = { mesh: Mesh; material: MeshBasicMaterial; scale: number; opacity: number };
+
+function easeOutCubic(t: number): number {
+  const u = 1 - t;
+  return 1 - u * u * u;
+}
+
 export class FieldSystem extends createSystem({
   nodes: { required: [MemoryNode] },
 }) {
-  private crystalMaterials: Record<string, MeshPhysicalMaterial> = {};
-  private haloMaterials: Record<string, MeshStandardMaterial> = {};
+  private crystalMaterials: Record<string, MeshStandardMaterial> = {};
+  private haloMaterials: Record<string, MeshBasicMaterial> = {};
   private fallbackCrystal = makeCrystalMaterial(UNKNOWN_STATUS_COLOR);
   private fallbackHalo = makeHaloMaterial(UNKNOWN_STATUS_COLOR);
-  private capsuleMaterial = new MeshPhysicalMaterial({
+  // Glass: a standard material, not a physical one. Clearcoat and
+  // transmission cost a second lighting pass per fragment on a mobile GPU
+  // for a difference nobody reads at 1.5 m; the layered look comes from
+  // three real sheets and their parallax, not from the shader.
+  private capsuleMaterial = new MeshStandardMaterial({
     color: new Color(OBS.glass),
     transparent: true,
-    opacity: 0.16,
-    roughness: 0.08,
+    opacity: 0.11,
+    roughness: 0.06,
     metalness: 0.0,
-    clearcoat: 1,
-    clearcoatRoughness: 0.1,
     depthWrite: false,
+    side: DoubleSide,
   });
   private baseMaterial = new MeshStandardMaterial({
-    color: new Color(OBS.metal), roughness: 0.35, metalness: 0.7,
+    color: new Color(OBS.metal), roughness: 0.5, metalness: 0.55,
   });
-  private baseEdgeMaterial = new LineBasicMaterial({ color: new Color('#5a6b80') });
-  private cageMaterial = new MeshStandardMaterial({
+  private baseEdgeMaterial = new LineBasicMaterial({ color: new Color(OBS.ivory) });
+  private edgeMaterial = new MeshBasicMaterial({
+    color: new Color(OBS.ivory), transparent: true, opacity: 0.42, side: DoubleSide, depthWrite: false,
+  });
+  private cageMaterial = new MeshBasicMaterial({
     color: new Color(CUSTODY_COLOR[CustodyStatus.QUARANTINED]),
-    emissive: new Color(CUSTODY_COLOR[CustodyStatus.QUARANTINED]),
-    emissiveIntensity: 0.6,
-    wireframe: true,
   });
 
   private placed: PlacedCore[] = [];
   private previousStatus = new Map<string, string>();
   private transitions: ColorTransition[] = [];
-  // Selection beam: a soft column of light from the ceiling onto the
-  // selected core. Interaction feedback, not evidence.
-  private beam = new Mesh(
-    new CylinderGeometry(0.02, 0.11, 2.4, 20, 1, true),
-    new MeshBasicMaterial({
-      color: new Color(OBS.selected), transparent: true, opacity: 0.12, depthWrite: false,
-    }),
-  );
-  private beamEntity: Entity | null = null;
-  // One selection ring, moved under whichever core is selected: pure
-  // interaction feedback, identical for every custody status.
-  private selectRing = new Mesh(
-    SELECT_RING_GEO,
-    new MeshStandardMaterial({
-      color: new Color(OBS.selected), emissive: new Color(OBS.selected),
-      emissiveIntensity: 1.3, transparent: true, opacity: 0.9,
-    }),
-  );
+  // Focus brackets: interaction feedback only, ivory, identical for every
+  // custody status. One pair follows the pointer, one holds the selection.
+  private hoverFocus = makeFocus();
+  private selectFocus = makeFocus();
   private stateMarks = new Map<string, StateMark>();
-  private stateMaterial = new MeshStandardMaterial({
-    color: new Color(STATE_COLOR), emissive: new Color(STATE_COLOR),
-    emissiveIntensity: 0.9, transparent: true, opacity: 0.9,
+  private stateMaterial = new MeshBasicMaterial({
+    color: new Color(STATE_COLOR), transparent: true, opacity: 0.9,
   });
   private scratch = new Vector3();
+  /** Seconds since the current arrival began; negative during the lead-in. */
+  private arrivalClock = Number.POSITIVE_INFINITY;
+  private arrived = false;
 
   init(): void {
     for (const [status, hex] of Object.entries(CUSTODY_COLOR)) {
       this.crystalMaterials[status] = makeCrystalMaterial(hex);
       this.haloMaterials[status] = makeHaloMaterial(hex);
     }
-    this.beam.visible = false;
-    this.beamEntity = this.world.createTransformEntity(this.beam);
-    this.selectRing.rotation.x = Math.PI / 2;
-    this.selectRing.visible = false;
-    this.world.createTransformEntity(this.selectRing);
+    this.world.createTransformEntity(this.hoverFocus.mesh);
+    this.world.createTransformEntity(this.selectFocus.mesh);
+    // Entering the immersive session is an arrival too: the observer was
+    // not in the room when the page first read the field, so the field
+    // presents itself again. No data is re-fetched or altered by this.
+    const xr = this.world.renderer.xr;
+    const onSessionStart = () => { if (this.arrived) this.beginArrival(); };
+    xr.addEventListener('sessionstart', onSessionStart);
+    this.cleanupFuncs.push(() => xr.removeEventListener('sessionstart', onSessionStart));
     void this.refresh();
   }
 
-  update(delta: number, time: number): void {
+  /** Restart the arrival choreography for the cores currently placed. */
+  private beginArrival(): void {
+    this.arrivalClock = -ARRIVAL_LEAD_IN;
+    this.placed.forEach((p, i) => { p.arrivalAt = i * ARRIVAL_STAGGER; });
+  }
+
+  update(delta: number): void {
     const selectedId = SelectedMemory.get();
     const smoothing = 1 - Math.exp(-delta * 9);
     let selectedCore: MemoryCore | null = null;
+    let hoveredCore: MemoryCore | null = null;
+    if (this.arrivalClock < 1e6) this.arrivalClock += delta;
+    let presence = 0;
 
     for (const p of this.placed) {
       const { core, entity } = p;
       const hovered = entity.hasComponent(Hovered);
       const selected = p.memoryId === selectedId;
       if (selected) selectedCore = core;
-      // Focus: while one memory is open, the other labels step back so the
-      // provenance tower and edges have room to read. Cores themselves stay
-      // fully visible; only text yields.
-      core.label.visible = selectedId === null || selected || hovered;
-      const targetScale = selected ? 1.22 : hovered ? 1.1 : 1;
-      const targetLift = selected ? 0.1 : 0;
-      const bob = Math.sin(time * 1.1 + core.phase) * 0.01;
-      const s = core.float.scale.x + (targetScale - core.float.scale.x) * smoothing;
-      core.float.scale.setScalar(s);
-      core.float.position.y += (targetLift + bob - core.float.position.y) * smoothing;
-      core.crystal.rotation.y += delta * (selected ? 1.6 : 0.55);
-      core.halo.rotation.z += delta * 0.8;
-    }
+      else if (hovered) hoveredCore = core;
 
-    if (selectedCore) {
-      selectedCore.root.getWorldPosition(this.scratch);
-      this.beam.position.set(this.scratch.x, this.scratch.y + 1.25, this.scratch.z);
-      this.beam.visible = true;
-      this.selectRing.position.set(this.scratch.x, this.scratch.y - 0.15, this.scratch.z);
-      this.selectRing.rotation.z += delta * 0.4;
-      this.selectRing.visible = true;
-    } else {
-      this.beam.visible = false;
-      this.selectRing.visible = false;
-    }
+      const t = Math.min(1, Math.max(0, (this.arrivalClock - p.arrivalAt) / ARRIVAL_SECONDS));
+      const arrival = easeOutCubic(t);
+      core.arrival = arrival;
+      presence += arrival;
+      core.float.visible = t > 0;
+      core.float.scale.setScalar(0.9 + 0.1 * arrival);
 
-    // Transport-state marks ride their core and pulse only while loading.
+      // Focus: while one memory is open, the other captions step back so
+      // the provenance tower and edges have room to read. Plates themselves
+      // stay fully visible; only text yields. An attended or open plate
+      // shows the longer caption with the plain-language gloss.
+      const captionOn = t >= 1 && (selectedId === null || selected || hovered);
+      const full = selected || hovered;
+      p.caption.visible = captionOn && !full;
+      p.captionFull.visible = captionOn && full;
+
+      const targetSpread = Math.max(selected ? 1 : hovered ? 0.4 : 0, 1 - arrival);
+      const targetLift = (selected ? 0.03 : 0) - (1 - arrival) * 0.05;
+      setPlateSpread(core, core.spread + (targetSpread - core.spread) * smoothing);
+      core.float.position.y += (targetLift - core.float.position.y) * smoothing;
+    }
+    ObservatoryScene.setFieldPresence(this.placed.length ? presence / this.placed.length : 0);
+
+    this.driveFocus(this.selectFocus, selectedCore, 1.0, 0.95, smoothing);
+    this.driveFocus(this.hoverFocus, hoveredCore, 1.12, 0.6, smoothing);
+
+    // Transport-state marks ride their core and turn only while loading.
     for (const [memoryId, mark] of this.stateMarks) {
       if (this.getCoreWorldPosition(memoryId, this.scratch)) {
         mark.group.position.copy(this.scratch);
@@ -213,9 +275,32 @@ export class FieldSystem extends createSystem({
         t.crystal.color.lerpColors(t.from, t.to, alpha);
         t.crystal.emissive.copy(t.crystal.color);
         t.halo.color.copy(t.crystal.color);
-        t.halo.emissive.copy(t.crystal.color);
+        // The sheets open while the record is being re-marked and close as
+        // the new status settles: the change is visible as an event, not
+        // only as a different colour found later.
+        setPlateSpread(t.core, Math.max(t.core.spread, Math.sin(alpha * Math.PI)));
       }
     }
+  }
+
+  private driveFocus(focus: Focus, core: MemoryCore | null, scale: number, opacity: number, k: number): void {
+    if (core) {
+      if (!focus.mesh.visible) {
+        // Appear wide and close in: the eye is led to the plate.
+        focus.scale = scale * 1.25;
+        focus.opacity = 0;
+        focus.mesh.visible = true;
+      }
+      core.float.getWorldPosition(focus.mesh.position);
+      core.root.getWorldQuaternion(focus.mesh.quaternion);
+      focus.scale += (scale - focus.scale) * k;
+      focus.opacity += (opacity - focus.opacity) * k;
+    } else if (focus.mesh.visible) {
+      focus.opacity += (0 - focus.opacity) * k * 1.5;
+      if (focus.opacity < 0.02) focus.mesh.visible = false;
+    }
+    focus.mesh.scale.setScalar(focus.scale);
+    focus.material.opacity = focus.opacity;
   }
 
   /** Show a transport state on one core: a request in flight (LOADING) or
@@ -232,20 +317,20 @@ export class FieldSystem extends createSystem({
     const group = new Group();
     const ring = new Mesh(STATE_RING_GEO, this.stateMaterial);
     ring.rotation.x = Math.PI / 2;
-    ring.position.y = 0.2;
+    ring.position.y = 0.125;
     group.add(ring);
     const label = state === 'loading'
       ? makeLabel(
-          [{ text: 'READING RECORD...', color: STATE_COLOR, size: 22, weight: '700' },
-           { text: 'request in flight', color: '#8d98a6', size: 17 }],
-          { width: 0.2, background: '#0b121bd9', border: '#c3ccd866' },
+          [{ text: 'READING RECORD', color: STATE_COLOR, size: 22, weight: '700' },
+           { text: 'request in flight', color: OBS.ivoryDim, size: 21 }],
+          { width: 0.24, background: '#000000e0', border: STATE_COLOR },
         )
       : makeLabel(
           [{ text: 'READ FAILED', color: STATE_COLOR, size: 22, weight: '700' },
-           { text: 'transport error, not a custody status', color: '#8d98a6', size: 17 }],
-          { width: 0.24, background: '#0b121bd9', border: '#c3ccd866' },
+           { text: 'transport error, not a custody status', color: OBS.ivoryDim, size: 21 }],
+          { width: 0.3, background: '#000000e0', border: STATE_COLOR },
         );
-    label.position.y = 0.3;
+    label.position.y = 0.2;
     group.add(label);
     if (this.getCoreWorldPosition(memoryId, this.scratch)) group.position.copy(this.scratch);
     const entity = this.world.createTransformEntity(group);
@@ -288,7 +373,8 @@ export class FieldSystem extends createSystem({
     }
 
     for (const p of this.placed) {
-      disposeLabel(p.core.label);
+      disposeLabel(p.caption);
+      disposeLabel(p.captionFull);
       p.entity.dispose();
     }
     this.placed = [];
@@ -326,39 +412,47 @@ export class FieldSystem extends createSystem({
         capsule: this.capsuleMaterial,
         base: this.baseMaterial,
         baseEdge: this.baseEdgeMaterial,
+        edge: this.edgeMaterial,
         cage: this.cageMaterial,
       };
 
       const presentation = CUSTODY_PRESENTATION[m.custody_status];
       // Identity and state only: topic and excerpt belong to the hover
       // card and the inspector (progressive disclosure), so the field reads
-      // as objects, not as a wall of text.
-      const label = makeLabel(
-        [
-          { text: m.memory_id, color: '#f2f6fa', size: 32, weight: '700' },
-          {
-            text: presentation ? `${presentation.glyph} ${m.custody_status}` : `? ${m.custody_status} (unmapped)`,
-            color: knownStatus ? CUSTODY_COLOR[m.custody_status] : UNKNOWN_STATUS_COLOR,
-            size: 25,
-            weight: '600',
-          },
-          { text: CUSTODY_GLOSS[m.custody_status] ?? 'status not in this client\'s vocabulary', color: '#9fb3c8', size: 18 },
-        ],
-        { width: 0.26, background: '#0b121bd9', border: '#2a3a4d' },
+      // as objects, not as a wall of text. The plain gloss joins the
+      // caption while the plate is attended or open.
+      const statusColor = knownStatus ? CUSTODY_COLOR[m.custody_status] : UNKNOWN_STATUS_COLOR;
+      const idLine = { text: m.memory_id, color: OBS.ivory, size: 27, weight: '500', font: 'mono' as const };
+      const statusLine = {
+        text: presentation ? `${presentation.glyph} ${m.custody_status}` : `? ${m.custody_status} (unmapped)`,
+        // SUPERSEDED's declared grey is too dark to read as text on ink; the
+        // caption states the status in words and glyph, the mark keeps the hex.
+        color: m.custody_status === CustodyStatus.SUPERSEDED ? '#a3a7ae' : statusColor,
+        size: 22,
+        weight: '700',
+      };
+      const caption = makeLabel([idLine, statusLine], { width: 0.25, background: '#000000b8' });
+      const captionFull = makeLabel(
+        [idLine, statusLine,
+         { text: CUSTODY_GLOSS[m.custody_status] ?? 'status not in this client\'s vocabulary', color: OBS.ivoryDim, size: 21 }],
+        { width: 0.27, background: '#000000ee', border: OBS.ivory },
       );
 
       const core = buildMemoryCore(
-        materials, label, m.custody_status === CustodyStatus.QUARANTINED, i * 0.9,
+        materials, caption, m.custody_status === CustodyStatus.QUARANTINED, i * 0.9,
       );
+      placeCaption(captionFull);
+      captionFull.visible = false;
+      core.root.add(captionFull);
       core.root.position.set(x, coreHeight, z);
-      // Face the seated viewer so the containment cage reads squarely;
-      // orientation is presentation only and encodes no relationship.
+      // Face the seated viewer so the sheets read squarely; orientation is
+      // presentation only and encodes no relationship.
       core.root.lookAt(0, coreHeight, 0);
 
       if (changed) {
         this.transitions.push({
-          crystal: materials.crystal as MeshPhysicalMaterial,
-          halo: materials.halo as MeshStandardMaterial,
+          crystal: materials.crystal as MeshStandardMaterial,
+          halo: materials.halo as MeshBasicMaterial,
           from: new Color(CUSTODY_COLOR[priorStatus!]),
           to: new Color(CUSTODY_COLOR[m.custody_status]),
           toStatus: m.custody_status,
@@ -390,10 +484,16 @@ export class FieldSystem extends createSystem({
         topic: m.topic ?? '',
         contentPreview: m.content_preview ?? '',
       });
-      this.placed.push({ entity, core, memoryId: m.memory_id });
+      // A refresh after the first arrival (a commit, for instance) does not
+      // replay the entrance: those plates are already standing.
+      this.placed.push({ entity, core, memoryId: m.memory_id, caption, captionFull, arrivalAt: -ARRIVAL_SECONDS });
       nextStatus.set(m.memory_id, m.custody_status);
     });
     this.previousStatus = nextStatus;
+    if (!this.arrived) {
+      this.arrived = true;
+      this.beginArrival();
+    }
     FieldEvents.emitRefreshed();
   }
 
@@ -416,7 +516,7 @@ export class FieldSystem extends createSystem({
     legend.getElementById('legend-status')?.setProperties({ display: 'none' });
     this.world.getSceneObject<UIKitMLAsset>('welcome-panel')?.getElementById('welcome-status')?.setProperties({
       text: `Live field: ${overview.total_memories} memories, field_version ${overview.field_version}.`,
-      color: '#7fd4a8',
+      color: OBS.ivoryDim,
     });
   }
 
@@ -428,36 +528,43 @@ export class FieldSystem extends createSystem({
     const status = legend?.getElementById('legend-status');
     status?.setProperties({
       text: `FAILED to load field: ${(err as Error).message ?? err}`,
-      color: '#ff8080',
+      color: STATE_COLOR,
       display: 'flex',
     });
     // The welcome card is the first thing a newcomer reads: it must carry
     // the failure too, or the room looks merely empty.
     this.world.getSceneObject<UIKitMLAsset>('welcome-panel')?.getElementById('welcome-status')?.setProperties({
       text: `FAILED to load the field: ${(err as Error).message ?? err}`,
-      color: '#ff8080',
+      color: STATE_COLOR,
     });
   }
 }
 
-function makeCrystalMaterial(hex: string): MeshPhysicalMaterial {
-  return new MeshPhysicalMaterial({
-    color: new Color(hex),
-    emissive: new Color(hex),
-    emissiveIntensity: 0.5,
-    roughness: 0.22,
-    metalness: 0.1,
-    clearcoat: 1,
-    clearcoatRoughness: 0.15,
+function makeFocus(): Focus {
+  const material = new MeshBasicMaterial({
+    color: new Color(OBS.selected), transparent: true, opacity: 0, side: DoubleSide, depthWrite: false,
   });
+  const mesh = new Mesh(BRACKET_GEO, material);
+  mesh.visible = false;
+  mesh.renderOrder = 6;
+  mesh.raycast = () => {};
+  return { mesh, material, scale: 1, opacity: 0 };
 }
 
-function makeHaloMaterial(hex: string): MeshStandardMaterial {
+// The custody mark is lit, so it has facets; emissive keeps the declared
+// hue readable in shadow. Intensity is the same for every status.
+function makeCrystalMaterial(hex: string): MeshStandardMaterial {
   return new MeshStandardMaterial({
     color: new Color(hex),
     emissive: new Color(hex),
-    emissiveIntensity: 1.6,
-    roughness: 0.4,
-    metalness: 0.2,
+    emissiveIntensity: 0.75,
+    roughness: 0.3,
+    metalness: 0.1,
+    flatShading: true,
   });
+}
+
+// The custody frame is unlit: the declared hex, exactly, from any angle.
+function makeHaloMaterial(hex: string): MeshBasicMaterial {
+  return new MeshBasicMaterial({ color: new Color(hex), side: DoubleSide });
 }

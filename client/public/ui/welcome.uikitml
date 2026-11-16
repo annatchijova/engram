@@ -1,12 +1,12 @@
 <style>
-  .panel-root { flex-direction: column; width: 78; padding-top: 3; padding-bottom: 3; padding-left: 4; padding-right: 4; background-color: #070b12f4; border-color: #5fc9ff; border-width: 0.16; border-radius: 1.2; }
-  .eyebrow { font-size: 1.2; font-weight: 700; color: #5fc9ff; margin-bottom: 0.8; }
-  .question { font-size: 4; font-weight: 700; color: #f2f6fa; margin-bottom: 1.4; }
-  .body { font-size: 1.55; color: #c9d6e3; margin-bottom: 0.9; }
-  .task { font-size: 1.55; color: #e8f0f8; margin-bottom: 2; }
-  .begin { width: 100%; height: 3.6; background-color: #2b5f8a; border-radius: 1.8; justify-content: center; align-items: center; color: #eaf6ff; font-size: 1.7; font-weight: 700; cursor: pointer; margin-bottom: 0.9; }
-  .explore { width: 100%; height: 2.8; background-color: #1d2a3b; border-radius: 1.4; justify-content: center; align-items: center; color: #cfd8e3; font-size: 1.3; cursor: pointer; }
-  .foot { font-size: 1; color: #6f8196; margin-top: 1.4; }
+  .panel-root { flex-direction: column; width: 78; padding-top: 2.4; padding-bottom: 2.4; padding-left: 2.8; padding-right: 2.8; background-color: #0b0d12f4; border-color: #4a4b4f; border-width: 0.1; border-radius: 0.5; }
+  .eyebrow { font-size: 1.3; font-weight: 700; color: #b9b5ab; margin-bottom: 1; }
+  .question { font-size: 4.2; font-weight: 700; color: #EEE9DF; margin-bottom: 1.6; }
+  .body { font-size: 1.9; color: #b9b5ab; margin-bottom: 1; }
+  .task { font-size: 1.9; color: #EEE9DF; margin-bottom: 2.2; }
+  .begin { width: 100%; height: 4.6; background-color: #EEE9DF; border-radius: 0.4; justify-content: center; align-items: center; color: #0b0d12; font-size: 2.1; font-weight: 700; cursor: pointer; margin-bottom: 0.7; }
+  .explore { width: 100%; height: 3.6; background-color: #1c2029; border-radius: 0.4; justify-content: center; align-items: center; color: #EEE9DF; font-size: 1.7; cursor: pointer; margin-bottom: 0.7; }
+  .foot { font-size: 1.6; color: #8f8c85; margin-top: 0.9; }
 </style>
 <div class="panel-root" id="welcome-root">
   <span class="eyebrow">ENGRAM - THE MEMORY OBSERVATORY</span>

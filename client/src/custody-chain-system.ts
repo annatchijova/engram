@@ -40,10 +40,10 @@ import { OBS } from './observatory/palette.js';
 import { SelectedMemory } from './selected-memory.js';
 
 const BLOCK_GEO = new BoxGeometry(0.075, 0.028, 0.045);
-const BLOCK_STEP = 0.082;
+const BLOCK_STEP = 0.088;
 // The custody tower rises just behind the core and the impact markers sit
 // in front of it, so provenance and causality never stack on one another.
-const TOWER_BASE = 0.34;
+const TOWER_BASE = 0.24;
 const TOWER_DEPTH = -0.12;
 const LINEAGE_COLOR = '#9aa4b2';
 
@@ -53,8 +53,8 @@ export class CustodyChainSystem extends createSystem({}) {
   private labels: Sprite[] = [];
   private blocks: Mesh[] = [];
   private blockMaterial = new MeshStandardMaterial({
-    color: new Color(OBS.provenance), emissive: new Color(OBS.provenance),
-    emissiveIntensity: 0.35, roughness: 0.3, metalness: 0.5,
+    color: new Color('#8f8c85'), emissive: new Color(OBS.provenance),
+    emissiveIntensity: 0.12, roughness: 0.4, metalness: 0.4,
   });
   private headMaterial = new MeshStandardMaterial({
     color: new Color('#ffffff'), emissive: new Color(OBS.provenance),
@@ -125,9 +125,9 @@ export class CustodyChainSystem extends createSystem({}) {
     if (entries.length === 0) {
       // Honest degradation: an empty chain is stated, never drawn as clean.
       const warn = makeLabel(
-        [{ text: 'custody chain INCOMPLETE', color: '#e0a62b', size: 24, weight: '700' },
-         { text: 'the server returned no custody events for this memory', color: '#c8b08a', size: 18 }],
-        { width: 0.3, background: '#1a1410d9', border: '#e0a62b88' },
+        [{ text: 'CUSTODY CHAIN INCOMPLETE', color: '#c3ccd8', size: 24, weight: '700' },
+         { text: 'the server returned no custody events for this memory', color: '#a9a69e', size: 18 }],
+        { width: 0.34, background: '#000000d9', border: '#c3ccd8' },
       );
       tower.add(warn);
       this.labels.push(warn);
@@ -150,25 +150,25 @@ export class CustodyChainSystem extends createSystem({}) {
       }
       const label = makeLabel(
         [
-          { text: `#${e.seq} ${e.event_type}`, color: '#f2f6fa', size: 24, weight: '700' },
-          { text: `${e.actor_id} · ${e.entry_hash.slice(0, 12)}…`, color: '#9fd4b8', size: 19 },
+          { text: `#${e.seq} ${e.event_type}`, color: '#EEE9DF', size: 24, weight: '700' },
+          { text: `${e.actor_id} · ${e.entry_hash.slice(0, 12)}…`, color: '#a9a69e', size: 21, font: 'mono' },
         ],
-        { width: 0.26, background: '#0b1a14d9', border: '#2a5a3a', align: 'left' },
+        { width: 0.34, background: '#000000d9', align: 'left' },
       );
-      label.position.set(0.19, y, 0);
+      label.position.set(0.225, y, 0);
       tower.add(label);
       this.labels.push(label);
     });
 
     const head = makeLabel(
       [
-        { text: `custody chain · ${chain.chain_length} events`, color: OBS.provenance, size: 24, weight: '700' },
-        { text: `head ${chain.head_hash.slice(0, 16)}…`, color: '#9fb3c8', size: 19 },
-        { text: 'hash-linked record as MNEME returned it — read-only', color: '#7f8fa3', size: 16 },
+        { text: `CUSTODY CHAIN · ${chain.chain_length} EVENTS`, color: OBS.provenance, size: 24, weight: '700' },
+        { text: `head ${chain.head_hash.slice(0, 16)}…`, color: '#a9a69e', size: 21, font: 'mono' },
+        { text: 'hash-linked record as MNEME returned it — read-only', color: '#8a8880', size: 16 },
       ],
-      { width: 0.3, background: '#0b121bd9', border: '#3a7a5a' },
+      { width: 0.36, background: '#000000d9', border: OBS.provenance },
     );
-    head.position.set(0, entries.length * BLOCK_STEP + 0.04, 0);
+    head.position.set(0.1, entries.length * BLOCK_STEP + 0.07, 0);
     tower.add(head);
     this.labels.push(head);
 
@@ -187,8 +187,8 @@ export class CustodyChainSystem extends createSystem({}) {
       line.frustumCulled = false;
       const label = makeLabel(
         [{ text: 'SUPERSEDED_BY', color: LINEAGE_COLOR, size: 22, weight: '700' },
-         { text: `replaced by ${successor} — retired, not deleted`, color: '#9fb3c8', size: 17 }],
-        { width: 0.24, background: '#0b121bcc', border: '#9aa4b266' },
+         { text: `replaced by ${successor} — retired, not deleted`, color: '#a9a69e', size: 17 }],
+        { width: 0.3, background: '#000000d9', border: LINEAGE_COLOR },
       );
       this.labels.push(label);
       this.lineage = { geometry, from: chain.memory_id, to: successor, label };

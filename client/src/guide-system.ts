@@ -25,7 +25,9 @@ import { OnboardingStageValue } from './onboarding-stage-machine.js';
 import { GuideTarget, TOUR } from './tour-script.js';
 import { TourState } from './tour-state.js';
 
-const RING_GEO = new TorusGeometry(0.15, 0.006, 10, 56);
+/** Height of the marker above a core's origin: clear of the plate and its brackets. */
+const CORE_MARK_LIFT = 0.16;
+const RING_GEO = new TorusGeometry(0.1, 0.004, 10, 56);
 
 export class GuideSystem extends createSystem({}) {
   private entity: Entity | null = null;
@@ -54,7 +56,7 @@ export class GuideSystem extends createSystem({}) {
       // Follow the core even if a hand moved it.
       const field = this.world.getSystem(FieldSystem);
       if (field?.getCoreWorldPosition(this.target.memoryId, this.scratch)) {
-        this.group.position.set(this.scratch.x, this.scratch.y + 0.5, this.scratch.z);
+        this.group.position.set(this.scratch.x, this.scratch.y + CORE_MARK_LIFT, this.scratch.z);
       }
     }
   }
@@ -82,10 +84,10 @@ export class GuideSystem extends createSystem({}) {
     group.add(ring);
     const label = makeLabel(
       [{ text: stage === OnboardingStageValue.DISCOVER ? 'START HERE' : 'NEXT', color: OBS.hover, size: 30, weight: '800' },
-       { text: step.action, color: '#d8e6f5', size: 20 }],
-      { width: 0.42, background: '#070b12e6', border: '#ffffff88' },
+       { text: step.action, color: '#d9d5cb', size: 22 }],
+      { width: 0.44, background: '#000000e6', border: OBS.hover },
     );
-    label.position.y = 0.11;
+    label.position.y = 0.085;
     group.add(label);
     group.position.copy(pos);
     this.label = label;
@@ -99,7 +101,7 @@ export class GuideSystem extends createSystem({}) {
       const field = this.world.getSystem(FieldSystem);
       const p = field?.getCoreWorldPosition(target.memoryId, this.scratch);
       // The field may still be loading; the per-frame follow fixes it up.
-      return p ? p.clone().setY(p.y + 0.5) : new Vector3(-0.37, 1.58, -1.44);
+      return p ? p.clone().setY(p.y + CORE_MARK_LIFT) : new Vector3(-0.37, 0.98 + CORE_MARK_LIFT, -1.44);
     }
     if (target.kind === 'panel') {
       const panel = this.world.getSceneObject<UIKitMLAsset>(target.panelId) as unknown as
