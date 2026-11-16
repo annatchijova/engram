@@ -177,9 +177,23 @@ a **relative fill-cost indicator** between the two builds.
 
 | Metric | Base `6bddc8c` | This round |
 |---|---|---|
-| draw calls per frame | PERF_BASE_CALLS | PERF_NEW_CALLS |
-| triangles per frame | PERF_BASE_TRIS | PERF_NEW_TRIS |
-| frames per second (software) | PERF_BASE_FPS | PERF_NEW_FPS |
+| draw calls per frame | 136 | **184** |
+| triangles per frame | 28,706 | 21,806 |
+| frames per second (software) | 1.75 | 2.9 - 3.1 (two runs) |
+
+**Draw calls went up, and that is a cost of this round.** A memory was
+seven meshes (crystal, halo, capsule, cap, base, outline, label); an engram
+plate is nine (foot, foot edge, three sheets, sheet edge, mark, frame,
+caption). The first measurement of this round was 213 calls; merging the
+quarantine frame into one mesh and dropping one sheet edge brought it to
+184. Triangles fell 24 % and the software frame rate rose about 65 %,
+which points at lower fill cost (no clearcoat pass, fewer lights, no
+full-height selection beam, no dust). 184 calls is inside the usual WebXR
+budget for a Quest 3, but that is a guideline, not a measurement. If draw
+calls turn out to be the bottleneck on device, the three sheets of all
+memories can become one `InstancedMesh` (27 calls to 1); that was not done
+here because per-plate spread animation is simpler to keep correct on
+separate meshes.
 
 Design decisions taken for the device, independent of the numbers above:
 no `MeshPhysicalMaterial` (clearcoat/transmission), five lights instead of
@@ -268,7 +282,11 @@ time.
 | V8 | Stage quarantine: amber PREVIEW ring on the field, nothing committed | **PASS** | `10-staged.png`, `10b-staged-field.png` |
 | V9 | Export and verify: verifier output rendered, tour completes | **PASS** | `12-verified.png`, `13-complete-guide.png`: "The investigation is preserved." |
 
-The tour was completed twice end to end this way. It mutates nothing (no
+The tour was completed twice end to end this way. The stills were taken
+on the second run; the video was recorded afterwards on the final build.
+Between the two, the quarantine frame became a single mesh, the rear
+sheet lost its ivory edge and three panel eyebrows grew from 1.05 to 1.2
+units, so the stills differ from the final build in those details only. It mutates nothing (no
 commit is part of it).
 
 ### Suites
@@ -277,7 +295,7 @@ commit is part of it).
 |---|---|
 | `npm run typecheck` | **PASS** |
 | `npm test` | **PASS**, 48/48 (39 existing unchanged + 9 new art-direction invariants `A1`-`A9`) |
-| `npm run build` | BUILD_RESULT |
+| `npm run build` | **PASS** (`vite build`, both entry points) |
 
 ### NOT TESTED
 
@@ -329,7 +347,7 @@ commit is part of it).
    about 16 px per degree, coarser than a Quest 3. Small text looks worse
    in them than the computed angles imply; composition looks more distant.
 9. Two dependencies were added (`@fontsource/inter`,
-   `@fontsource/ibm-plex-mono`, latin subsets, about 100 kB of woff2).
+   `@fontsource/ibm-plex-mono`, latin subsets, 128 kB of woff2).
 
 ## Integration
 

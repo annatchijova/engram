@@ -20,6 +20,8 @@
  */
 import {
   BoxGeometry,
+  BufferAttribute,
+  BufferGeometry,
   ExtrudeGeometry,
   Group,
   LineBasicMaterial,
@@ -102,6 +104,38 @@ function frameShape(w: number, h: number, c: number, t: number): Shape {
   return outer;
 }
 
+/** The twelve edges of a box as one mesh: a containment frame is a single
+ * draw call, not twelve. */
+function cageGeometry(w: number, h: number, d: number, t: number): BufferGeometry {
+  const parts: BoxGeometry[] = [];
+  const add = (sx: number, sy: number, sz: number, x: number, y: number, z: number) => {
+    const g = new BoxGeometry(sx, sy, sz);
+    g.translate(x, y, z);
+    parts.push(g);
+  };
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) add(t, h, t, (sx * w) / 2, 0, (sz * d) / 2);
+  for (const sy of [-1, 1]) {
+    for (const sz of [-1, 1]) add(w, t, t, 0, (sy * h) / 2, (sz * d) / 2);
+    for (const sx of [-1, 1]) add(t, t, d, (sx * w) / 2, (sy * h) / 2, 0);
+  }
+  const positions: number[] = [];
+  const normals: number[] = [];
+  const indices: number[] = [];
+  let offset = 0;
+  for (const g of parts) {
+    positions.push(...(g.getAttribute('position').array as Float32Array));
+    normals.push(...(g.getAttribute('normal').array as Float32Array));
+    for (const i of g.getIndex()!.array) indices.push(i + offset);
+    offset += g.getAttribute('position').count;
+    g.dispose();
+  }
+  const merged = new BufferGeometry();
+  merged.setAttribute('position', new BufferAttribute(new Float32Array(positions), 3));
+  merged.setAttribute('normal', new BufferAttribute(new Float32Array(normals), 3));
+  merged.setIndex(indices);
+  return merged;
+}
+
 // Shared geometry: N cores never mint their own.
 const plateGeo = new ExtrudeGeometry(chamferedRect(PLATE.width, PLATE.height, PLATE.chamfer), {
   depth: PLATE.thickness, bevelEnabled: false,
@@ -115,9 +149,7 @@ const GEO = {
   mark: new OctahedronGeometry(0.027, 0),
   foot: new BoxGeometry(0.15, 0.022, 0.085),
   footEdge: new BoxGeometry(0.15, 0.0022, 0.0022),
-  cagePost: new BoxGeometry(0.0038, 0.212, 0.0038),
-  cageX: new BoxGeometry(0.166, 0.0038, 0.0038),
-  cageZ: new BoxGeometry(0.0038, 0.0038, 0.1),
+  cage: cageGeometry(0.166, 0.212, 0.1, 0.0038),
 };
 
 export function buildMemoryCore(
@@ -148,9 +180,9 @@ export function buildMemoryCore(
     plate.renderOrder = 2 + i;
     float.add(plate);
     plates.push(plate);
-    // The outer sheets carry a faint ivory edge so three layers read as
-    // three layers; the middle sheet's edge is the custody frame below.
-    if (i !== 1 && materials.edge) {
+    // The front sheet carries a faint ivory edge so the layers read as
+    // layers; the middle sheet's edge is the custody frame below.
+    if (i === 2 && materials.edge) {
       const sheetEdge = new Mesh(GEO.sheetEdge, materials.edge);
       sheetEdge.raycast = () => {};
       plate.add(sheetEdge);
@@ -170,25 +202,9 @@ export function buildMemoryCore(
   plates[1].add(halo);
 
   if (quarantined && materials.cage) {
-    const cage = new Group();
-    for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
-      const post = new Mesh(GEO.cagePost, materials.cage);
-      post.position.set(sx * 0.081, 0.006, sz * 0.048);
-      cage.add(post);
-    }
-    for (const sy of [-1, 1]) {
-      for (const sz of [-1, 1]) {
-        const bar = new Mesh(GEO.cageX, materials.cage);
-        bar.position.set(0, 0.006 + sy * 0.104, sz * 0.048);
-        cage.add(bar);
-      }
-      for (const sx of [-1, 1]) {
-        const bar = new Mesh(GEO.cageZ, materials.cage);
-        bar.position.set(sx * 0.081, 0.006 + sy * 0.104, 0);
-        cage.add(bar);
-      }
-    }
-    cage.traverse((o) => { o.raycast = () => {}; });
+    const cage = new Mesh(GEO.cage, materials.cage);
+    cage.position.y = 0.006;
+    cage.raycast = () => {};
     float.add(cage);
   }
 
