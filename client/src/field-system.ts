@@ -15,8 +15,8 @@
  *     with the fraction that has arrived. A failed read lights nothing.
  *   - ATTENTION: a pointer rests on a plate; its sheets part slightly and
  *     ivory focus brackets frame it.
- *   - OPEN: the record is selected; the sheets open fully and the brackets
- *     close on it.
+ *   - OPEN: the record is selected, or a pinch holds it in the hand; the
+ *     sheets open fully and, when selected, the brackets close on it.
  *   - CUSTODY CHANGE: MNEME reported a different status after a refresh;
  *     the mark's colour moves from the old declared hue to the new one.
  * All four are identical for every custody status: motion, size and
@@ -27,6 +27,7 @@ import {
   createSystem,
   Group,
   Entity,
+  Grabbed,
   Hovered,
   LineBasicMaterial,
   Mesh,
@@ -223,6 +224,10 @@ export class FieldSystem extends createSystem({
     for (const p of this.placed) {
       const { core, entity } = p;
       const hovered = entity.hasComponent(Hovered);
+      // A pinch that holds the core is a real event, like opening it: the
+      // sheets open fully in the hand so the mark can be read up close.
+      // Presentation only, and identical for every custody status.
+      const held = entity.hasComponent(Grabbed);
       const selected = p.memoryId === selectedId;
       if (selected) selectedCore = core;
       else if (hovered) hoveredCore = core;
@@ -245,7 +250,7 @@ export class FieldSystem extends createSystem({
       p.caption.visible = captionOn && !full;
       p.captionFull.visible = captionOn && full;
 
-      const targetSpread = Math.max(selected ? 1 : hovered ? 0.4 : 0, 1 - arrival);
+      const targetSpread = Math.max(selected || held ? 1 : hovered ? 0.4 : 0, 1 - arrival);
       const targetLift = (selected ? 0.03 : 0) - (1 - arrival) * 0.05;
       setPlateSpread(core, core.spread + (targetSpread - core.spread) * smoothing);
       core.float.position.y += (targetLift - core.float.position.y) * smoothing;
