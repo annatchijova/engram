@@ -56,9 +56,9 @@ The strongest current evidence is repository-local and environment-scoped:
 |---|---|---|
 | `docs/XR-AUDIT-ROUND11.md` | Guided emulated XR tour 12/12; flat-screen controls 2/2; free loop 15/15 | IWER Quest 3 emulator and desktop browser |
 | `docs/XR-RELEASE-CANDIDATE-ROUND12.md` | Guided 12/12 and free exploration 15/15 observed; suites reported PASS | Release-candidate environment described in the report |
-| `npm run typecheck` | PASS | Client checkout used for the cited round |
-| `npm test` | PASS, 41/41 in Round 12 | Client checkout used for the cited round |
-| `npm run build` | PASS | Client checkout used for the cited round |
+| `npm run typecheck` | PASS | Rerun at `eb87b67` |
+| `npm test` | PASS, 51/51 | Rerun at `eb87b67` |
+| `npm run build` | PASS | Rerun at `eb87b67` |
 | `scripts/test-adapter.py` | PASS, 8/8 in cited round | Throwaway adapter field |
 | `scripts/readiness.py` | PASS, 5/5 in cited round | Readiness checks in cited round |
 | `docs/SECURITY-ROUND4.md` | Tampered bundle rejected; 8/8 PASS | The security round's test fixture |

@@ -17,6 +17,13 @@ ENGRAM turns computational memory into an explorable research space. Built on
 memory, trace provenance, stage an authorized intervention, compare a factual
 world with a sealed hypothetical, and verify the resulting evidence.
 
+What happens when an AI makes a decision based on compromised memory? ENGRAM
+explores that question by letting researchers move through memories, their
+relationships, provenance, and possible consequences in an interactive space
+instead of reading endless logs. The investigation does not end at
+visualization: researchers can compare bounded scenarios, examine evidence,
+and preserve verifiable results.
+
 This is not a 3D graph for decoration. It is an interface for asking a hard
 question: **what would change if this memory were no longer trusted?**
 
@@ -39,6 +46,12 @@ step, use:
 
 - username `meta`
 - password `metavr`
+
+The demo field is synthetic, produced through MNEME's own authorized API. The
+engine, the hash-linked custody chains, the causal classes and the independent
+verifier are real; the memories are not a real incident. What has and has not
+been proven, and under which scope, is in the
+[technical README](README_TECHNICAL.md).
 
 ## Run locally
 

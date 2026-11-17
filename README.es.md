@@ -18,6 +18,13 @@ recorrer recuerdos, examinar su procedencia, ensayar una intervención
 autorizada, comparar un mundo factual con un hipotético sellado y verificar la
 evidencia resultante.
 
+¿Qué ocurre cuando una IA toma una decisión basándose en una memoria
+comprometida? ENGRAM explora esa pregunta permitiendo recorrer las memorias,
+sus relaciones, su procedencia y sus posibles consecuencias en un espacio
+interactivo, en lugar de leer registros interminables. Y la investigación no
+termina en la visualización: permite comparar escenarios delimitados, examinar
+evidencias y preservar resultados verificables.
+
 No es un grafo 3D decorativo. Es una forma de investigar una pregunta difícil:
 **¿qué cambiaría si dejáramos de confiar en este recuerdo?**
 
@@ -39,6 +46,12 @@ Para el paso de demo que modifica el campo:
 
 - usuario `meta`
 - contraseña `metavr`
+
+El campo de demo es sintético, producido con la API autorizada de MNEME. El
+motor, las cadenas de custodia encadenadas por hash, las clases causales y el
+verificador independiente son reales; las memorias no son un incidente real.
+Qué se probó y qué no, y con qué alcance, está en el
+[README técnico](README_TECHNICAL.md).
 
 ## Ejecutar localmente
 
