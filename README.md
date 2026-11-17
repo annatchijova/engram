@@ -11,7 +11,9 @@ It is being designed on top of [MNEME](https://github.com/annatchijova/mneme): M
 
 ## Live
 
+- **Project home**: https://annatchijova.github.io/engram/
 - **The observatory — start here**: https://client-six-mu-93.vercel.app
+- **The 2D canvas**: https://client-six-mu-93.vercel.app/canvas.html
 - **ENGRAM slides**: https://annatchijova.github.io/engram/slides.html
 - **Adapter**: https://engram-adapter-1048644120951.southamerica-east1.run.app
 

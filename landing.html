@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ENGRAM — The Memory Observatory</title>
+<meta name="description" content="An evidence investigation room you operate with your hands. Built on MNEME.">
+<style>
+  :root {
+    --ink: #0b0d12;
+    --ivory: #EEE9DF;
+    --dim: #b9b5ab;
+    --faint: #8f8c85;
+    --line: #2b313d;
+    --amber: #D58B58;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--ink);
+    color: var(--ivory);
+    font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 4rem 1.5rem 5rem;
+  }
+  main { width: 100%; max-width: 46rem; }
+  .eyebrow {
+    font-size: .78rem; font-weight: 700; letter-spacing: .14em;
+    color: var(--faint); text-transform: uppercase; margin-bottom: .9rem;
+  }
+  h1 { font-size: clamp(2rem, 6vw, 3rem); line-height: 1.1; font-weight: 700; }
+  .tagline { font-size: 1.12rem; color: var(--dim); margin-top: .9rem; max-width: 34rem; }
+  .doors { display: grid; gap: .9rem; margin: 2.6rem 0 2rem; }
+  @media (min-width: 40rem) { .doors { grid-template-columns: 1fr 1fr; } }
+  a.door {
+    display: block; padding: 1.15rem 1.3rem; text-decoration: none;
+    border: 1px solid var(--line); border-radius: .5rem; color: var(--ivory);
+    background: #11141b; transition: border-color .15s, background .15s;
+  }
+  a.door:hover, a.door:focus-visible { border-color: var(--amber); background: #161a23; }
+  a.door.primary { border-color: var(--amber); background: #1a1410; }
+  .door .name { font-weight: 700; font-size: 1.04rem; }
+  .door .what { color: var(--dim); font-size: .92rem; margin-top: .3rem; }
+  .note {
+    border-top: 1px solid var(--line); padding-top: 1.5rem; margin-top: 1rem;
+    color: var(--dim); font-size: .93rem;
+  }
+  .note p + p { margin-top: .8rem; }
+  code {
+    font-family: ui-monospace, "IBM Plex Mono", SFMono-Regular, Menlo, monospace;
+    font-size: .88em; color: var(--ivory); background: #171b24;
+    padding: .1em .4em; border-radius: .25rem;
+  }
+  footer { margin-top: 2.4rem; color: var(--faint); font-size: .86rem; }
+  footer a { color: var(--dim); }
+</style>
+</head>
+<body>
+<main>
+  <p class="eyebrow">Geometry of Evidence</p>
+  <h1>ENGRAM</h1>
+  <p class="tagline">
+    An evidence investigation room you operate with your hands. Every memory on
+    the bench is held by <strong>MNEME</strong>, the engine that decides and
+    proves; ENGRAM makes those decisions inspectable.
+  </p>
+
+  <div class="doors">
+    <a class="door primary" href="https://client-six-mu-93.vercel.app">
+      <div class="name">Enter the observatory &rarr;</div>
+      <div class="what">The spatial investigation. Open it in a Quest browser
+        for hands, or on a laptop where the same room runs flat.</div>
+    </a>
+    <a class="door" href="https://client-six-mu-93.vercel.app/canvas.html">
+      <div class="name">Open the canvas &rarr;</div>
+      <div class="what">The same field as a 2D investigation surface, with the
+        guided scenario, the inspector and the evidence bundle.</div>
+    </a>
+    <a class="door" href="https://annatchijova.github.io/engram/slides.html">
+      <div class="name">Read the slides &rarr;</div>
+      <div class="what">What the problem is, who picks it up, and what each
+        step of the investigation answers.</div>
+    </a>
+    <a class="door" href="https://github.com/annatchijova/engram">
+      <div class="name">Read the source &rarr;</div>
+      <div class="what">The client, the read adapter over MNEME, the tests and
+        the round reports, including what is not yet proven.</div>
+    </a>
+  </div>
+
+  <div class="note">
+    <p>
+      Nothing needs an account until the single step that changes the field.
+      For that one, sign in as <code>meta</code> / <code>metavr</code> — that
+      account acts as Analyst Omar, the one actor MNEME has granted
+      <code>QUARANTINE_ACTOR</code>. Reading the field, opening a record and
+      its custody chain, tracing impact, running the bounded comparison and
+      exporting a sealed bundle all work with no login.
+    </p>
+    <p>
+      The demo field is synthetic, produced through MNEME's own authorized
+      API. The engine, the hash-linked custody chains, the causal classes and
+      the independent verifier are real. The experience has been validated in
+      the Quest 3 emulator, not on physical hardware.
+    </p>
+  </div>
+
+  <footer>
+    Built on <a href="https://github.com/annatchijova/mneme">MNEME</a> ·
+    Meta VR Start Developer Competition 2026
+  </footer>
+</main>
+</body>
+</html>

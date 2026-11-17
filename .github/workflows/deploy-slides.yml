@@ -1,10 +1,11 @@
-name: Deploy ENGRAM slides
+name: Deploy ENGRAM pages
 
 on:
   push:
     branches: [main]
     paths:
       - "slides.html"
+      - "landing.html"
       - ".github/workflows/deploy-slides.yml"
   workflow_dispatch:
 
@@ -30,6 +31,7 @@ jobs:
         run: |
           mkdir -p _site
           cp slides.html _site/slides.html
+          cp landing.html _site/index.html
       - name: Upload slides
         uses: actions/upload-pages-artifact@v3
         with:
