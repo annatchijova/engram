@@ -24,4 +24,4 @@ Sin headset conectado no se afirma validación en hardware.
 ## Slides
 
 La presentación de ENGRAM está publicada en
-https://annatchijova.github.io/engram/slides/.
+https://annatchijova.github.io/engram/slides/index.html.
