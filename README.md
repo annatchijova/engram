@@ -22,13 +22,13 @@ question: **what would change if this memory were no longer trusted?**
 
 ## Start here
 
-- **[XR observatory](https://client-six-mu-93.vercel.app)** — the hands-first
-  Meta Quest/WebXR experience.
-- **[2D canvas](https://client-six-mu-93.vercel.app/canvas.html)** — the same
-  field from a conventional browser.
-- **[Slides](https://annatchijova.github.io/engram/slides.html)** — the short
-  visual story.
-- **[Evidence bundle](visual/engram-bundle.json)** · **[Canvas export](visual/engram-canvas.json)**
+- **Project home**: https://annatchijova.github.io/engram/
+- **The observatory — start here**: https://client-six-mu-93.vercel.app
+- **The 2D canvas**: https://client-six-mu-93.vercel.app/canvas.html
+- **Evidence bundle**: [visual/engram-bundle.json](visual/engram-bundle.json)
+- **Canvas export**: [visual/engram-canvas.json](visual/engram-canvas.json)
+- **ENGRAM slides**: https://annatchijova.github.io/engram/slides.html
+- **Adapter**: https://engram-adapter-1048644120951.southamerica-east1.run.app
 
 The web and XR surfaces operate on the same adapter and the same MNEME field.
 The browser is the accessible research desk; the observatory is the spatial
@@ -115,35 +115,6 @@ physical Quest validation.
 - Tests and readiness checks cover the guided tour, free exploration, adapter
   behavior, build, and presentation invariants. See the
   [technical README](README_TECHNICAL.md) for exact scopes and reports.
-
-## Limitations, plainly stated
-
-This is a competition-ready research prototype, not a production memory
-service. The public demo uses a single shared read token, a demo login, and a
-volume-less deployment whose seeded field can reset after a cold start. XR
-behavior has been exercised in the IWER Quest 3 emulator, while physical
-headset comfort, tracking, and legibility still require device testing. The
-intended users and the claim that spatial inspection reveals something harder
-to notice in 2D still need evaluation with real researchers.
-
-The full limitation list, threat model, failure modes, and remaining work are
-in the [Technical README](README_TECHNICAL.md).
-
-## Development provenance
-
-Selected implementation and design decisions were developed with assistance
-from OpenAI Codex, Kimi, Anthropic Claude, and Meta's Muse model. The
-repository's author directed the work, integrated the changes, and verified
-the resulting behavior; tool assistance is not presented as user validation.
-
-## Learn more
-
-- [Technical README](README_TECHNICAL.md) — architecture, evidence, trust
-  boundaries, limitations, and reproducibility.
-- [Español](README.es.md) — the human-facing version in Spanish.
-- [Demo scenario](docs/DEMO-SCENARIO.md) — the synthetic investigation.
-- [XR release-candidate assessment](docs/XR-RELEASE-CANDIDATE-ROUND12.md) —
-  observed checks and open risks.
 
 ## License
 
