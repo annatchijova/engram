@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "slides/**"
+      - "slides.html"
       - ".github/workflows/deploy-slides.yml"
   workflow_dispatch:
 
@@ -26,10 +26,14 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Prepare Pages artifact
+        run: |
+          mkdir -p _site
+          cp slides.html _site/slides.html
       - name: Upload slides
         uses: actions/upload-pages-artifact@v3
         with:
-          path: slides
+          path: _site
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
