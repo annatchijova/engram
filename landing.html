@@ -24,12 +24,12 @@
     padding: 4rem 1.5rem 5rem;
   }
   main { width: 100%; max-width: 46rem; }
-  .eyebrow {
-    font-size: .78rem; font-weight: 700; letter-spacing: .14em;
-    color: var(--faint); text-transform: uppercase; margin-bottom: .9rem;
-  }
   h1 { font-size: clamp(2rem, 6vw, 3rem); line-height: 1.1; font-weight: 700; }
-  .tagline { font-size: 1.12rem; color: var(--dim); margin-top: .9rem; max-width: 34rem; }
+  .subtitle {
+    font-size: clamp(1.15rem, 2.6vw, 1.45rem); color: var(--amber);
+    margin-top: .35rem; font-weight: 500;
+  }
+  .tagline { font-size: 1.12rem; color: var(--dim); margin-top: 1.1rem; max-width: 34rem; }
   .doors { display: grid; gap: .9rem; margin: 2.6rem 0 2rem; }
   @media (min-width: 40rem) { .doors { grid-template-columns: 1fr 1fr; } }
   a.door {
@@ -57,8 +57,8 @@
 </head>
 <body>
 <main>
-  <p class="eyebrow">Geometry of Evidence</p>
   <h1>ENGRAM</h1>
+  <p class="subtitle">Geometry of Evidence</p>
   <p class="tagline">
     An evidence investigation room you operate with your hands. Every memory on
     the bench is held by <strong>MNEME</strong>, the engine that decides and
