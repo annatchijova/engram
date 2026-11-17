@@ -20,3 +20,8 @@ Abrí `https://localhost:8081/canvas.html` (Canvas) o `/index.html`
 está en `docs/DEMO-SCENARIO.md`; validación XR y seguridad en
 `docs/XR-INTERACTION-VALIDATION.md` y `docs/SECURITY-ROUND4.md`.
 Sin headset conectado no se afirma validación en hardware.
+
+## Slides
+
+La presentación de ENGRAM está publicada en
+https://annatchijova.github.io/engram/slides/.

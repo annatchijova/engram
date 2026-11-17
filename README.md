@@ -12,6 +12,7 @@ It is being designed on top of [MNEME](https://github.com/annatchijova/mneme): M
 ## Live
 
 - **The observatory — start here**: https://client-six-mu-93.vercel.app
+- **ENGRAM slides**: https://annatchijova.github.io/engram/slides/
 - **Adapter**: https://engram-adapter-1048644120951.southamerica-east1.run.app
 
 Open the observatory link and let it load the field. On a Quest, open it in
