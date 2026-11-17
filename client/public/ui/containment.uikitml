@@ -1,5 +1,5 @@
 <style>
-  .panel-root { flex-direction: column; width: 60; padding-top: 2.4; padding-bottom: 2.4; padding-left: 2.8; padding-right: 2.8; background-color: #0b0d12f4; border-color: #D58B58; border-width: 0.1; border-radius: 0.5; }
+  .panel-root { flex-direction: column; width: 60; padding-top: 2.4; padding-bottom: 2.4; padding-left: 2.8; padding-right: 2.8; background-color: #0b0d12ff; border-color: #D58B58; border-width: 0.1; border-radius: 0.5; }
   .eyebrow { font-size: 1.05; font-weight: 700; color: #D58B58; margin-bottom: 0.5; }
   .heading { font-size: 2.1; font-weight: 700; color: #EEE9DF; margin-bottom: 0.7; }
   .hint { font-size: 1.25; color: #b9b5ab; margin-bottom: 0.9; }

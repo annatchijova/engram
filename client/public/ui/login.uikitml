@@ -1,5 +1,5 @@
 <style>
-  .panel-root { flex-direction: column; width: 48; padding-top: 2.4; padding-bottom: 2.4; padding-left: 2.8; padding-right: 2.8; background-color: #0b0d12f4; border-color: #D58B58; border-width: 0.1; border-radius: 0.5; }
+  .panel-root { flex-direction: column; width: 48; padding-top: 2.4; padding-bottom: 2.4; padding-left: 2.8; padding-right: 2.8; background-color: #0b0d12ff; border-color: #D58B58; border-width: 0.1; border-radius: 0.5; }
   .eyebrow { font-size: 1.2; font-weight: 700; color: #D58B58; margin-bottom: 0.5; }
   .heading { font-size: 2.1; font-weight: 700; color: #EEE9DF; margin-bottom: 1; }
   .field { width: 100%; height: 3; background-color: #07080b; border-color: #4a4b4f; border-width: 0.1; border-radius: 0.3; padding-left: 1; padding-right: 1; color: #EEE9DF; font-size: 1.4; margin-bottom: 0.9; }
