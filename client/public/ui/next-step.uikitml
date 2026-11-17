@@ -7,8 +7,8 @@
   .progress { display: none; font-size: 1.5; color: #EEE9DF; }
   .checklist { flex-direction: row; gap: 1.6; margin-bottom: 1; }
   .checklist-row { font-size: 1.3; color: #8f8c85; }
-  .skip-btn { width: 100%; height: 3; background-color: #1c2029; border-radius: 0.4; justify-content: center; align-items: center; color: #EEE9DF; font-size: 1.45; cursor: pointer; margin-bottom: 0.7; }
-  .restart-btn { width: 100%; height: 2.6; background-color: #12141b; border-radius: 0.4; justify-content: center; align-items: center; color: #8f8c85; font-size: 1.3; cursor: pointer; }
+  .skip-btn { width: 100%; height: 4.4; background-color: #1c2029; border-radius: 0.4; justify-content: center; align-items: center; color: #EEE9DF; font-size: 1.8; cursor: pointer; }
+  .restart-btn { width: 100%; height: 3.6; background-color: #12141b; border-radius: 0.4; justify-content: center; align-items: center; color: #8f8c85; font-size: 1.5; cursor: pointer; margin-top: 3.2; }
 </style>
 <div class="panel-root" id="next-step-root">
   <span class="eyebrow" id="guide-eyebrow">INVESTIGATION - STEP 1 OF 5</span>

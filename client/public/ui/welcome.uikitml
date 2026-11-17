@@ -4,8 +4,8 @@
   .question { font-size: 4.2; font-weight: 700; color: #EEE9DF; margin-bottom: 1.6; }
   .body { font-size: 1.9; color: #b9b5ab; margin-bottom: 1; }
   .task { font-size: 1.9; color: #EEE9DF; margin-bottom: 2.2; }
-  .begin { width: 100%; height: 4.6; background-color: #EEE9DF; border-radius: 0.4; justify-content: center; align-items: center; color: #0b0d12; font-size: 2.1; font-weight: 700; cursor: pointer; margin-bottom: 0.7; }
-  .explore { width: 100%; height: 3.6; background-color: #1c2029; border-radius: 0.4; justify-content: center; align-items: center; color: #EEE9DF; font-size: 1.7; cursor: pointer; margin-bottom: 0.7; }
+  .begin { width: 100%; height: 5.2; background-color: #EEE9DF; border-radius: 0.4; justify-content: center; align-items: center; color: #0b0d12; font-size: 2.2; font-weight: 700; cursor: pointer; }
+  .explore { width: 100%; height: 4.4; background-color: #1c2029; border-radius: 0.4; justify-content: center; align-items: center; color: #EEE9DF; font-size: 1.8; cursor: pointer; margin-top: 1.8; margin-bottom: 0.7; }
   .foot { font-size: 1.6; color: #8f8c85; margin-top: 0.9; }
 </style>
 <div class="panel-root" id="welcome-root">

@@ -49,9 +49,19 @@ const MILESTONES: { elementId: string; label: string; test: (stage: string, cont
   { elementId: 'checklist-verify', label: 'Verified it', test: (s) => stageAtLeast(s, OnboardingStageValue.COMPLETE) },
 ];
 
+type PanelElement = NonNullable<ReturnType<UIKitMLAsset['getElementById']>>;
+
+/** How long "Restart?" stays armed before it forgets it was asked. */
+const RESTART_CONFIRM_MS = 8000;
+
 export class OnboardingSystem extends createSystem({}) {
   private stage: string = OnboardingStageValue.WELCOME;
   private contained = false;
+  private restartArmed = false;
+  private restartTimer: ReturnType<typeof setTimeout> | undefined;
+  /** Assigned once the restart button is resolved; a stage change cancels
+   * any half-asked confirmation so it cannot fire against a later step. */
+  private disarmRestart: (() => void) | undefined;
 
   init(): void {
     const entity = this.world.createTransformEntity(new Object3D());
@@ -65,6 +75,7 @@ export class OnboardingSystem extends createSystem({}) {
     const restartBtn = requireElement(guide, 'next-step-panel', 'guide-restart');
 
     const applyStage = (stage: string) => {
+      this.disarmRestart?.();
       this.stage = stage;
       entity.setValue(OnboardingStage, 'stage', stage);
       TourState.set(stage);
@@ -92,9 +103,56 @@ export class OnboardingSystem extends createSystem({}) {
     };
     this.cleanupFuncs.push(OnboardingEvents.subscribe(onEvent));
 
+    // A pinch ray that misses by a couple of centimetres used to land on
+    // "Restart the investigation" and throw the whole walkthrough away. The
+    // button is further off now, and it asks a second time before acting.
+    const disarmRestart = (this.disarmRestart = () => {
+      this.restartArmed = false;
+      if (this.restartTimer !== undefined) {
+        clearTimeout(this.restartTimer);
+        this.restartTimer = undefined;
+      }
+      restartBtn?.setProperties({
+        text: 'Restart the investigation',
+        backgroundColor: '#12141b',
+        color: '#8f8c85',
+      });
+    });
+    this.cleanupFuncs.push(disarmRestart);
+
     const onBegin = () => applyStage(beginTour(this.stage));
     const onExplore = () => applyStage(exploreFreely());
-    const onRestart = () => applyStage(restartTour());
+    const onRestart = () => {
+      if (!this.restartArmed) {
+        this.restartArmed = true;
+        restartBtn?.setProperties({
+          text: 'Restart? Press again to confirm',
+          backgroundColor: '#3a2326',
+          color: '#EEE9DF',
+        });
+        this.restartTimer = setTimeout(disarmRestart, RESTART_CONFIRM_MS);
+        return;
+      }
+      disarmRestart();
+      applyStage(restartTour());
+    };
+
+    // Hands need to see that the ray is on the target before they commit.
+    for (const [btn, idle, hot] of [
+      [beginBtn, '#EEE9DF', '#ffffff'],
+      [exploreBtn, '#1c2029', '#2b313d'],
+      [skipBtn, '#1c2029', '#2b313d'],
+    ] as [PanelElement | undefined, string, string][]) {
+      if (!btn) continue;
+      const enter = () => btn.setProperties({ backgroundColor: hot });
+      const leave = () => btn.setProperties({ backgroundColor: idle });
+      btn.addEventListener('pointerover', enter);
+      btn.addEventListener('pointerout', leave);
+      this.cleanupFuncs.push(
+        () => btn.removeEventListener('pointerover', enter),
+        () => btn.removeEventListener('pointerout', leave),
+      );
+    }
     beginBtn?.addEventListener('click', onBegin);
     exploreBtn?.addEventListener('click', onExplore);
     skipBtn?.addEventListener('click', onExplore);
