@@ -15,8 +15,9 @@ It is being designed on top of [MNEME](https://github.com/annatchijova/mneme): M
 - **Adapter**: https://engram-adapter-1048644120951.southamerica-east1.run.app
 
 Open the observatory link and let it load the field. On a Quest, open it in
-the headset browser and press **Enter XR**; on a laptop the same scene runs
-flat, where you look around by dragging and act by clicking. The first card
+the headset browser and accept the immersive session the page offers; on a
+laptop the same scene runs flat, where you look around by dragging and act
+by clicking. The first card
 asks one question and offers **Begin investigation**, which walks the whole
 case in five steps. **Explore freely** opens every surface at once instead.
 

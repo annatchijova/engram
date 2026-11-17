@@ -175,10 +175,17 @@ export class OnboardingSystem extends createSystem({}) {
     guide.getElementById('guide-question')?.setProperties({ text: step.question });
     guide.getElementById('next-step-text')?.setProperties({ text: step.body });
     guide.getElementById('guide-action')?.setProperties({ text: done ? '' : `Next: ${step.action}` });
-    const filled = done ? TOUR_TOTAL : step.index - 1;
-    guide.getElementById('guide-progress')?.setProperties({
-      text: Array.from({ length: TOUR_TOTAL }, (_, i) => (i < filled ? '●' : '○')).join(' '),
-    });
+    // The step you are standing on counts as reached, so step one shows one
+    // filled dot. Leaving it empty read as "nothing has happened yet".
+    const filled = done ? TOUR_TOTAL : step.index;
+    // Drawn as elements, not glyphs: the font atlas has no filled and hollow
+    // circle, so a text stepper rendered as five identical tofu boxes and
+    // told the reader nothing.
+    for (let i = 1; i <= TOUR_TOTAL; i++) {
+      guide.getElementById(`pip-${i}`)?.setProperties({
+        backgroundColor: i <= filled ? '#EEE9DF' : '#3a3d45',
+      });
+    }
     guide.getElementById('next-step-skip')?.setProperties({ display: done ? 'none' : 'flex' });
   }
 
@@ -200,6 +207,10 @@ export class OnboardingSystem extends createSystem({}) {
 
   private applyMilestones(guide: UIKitMLAsset | undefined, stage: string): void {
     const visible = stage !== OnboardingStageValue.WELCOME;
+    // The dots above count the five steps; these four count what has been
+    // proven, one of which is optional. Naming the group keeps a reader from
+    // reading them as a second, disagreeing step counter.
+    guide?.getElementById('proven-label')?.setProperties({ display: visible ? 'flex' : 'none' });
     for (const m of MILESTONES) {
       const done = m.test(stage, this.contained);
       guide?.getElementById(m.elementId)?.setProperties({

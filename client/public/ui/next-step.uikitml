@@ -1,12 +1,14 @@
 <style>
   .panel-root { flex-direction: column; width: 66; padding-top: 2.4; padding-bottom: 2.4; padding-left: 2.8; padding-right: 2.8; background-color: #0b0d12ff; border-color: #4a4b4f; border-width: 0.1; border-radius: 0.5; }
-  .eyebrow { font-size: 1.15; font-weight: 700; color: #b9b5ab; margin-bottom: 0.6; }
+  .eyebrow { font-size: 1.35; font-weight: 700; color: #b9b5ab; margin-bottom: 0.5; }
   .question { font-size: 2.9; font-weight: 700; color: #EEE9DF; margin-bottom: 0.9; }
   .body { font-size: 1.7; color: #b9b5ab; margin-bottom: 1.1; }
   .action { font-size: 1.9; font-weight: 700; color: #EEE9DF; margin-bottom: 1; }
-  .progress { display: none; font-size: 1.5; color: #EEE9DF; }
+  .progress { flex-direction: row; gap: 0.9; align-items: center; margin-bottom: 1.2; }
+  .pip { width: 11.3; height: 0.6; border-radius: 0.3; background-color: #3a3d45; }
+  .proven { font-size: 1.15; font-weight: 700; color: #6d6c68; margin-bottom: 0.4; }
   .checklist { flex-direction: row; gap: 1.6; margin-bottom: 1; }
-  .checklist-row { font-size: 1.3; color: #8f8c85; }
+  .checklist-row { font-size: 1.5; color: #8f8c85; }
   .skip-btn { width: 100%; height: 4.4; background-color: #1c2029; border-radius: 0.4; justify-content: center; align-items: center; color: #EEE9DF; font-size: 1.8; cursor: pointer; }
   .restart-btn { width: 100%; height: 3.6; background-color: #12141b; border-radius: 0.4; justify-content: center; align-items: center; color: #8f8c85; font-size: 1.5; cursor: pointer; margin-top: 3.2; }
 </style>
@@ -15,7 +17,14 @@
   <span class="question" id="guide-question">Which memory deserves our attention?</span>
   <span class="body" id="next-step-text">​</span>
   <span class="action" id="guide-action">​</span>
-  <span class="progress" id="guide-progress">​</span>
+  <div class="progress" id="guide-progress">
+    <div class="pip" id="pip-1"></div>
+    <div class="pip" id="pip-2"></div>
+    <div class="pip" id="pip-3"></div>
+    <div class="pip" id="pip-4"></div>
+    <div class="pip" id="pip-5"></div>
+  </div>
+  <span class="proven" id="proven-label" style="display: none">PROVEN SO FAR</span>
   <div class="checklist">
     <span class="checklist-row" id="checklist-select" style="display: none">[ ] Found it</span>
     <span class="checklist-row" id="checklist-trace" style="display: none">[ ] Traced it</span>
