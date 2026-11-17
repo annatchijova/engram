@@ -9,50 +9,90 @@ ENGRAM is an immersive XR environment for inspecting and operating on computatio
 
 It is being designed on top of [MNEME](https://github.com/annatchijova/mneme): MNEME decides and proves; ENGRAM makes those decisions inspectable and operable through the body.
 
-## Why XR
+## Live
 
-ENGRAM is not a 3D graph viewer. Its defining interaction is counterfactual analysis: a user can hold a factual world and a sealed hypothetical world apart, then inspect how memories, rankings, claims, and decisions diverge.
+- **The observatory — start here**: https://client-six-mu-93.vercel.app
+- **Adapter**: https://engram-adapter-1048644120951.southamerica-east1.run.app
 
-The spaces must remain physically and semantically distinct. A counterfactual projection is never silently treated as factual state, and ending a comparison never merges the worlds.
+Open the observatory link and let it load the field. On a Quest, open it in
+the headset browser and press **Enter XR**; on a laptop the same scene runs
+flat, where you look around by dragging and act by clicking. The first card
+asks one question and offers **Begin investigation**, which walks the whole
+case in five steps. **Explore freely** opens every surface at once instead.
 
-## Interaction boundary
+Nothing needs an account until the single step that changes the field. For
+that one, log in on the containment console:
 
-Spatial state is a projection, never the epistemic authority:
+- username `meta`
+- password `metavr`
 
-```text
-gesture
-  → candidate intent
-  → semantic confirmation
-  → typed command
-  → MNEME authorization and preconditions
-  → audited transaction
-  → new authoritative snapshot
-  → XR projection
-```
+That account acts as Analyst Omar, the one actor MNEME has granted
+`QUARANTINE_ACTOR`. Reading the field, opening a record and its custody
+chain, tracing impact, running the exclusion forecast, and exporting and
+verifying a sealed bundle all work with no login. The client carries a
+read-only token that the adapter refuses for every write, so the public link
+can inspect the field and cannot alter it.
 
-A physical drop never mutates state by itself. Operations such as quarantine are staged, previewed, explicitly committed, authorized by MNEME, and then reflected in XR.
+What you are looking at is a real MNEME field, not a mock: each memory was
+produced through MNEME's own authorized API, the custody chains are
+hash-linked, the causal classes come from `causality.impact()`, and the
+bundle is checked by an independent stdlib-only verifier running as a
+separate process.
 
-Every projection is scoped to an explicit world and snapshot. Factual worlds may mutate only through authorized commands. Counterfactual worlds are isolated, queryable comparisons and cannot create factual decisions.
+**Known limitations, stated plainly:**
 
-## Geometry is evidence-bearing
+- The adapter runs as a single instance and keeps its field in the container,
+  so a cold start reseeds the demo field. A quarantine you commit is real and
+  immediately visible, but it does not survive the service going idle.
+- With every surface revealed at once, ten panels crowd the seated view. The
+  guided tour paces them; free exploration is still dense.
+- The experience has been validated in the IWER Quest 3 emulator, not on
+  physical hardware. Comfort and legibility in a headset are unproven.
 
-Spatial form must communicate something true about the underlying state. Direct, derived, derived-unattested, and possible evidence remain distinct.
+## Visual demo
 
-Proximity does not automatically mean causality. Size does not mean authority. Brightness does not mean truth. Weight must not collapse confidence and standing into one signal. A line does not generically mean “related.”
+ENGRAM is an evidence investigation surface for researchers, scientists,
+forensic analysts, and safety engineers. If you know Obsidian, think of ENGRAM
+as a knowledge canvas where every connection has to explain its provenance.
 
-## Local Canvas demo (Round 4)
+### The investigation canvas
 
-```sh
-./scripts/dev-local.sh   # adapter :17347 + client https://localhost:8081
-python3 scripts/verify-fixture.py   # synthetic scenario, reproducible
-python3 scripts/test-adapter.py     # adapter regressions on a temp field
-```
+![ENGRAM Canvas initial investigation](visual/canvas-initial.png)
 
-Open `https://localhost:8081/` for the XR observatory, the primary
-surface. `https://localhost:8081/canvas.html` is the 2D investigation
-board. Guides:
-`docs/DEMO-SCENARIO.md`, `docs/XR-INTERACTION-VALIDATION.md`,
-`docs/SECURITY-ROUND4.md`. Spanish summary: `README.es.md`.
+The investigator starts with a concrete question: can this memory still be trusted?
+
+### Typed provenance
+
+![ENGRAM Canvas provenance graph](visual/canvas-provenance.png)
+
+Direct, derived, unattested, and possible relationships are not collapsed into one generic graph edge.
+
+### Preserve the answer
+
+![ENGRAM evidence bundle](visual/evidence-bundle.png)
+
+The investigation can be exported as an evidence bundle for later verification.
+The demo field is synthetic; the UI and adapter path are real, and the
+counterfactual is explicitly sealed as never executed.
+
+### Additional visual references
+
+![ENGRAM screenshot 1](visual/Screenshot%20from%202026-11-13%2011-18-41.png)
+
+![ENGRAM screenshot 2](visual/Screenshot%20from%202026-11-13%2011-18-56.png)
+
+![ENGRAM screenshot 3](visual/Screenshot%20from%202026-11-13%2011-52-08.png)
+
+![ENGRAM screenshot 4](visual/Screenshot%20from%202026-11-13%2016-55-36.png)
+
+![ENGRAM screenshot 5](visual/Screenshot%20from%202026-11-13%2017-00-02.png)
+
+![ENGRAM screenshot 6](visual/Screenshot%20from%202026-11-13%2017-00-20.png)
+
+![Layered memory plate](visual/Placa%20de%20memoria%20en%20capas-9.png)
+
+![ENGRAM architecture diagram](visual/mermaid-diagram.png)
+
 
 ## The XR observatory
 
@@ -126,90 +166,50 @@ Round 9 report with the full PASS / FAIL / NOT TESTED tables:
 [`docs/XR-OBSERVATORY-ROUND9.md`](docs/XR-OBSERVATORY-ROUND9.md).
 **Verified in the IWER Meta Quest 3 emulator, not on a headset.**
 
-## Visual demo
+## Why XR
 
-ENGRAM is an evidence investigation surface for researchers, scientists,
-forensic analysts, and safety engineers. If you know Obsidian, think of ENGRAM
-as a knowledge canvas where every connection has to explain its provenance.
+ENGRAM is not a 3D graph viewer. Its defining interaction is counterfactual analysis: a user can hold a factual world and a sealed hypothetical world apart, then inspect how memories, rankings, claims, and decisions diverge.
 
-### The investigation canvas
+The spaces must remain physically and semantically distinct. A counterfactual projection is never silently treated as factual state, and ending a comparison never merges the worlds.
 
-![ENGRAM Canvas initial investigation](visual/canvas-initial.png)
+## Interaction boundary
 
-The investigator starts with a concrete question: can this memory still be trusted?
+Spatial state is a projection, never the epistemic authority:
 
-### Typed provenance
+```text
+gesture
+  → candidate intent
+  → semantic confirmation
+  → typed command
+  → MNEME authorization and preconditions
+  → audited transaction
+  → new authoritative snapshot
+  → XR projection
+```
 
-![ENGRAM Canvas provenance graph](visual/canvas-provenance.png)
+A physical drop never mutates state by itself. Operations such as quarantine are staged, previewed, explicitly committed, authorized by MNEME, and then reflected in XR.
 
-Direct, derived, unattested, and possible relationships are not collapsed into one generic graph edge.
+Every projection is scoped to an explicit world and snapshot. Factual worlds may mutate only through authorized commands. Counterfactual worlds are isolated, queryable comparisons and cannot create factual decisions.
 
-### Preserve the answer
+## Geometry is evidence-bearing
 
-![ENGRAM evidence bundle](visual/evidence-bundle.png)
+Spatial form must communicate something true about the underlying state. Direct, derived, derived-unattested, and possible evidence remain distinct.
 
-The investigation can be exported as an evidence bundle for later verification.
-The demo field is synthetic; the UI and adapter path are real, and the
-counterfactual is explicitly sealed as never executed.
+Proximity does not automatically mean causality. Size does not mean authority. Brightness does not mean truth. Weight must not collapse confidence and standing into one signal. A line does not generically mean “related.”
 
-### Additional visual references
+## Local Canvas demo (Round 4)
 
-![ENGRAM screenshot 1](visual/Screenshot%20from%202026-11-13%2011-18-41.png)
+```sh
+./scripts/dev-local.sh   # adapter :17347 + client https://localhost:8081
+python3 scripts/verify-fixture.py   # synthetic scenario, reproducible
+python3 scripts/test-adapter.py     # adapter regressions on a temp field
+```
 
-![ENGRAM screenshot 2](visual/Screenshot%20from%202026-11-13%2011-18-56.png)
-
-![ENGRAM screenshot 3](visual/Screenshot%20from%202026-11-13%2011-52-08.png)
-
-![ENGRAM screenshot 4](visual/Screenshot%20from%202026-11-13%2016-55-36.png)
-
-![ENGRAM screenshot 5](visual/Screenshot%20from%202026-11-13%2017-00-02.png)
-
-![ENGRAM screenshot 6](visual/Screenshot%20from%202026-11-13%2017-00-20.png)
-
-![Layered memory plate](visual/Placa%20de%20memoria%20en%20capas-9.png)
-
-![ENGRAM architecture diagram](visual/mermaid-diagram.png)
-
-
-## Live
-
-- **The observatory — start here**: https://client-six-mu-93.vercel.app
-- **Adapter**: https://engram-adapter-1048644120951.southamerica-east1.run.app
-
-Open the observatory link and let it load the field. On a Quest, open it in
-the headset browser and press **Enter XR**; on a laptop the same scene runs
-flat, where you look around by dragging and act by clicking. The first card
-asks one question and offers **Begin investigation**, which walks the whole
-case in five steps. **Explore freely** opens every surface at once instead.
-
-Nothing needs an account until the single step that changes the field. For
-that one, log in on the containment console:
-
-- username `meta`
-- password `metavr`
-
-That account acts as Analyst Omar, the one actor MNEME has granted
-`QUARANTINE_ACTOR`. Reading the field, opening a record and its custody
-chain, tracing impact, running the exclusion forecast, and exporting and
-verifying a sealed bundle all work with no login. The client carries a
-read-only token that the adapter refuses for every write, so the public link
-can inspect the field and cannot alter it.
-
-What you are looking at is a real MNEME field, not a mock: each memory was
-produced through MNEME's own authorized API, the custody chains are
-hash-linked, the causal classes come from `causality.impact()`, and the
-bundle is checked by an independent stdlib-only verifier running as a
-separate process.
-
-**Known limitations, stated plainly:**
-
-- The adapter runs as a single instance and keeps its field in the container,
-  so a cold start reseeds the demo field. A quarantine you commit is real and
-  immediately visible, but it does not survive the service going idle.
-- With every surface revealed at once, ten panels crowd the seated view. The
-  guided tour paces them; free exploration is still dense.
-- The experience has been validated in the IWER Quest 3 emulator, not on
-  physical hardware. Comfort and legibility in a headset are unproven.
+Open `https://localhost:8081/` for the XR observatory, the primary
+surface. `https://localhost:8081/canvas.html` is the 2D investigation
+board. Guides:
+`docs/DEMO-SCENARIO.md`, `docs/XR-INTERACTION-VALIDATION.md`,
+`docs/SECURITY-ROUND4.md`. Spanish summary: `README.es.md`.
 
 ## Project status
 
