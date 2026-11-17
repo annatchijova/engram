@@ -15,7 +15,7 @@
   <span class="eyebrow">INTERVENTION STATION - the one mutation path</span>
   <span class="heading">Quarantine an actor</span>
   <span class="hint" id="containment-hint">log in to commit; staging a preview needs no session</span>
-  <span class="target" id="actor-row-label">target: pipeline-logs (ACTIVE)</span>
+  <span class="target" id="actor-row-label">target: none staged</span>
   <button class="stage-btn" id="stage-btn">Stage quarantine</button>
   <span class="gloss">preview only - nothing changes yet. Staged memories get an amber PREVIEW ring on the field.</span>
   <span class="preview-text" id="preview-text" style="display: none">​</span>

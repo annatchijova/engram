@@ -240,11 +240,24 @@ export class ContainmentSystem extends createSystem({}) {
       this.stagedActorId = actorId;
       this.stagedCount = preview.already_quarantined ? 0 : preview.count;
       this.stagedFieldVersion = preview.field_version;
+      // This line used to be a hardcoded placeholder in the markup that said
+      // "target: pipeline-logs (ACTIVE)" no matter which actor was in the
+      // cradle or what its custody state was. Written from the real preview
+      // now, so it cannot contradict the status shown beside it.
+      panel?.getElementById('actor-row-label')?.setProperties({
+        text: `target: ${actorId} (${preview.already_quarantined ? 'QUARANTINED' : 'ACTIVE'})`,
+      });
       if (preview.already_quarantined) {
-        showPreview(`${actorId} is already QUARANTINED - nothing to stage.`);
+        // Not an error and not a dead end: the containment the tour asks for
+        // has already been carried out, and MNEME never undoes it (M4).
+        showPreview(
+          `${actorId} is already QUARANTINED. The containment this step asks for ` +
+            `is already in force, so there is nothing left to commit. MNEME never ` +
+            `undoes a quarantine, so this is the end state, not a failure.`,
+        );
         this.setCradleStatus([
           { text: actorId, color: '#EEE9DF', size: 26, weight: '700' },
-          { text: 'already QUARANTINED - nothing to stage', color: OBS.staged, size: 19 },
+          { text: 'already contained - nothing left to commit', color: OBS.staged, size: 19 },
         ]);
       } else {
         showPreview(
