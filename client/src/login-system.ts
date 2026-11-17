@@ -15,6 +15,11 @@ import { EngramApi } from './engram-api.js';
 import { AudioCues } from './observatory/audio-cues.js';
 import { SessionStore } from './session.js';
 
+/** Printed on the login panel and in the README: the account judges are
+ * told to use. Not a secret, and deliberately the only one pre-filled. */
+const JUROR_USERNAME = 'meta';
+const JUROR_PASSWORD = 'metavr';
+
 export class LoginSystem extends createSystem({}) {
   private username = '';
   private password = '';
@@ -26,6 +31,7 @@ export class LoginSystem extends createSystem({}) {
     const userField = panel.getElementById('login-user');
     const passField = panel.getElementById('login-pass');
     const submitBtn = panel.getElementById('login-submit');
+    const jurorBtn = panel.getElementById('login-juror');
     const status = panel.getElementById('login-status');
 
     userField?.setProperties({
@@ -39,11 +45,11 @@ export class LoginSystem extends createSystem({}) {
       status?.setProperties({ text, color: isError ? '#e07070' : '#9fb79f' });
     };
 
-    const onSubmit = () => {
+    const submit = (username: string, password: string) => {
       void (async () => {
         setStatus('logging in...', false);
         try {
-          const result = await EngramApi.login(this.username, this.password);
+          const result = await EngramApi.login(username, password);
           const expiresAt = Date.now() + result.expires_in_seconds * 1000;
           SessionStore.set({
             sessionToken: result.session_token,
@@ -68,7 +74,28 @@ export class LoginSystem extends createSystem({}) {
       })();
     };
 
+    const onSubmit = () => submit(this.username, this.password);
+
+    // Typing a username and a password on a floating keyboard, with your
+    // hands, in the middle of an investigation, is the worst friction in the
+    // walkthrough. The juror account is already printed on this panel and in
+    // the README, so filling it in costs no secrecy and saves the demo. The
+    // fields are filled visibly rather than bypassed, so what was submitted
+    // stays inspectable, and typing an operator by hand still works -- that
+    // is how you watch MNEME refuse Agent Ada.
+    const onJuror = () => {
+      this.username = JUROR_USERNAME;
+      this.password = JUROR_PASSWORD;
+      userField?.setProperties({ value: JUROR_USERNAME });
+      passField?.setProperties({ value: JUROR_PASSWORD });
+      submit(JUROR_USERNAME, JUROR_PASSWORD);
+    };
+
     submitBtn?.addEventListener('click', onSubmit);
-    this.cleanupFuncs.push(() => submitBtn?.removeEventListener('click', onSubmit));
+    jurorBtn?.addEventListener('click', onJuror);
+    this.cleanupFuncs.push(
+      () => submitBtn?.removeEventListener('click', onSubmit),
+      () => jurorBtn?.removeEventListener('click', onJuror),
+    );
   }
 }
