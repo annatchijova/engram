@@ -14,6 +14,8 @@ It is being designed on top of [MNEME](https://github.com/annatchijova/mneme): M
 - **Project home**: https://annatchijova.github.io/engram/
 - **The observatory — start here**: https://client-six-mu-93.vercel.app
 - **The 2D canvas**: https://client-six-mu-93.vercel.app/canvas.html
+- **Evidence bundle**: [visual/engram-bundle.json](visual/engram-bundle.json)
+- **Canvas export**: [visual/engram-canvas.json](visual/engram-canvas.json)
 - **ENGRAM slides**: https://annatchijova.github.io/engram/slides.html
 - **Adapter**: https://engram-adapter-1048644120951.southamerica-east1.run.app
 
@@ -91,29 +93,31 @@ The investigator starts with a concrete question: can this memory still be trust
 
 Direct, derived, unattested, and possible relationships are not collapsed into one generic graph edge.
 
-### Preserve the answer
+### 2D visual references
 
-![ENGRAM evidence bundle](visual/evidence-bundle.png)
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-24-06.png" alt="ENGRAM 2D screenshot at 16:24:06" width="640">
 
-The investigation can be exported as an evidence bundle for later verification.
-The demo field is synthetic; the UI and adapter path are real, and the
-counterfactual is explicitly sealed as never executed.
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-24-37.png" alt="ENGRAM 2D screenshot at 16:24:37" width="640">
 
-### Additional visual references
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-28-53.png" alt="ENGRAM 2D screenshot at 16:28:53" width="640">
 
-![ENGRAM screenshot 1](visual/Screenshot%20from%202026-11-13%2011-18-41.png)
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-29-17.png" alt="ENGRAM 2D screenshot at 16:29:17" width="640">
 
-![ENGRAM screenshot 2](visual/Screenshot%20from%202026-11-13%2011-18-56.png)
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-30-00.png" alt="ENGRAM 2D screenshot at 16:30:00" width="640">
 
-![ENGRAM screenshot 3](visual/Screenshot%20from%202026-11-13%2011-52-08.png)
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-36-21.png" alt="ENGRAM 2D screenshot at 16:36:21" width="640">
 
-![ENGRAM screenshot 4](visual/Screenshot%20from%202026-11-13%2016-55-36.png)
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-38-27.png" alt="ENGRAM 2D screenshot at 16:38:27" width="640">
 
-![ENGRAM screenshot 5](visual/Screenshot%20from%202026-11-13%2017-00-02.png)
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-38-36.png" alt="ENGRAM 2D screenshot at 16:38:36" width="640">
 
-![ENGRAM screenshot 6](visual/Screenshot%20from%202026-11-13%2017-00-20.png)
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-38-43.png" alt="ENGRAM 2D screenshot at 16:38:43" width="640">
 
-![Layered memory plate](visual/Placa%20de%20memoria%20en%20capas-9.png)
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-38-53.png" alt="ENGRAM 2D screenshot at 16:38:53" width="640">
+
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-39-00.png" alt="ENGRAM 2D screenshot at 16:39:00" width="640">
+
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-39-22.png" alt="ENGRAM 2D mobile screenshot at 16:39:22" width="320">
 
 ![ENGRAM architecture diagram](visual/mermaid-diagram.png)
 
