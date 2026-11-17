@@ -10,7 +10,7 @@
 
 Hoy la memoria de una IA suele aparecer como texto, registros o datos
 invisibles. Cuando un recuerdo cambia, es difícil saber de dónde vino, quién
-lo modificó, qué contradice o qué decisiones posteriores depende de él.
+lo modificó, qué contradice o qué decisiones posteriores dependen de él.
 
 ENGRAM transforma la memoria computacional en un espacio de investigación
 explorable. Sobre [MNEME](https://github.com/annatchijova/mneme), permite
@@ -23,17 +23,41 @@ No es un grafo 3D decorativo. Es una forma de investigar una pregunta difícil:
 
 ## Entrá por acá
 
-- **[Observatorio XR](https://client-six-mu-93.vercel.app)** — la experiencia
-  hands-first para Meta Quest/WebXR.
-- **[Canvas 2D](https://client-six-mu-93.vercel.app/canvas.html)** — el mismo
-  campo desde un navegador convencional.
-- **[Slides](https://annatchijova.github.io/engram/slides.html)** — la historia
-  visual breve.
-- **[Bundle de evidencia](visual/engram-bundle.json)** · **[Export del canvas](visual/engram-canvas.json)**
+- **Project home**: https://annatchijova.github.io/engram/
+- **The observatory — start here**: https://client-six-mu-93.vercel.app
+- **The 2D canvas**: https://client-six-mu-93.vercel.app/canvas.html
+- **Evidence bundle**: [visual/engram-bundle.json](visual/engram-bundle.json)
+- **Canvas export**: [visual/engram-canvas.json](visual/engram-canvas.json)
+- **ENGRAM slides**: https://annatchijova.github.io/engram/slides.html
+- **Adapter**: https://engram-adapter-1048644120951.southamerica-east1.run.app
 
 La web y XR trabajan sobre el mismo adaptador y el mismo campo MNEME. El
 navegador es la mesa de investigación accesible; el observatorio es el
 instrumento espacial para relaciones difíciles de sostener en una vista plana.
+
+Para el paso de demo que modifica el campo:
+
+- usuario `meta`
+- contraseña `metavr`
+
+## Ejecutar localmente
+
+```sh
+git clone https://github.com/annatchijova/engram.git
+cd engram
+git clone https://github.com/annatchijova/mneme.git ../mneme
+git -C ../mneme checkout 124739ee9b3d99800c26b1ce6ccd320800810975
+python3 -m venv .venv
+. .venv/bin/activate
+python3 -m pip install -r ../mneme/requirements.txt -r server/requirements.txt
+(cd client && npm ci)
+./scripts/dev-local.sh
+```
+
+Necesitás Git, Python 3, `curl` y una versión de Node.js permitida por
+`client/package.json` (20.19+, 22.12+ o 24+). Si MNEME está en otro lugar,
+definí `MNEME_REPO_PATH` con la ruta de ese checkout antes de ejecutar el
+script.
 
 ## ¿Para quién existe?
 
@@ -55,7 +79,7 @@ La demo acompaña un recuerdo a través de cinco preguntas:
 
 1. ¿Qué hay en el campo y cuál es su estado de custodia?
 2. ¿De dónde salió este registro?
-3. ¿Qué recibos, decisiones y memorias afecta?
+3. ¿Qué comprobantes, decisiones y memorias afecta?
 4. ¿Qué cambiaría una intervención acotada?
 5. ¿Se puede verificar el bundle resultante de manera independiente?
 
@@ -83,7 +107,7 @@ una computadora.
 
 ![Grafo de procedencia de ENGRAM](visual/canvas-provenance.png)
 
-### La superficie 2D
+### Capturas de la superficie 2D
 
 <img src="visual/2D/Screenshot%20from%202026-11-17%2016-24-06.png" alt="Superficie 2D de investigación de ENGRAM" width="640">
 
@@ -105,46 +129,17 @@ una afirmación de validación en un Quest físico.
 
 ## Lo que ya está hecho
 
-- Canvas y observatorio XR leen el mismo campo respaldado por MNEME.
-- Cadenas de custodia, autoridad, impacto causal tipado y deltas
+- Un Canvas activo y un observatorio XR sentado leen el mismo campo respaldado
+  por MNEME.
+- Cadenas de custodia, grants de autoridad, impacto causal tipado y deltas
   contrafactuales aparecen como estructuras de evidencia distintas.
 - Una cuarentena real autorizada por MNEME se prepara, previsualiza y confirma
   mediante el flujo de demo.
 - El bundle se exporta y se verifica mediante el proceso offline separado de
   MNEME; la interfaz muestra ese resultado, no uno inventado.
-- Hay pruebas y chequeos de readiness para el tour guiado, la exploración
-  libre, el adaptador, el build y las invariantes de presentación. Los
+- Hay pruebas y chequeos de preparación para el tour guiado, la exploración
+  libre, el adaptador, la compilación y las invariantes de presentación. Los
   alcances exactos están en el [README técnico](README_TECHNICAL.md).
-
-## Limitaciones, sin esconderlas
-
-Esto es un prototipo de investigación para una competencia, no un servicio de
-memoria listo para producción. La demo pública usa un token de lectura
-compartido, un login de demostración y un despliegue sin volumen persistente,
-por lo que el campo sembrado puede reiniciarse después de un cold start. El
-comportamiento XR fue ejercitado en el emulador IWER Quest 3; el confort, el
-tracking y la legibilidad en hardware físico todavía requieren pruebas. También
-falta evaluar con investigadores reales si la inspección espacial descubre
-algo que una interfaz 2D vuelve difícil de advertir.
-
-El detalle completo de limitaciones, amenazas, fallos y trabajo pendiente está
-en el [README técnico](README_TECHNICAL.md).
-
-## Proveniencia del desarrollo
-
-Algunas decisiones de implementación y diseño se trabajaron con asistencia de
-OpenAI Codex, Kimi, Anthropic Claude y el modelo Muse de Meta. La autora dirigió
-el trabajo, integró los cambios y verificó el comportamiento resultante; esa
-asistencia no se presenta como validación de usuarios.
-
-## Para seguir
-
-- [README técnico](README_TECHNICAL.md) — arquitectura, evidencia, límites,
-  fronteras de confianza y reproducibilidad.
-- [README en inglés](README.md) — versión humana para jurados.
-- [Escenario de demo](docs/DEMO-SCENARIO.md) — la investigación sintética.
-- [Evaluación release candidate de XR](docs/XR-RELEASE-CANDIDATE-ROUND12.md) —
-  comprobaciones observadas y riesgos abiertos.
 
 ## Licencia
 

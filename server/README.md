@@ -8,7 +8,12 @@ in the file and is the only place anything in ENGRAM writes to MNEME.
 ## Run
 
 ```sh
-pip install -r requirements.txt
+# From the repository root, with MNEME cloned as the sibling repo ../mneme:
+python3 -m pip install -r ../mneme/requirements.txt -r server/requirements.txt
+
+# When running these commands from server/ instead:
+cd server
+python3 -m pip install -r ../mneme/requirements.txt -r requirements.txt
 
 # 1. seed a demo field (only needs to be done once; uses MNEME's real
 #    authorized API — bootstrap/store/reinforce/supersede/quarantine)

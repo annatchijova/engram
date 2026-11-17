@@ -43,4 +43,4 @@ mutation control in Round 2) produced no effect.
 
 Browser rendering at any viewport (no Chromium), Quest/simulator
 behaviour, simultaneous-race commits, malformed-payload fuzzing.
-Each reopens on the falsifier named in ENGRAM-REDTEAM-ROUND3.md.
+Each reopens on the falsifier named in [ENGRAM-REDTEAM-ROUND3.md](ENGRAM-REDTEAM-ROUND3.md).

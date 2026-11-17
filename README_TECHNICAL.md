@@ -238,9 +238,32 @@ but the live hosted service is not a persistent deterministic environment: its
 field can reseed after a cold start. Any claim about a particular live state
 must therefore include the observed `field_epoch`/field version and time.
 
-## Reproducibility
+## Clone, dependencies, and reproducibility
 
-From the repository root:
+The repository is public, but ENGRAM depends on MNEME as a sibling checkout;
+MNEME is not installed from PyPI. A clean local setup is:
+
+```sh
+git clone https://github.com/annatchijova/engram.git
+cd engram
+git clone https://github.com/annatchijova/mneme.git ../mneme
+git -C ../mneme checkout 124739ee9b3d99800c26b1ce6ccd320800810975
+python3 -m venv .venv
+. .venv/bin/activate
+python3 -m pip install -r ../mneme/requirements.txt -r server/requirements.txt
+(cd client && npm ci)
+```
+
+The client requires a Node.js version allowed by `client/package.json`:
+20.19+, 22.12+, or 24+. `npm ci` uses the committed `client/package-lock.json`.
+The server's direct dependencies are in `server/requirements.txt`; MNEME's
+runtime dependencies are in the sibling repository's `requirements.txt`.
+Git, Python 3, `curl`, and a shell are also required by the local scripts.
+
+If MNEME is checked out elsewhere, set `MNEME_REPO_PATH` to that directory.
+It must contain the `mneme/` Python package and `verify_offline.py`.
+
+From the repository root, with the virtual environment active:
 
 ```sh
 ./scripts/dev-local.sh
@@ -252,7 +275,7 @@ For the client:
 
 ```sh
 cd client
-npm install
+npm ci
 npm run typecheck
 npm test
 npm run build

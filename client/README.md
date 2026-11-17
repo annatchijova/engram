@@ -20,7 +20,7 @@ root README), then:
 ```sh
 cp .env.example .env   # set VITE_ENGRAM_API_BASE / VITE_ENGRAM_READ_TOKEN
                         # to match how you started server/app.py
-npm install
+npm ci
 npm run dev
 ```
 

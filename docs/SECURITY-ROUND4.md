@@ -2,7 +2,7 @@
 
 Threat model and claim discipline: every CONFIRMED below names its
 executed run; CODE FACT means read, not run; unresolved items stay
-unresolved. Full probe table: ENGRAM-REDTEAM-ROUND3.md.
+unresolved. Full probe table: [ENGRAM-REDTEAM-ROUND3.md](ENGRAM-REDTEAM-ROUND3.md).
 
 ## Executed this round (scripts/test-adapter.py, throwaway field)
 

@@ -34,6 +34,30 @@ The web and XR surfaces operate on the same adapter and the same MNEME field.
 The browser is the accessible research desk; the observatory is the spatial
 instrument for relationships that are difficult to hold in a flat view.
 
+Nothing needs an account until the step that changes the field. For that demo
+step, use:
+
+- username `meta`
+- password `metavr`
+
+## Run locally
+
+```sh
+git clone https://github.com/annatchijova/engram.git
+cd engram
+git clone https://github.com/annatchijova/mneme.git ../mneme
+git -C ../mneme checkout 124739ee9b3d99800c26b1ce6ccd320800810975
+python3 -m venv .venv
+. .venv/bin/activate
+python3 -m pip install -r ../mneme/requirements.txt -r server/requirements.txt
+(cd client && npm ci)
+./scripts/dev-local.sh
+```
+
+You need Git, Python 3, `curl`, and a Node.js version allowed by
+`client/package.json` (20.19+, 22.12+, or 24+). If MNEME lives elsewhere, set
+`MNEME_REPO_PATH` to its checkout before running the script.
+
 ## Who is this for?
 
 ENGRAM is for people who need to understand how an AI memory became what it
