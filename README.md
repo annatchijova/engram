@@ -53,6 +53,26 @@ separate process.
 - The experience has been validated in the IWER Quest 3 emulator, not on
   physical hardware. Comfort and legibility in a headset are unproven.
 
+## Two surfaces, one field
+
+**The canvas is the operational surface.** An investigator queries memories,
+examines provenance, reconstructs dependencies, compares bounded hypotheses,
+prepares an intervention — and commits the one intervention the engine
+authorizes. Memories enter the system through MNEME's own authorized API, not
+through ENGRAM: this room inspects and contains, and never invents evidence.
+That is a design constraint, not a gap. The adapter exposes exactly one
+mutation, and the public read token is refused for it.
+
+**The observatory is the spatial surface.** You enter the same live field and
+read it with your body: clusters, causal arcs and custody chains that are hard
+to perceive in a flat graph. Point, pinch, pick a record up and turn it in your
+hand.
+
+They share the field, not just the design. A containment committed on the
+canvas is already there when you enter the observatory, because both read the
+same adapter over the same MNEME. The canvas links out to the observatory from
+its header; carrying the selected memory across that link is future work.
+
 ## Visual demo
 
 ENGRAM is an evidence investigation surface for researchers, scientists,

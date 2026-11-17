@@ -1,0 +1,6 @@
+# slides.html is an exported deck, not hand-written source: a single 2.8 MB
+# file of inlined framework CSS that is 99.5% of all the HTML in this
+# repository and drowns the actual code in the language statistics. The
+# hand-written pages (client/canvas.html, client/index.html, landing.html)
+# stay counted, because somebody wrote them.
+slides.html linguist-generated=true
