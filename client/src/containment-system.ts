@@ -2,7 +2,7 @@
  * ENGRAM — Nivel 2 Audited Containment: the intervention station.
  *
  * Stage -> Commit, never collapsed into one gesture (see
- * ENGRAM-ARCHITECTURAL-INVESTIGATION.md §4): Stage only calls the
+ * docs/ENGRAM-ARCHITECTURAL-INVESTIGATION.md §4): Stage only calls the
  * read-only preview endpoint; Commit is a separate, explicit click that
  * calls the one mutating endpoint in the whole system
  * (POST /api/v1/actors/{id}/quarantine). Cancel never touches the server.

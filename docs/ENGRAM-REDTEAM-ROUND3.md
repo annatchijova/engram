@@ -4,7 +4,7 @@ Threat model: attacker controls every byte a client sends (headers,
 bodies, layout storage, memory content text) and can replay requests;
 attacker cannot forge MNEME seals, server env secrets, or another
 actor's grants. Probes map to the 17 rows of
-ENGRAM-ARCHITECTURAL-INVESTIGATION.md section 7. "Observed" only ever
+[ENGRAM-ARCHITECTURAL-INVESTIGATION.md](ENGRAM-ARCHITECTURAL-INVESTIGATION.md) section 7. "Observed" only ever
 means executed in this repo/session; everything else is labelled
 PLAUSIBLE HYPOTHESIS or UNRESOLVED, never "safe".
 

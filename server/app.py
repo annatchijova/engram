@@ -6,7 +6,7 @@ grant, or confidence number is computed here. The adapter's only jobs are:
 authenticate the caller, read, and wrap the result in a versioned envelope.
 
 No mutation endpoint exists in this file. That is deliberate, not an
-oversight: ENGRAM-ARCHITECTURAL-INVESTIGATION.md's authority boundary
+oversight: docs/ENGRAM-ARCHITECTURAL-INVESTIGATION.md's authority boundary
 requires an authenticated XR actor identity and a typed command gateway
 before any MNEME capability (STORE, QUARANTINE_MEMORY, ...) is reachable
 from the client, and that identity binding is still an open question

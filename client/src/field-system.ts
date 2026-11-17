@@ -60,7 +60,7 @@ import { CUSTODY_GLOSS } from './tour-script.js';
 // Declared once, referenced everywhere a status needs a color — this is
 // the single place the custody_status -> appearance mapping is allowed
 // to exist. Brightness/size must never imply authority or truth (see
-// ENGRAM-ARCHITECTURAL-INVESTIGATION.md, "Geometry is evidence-bearing").
+// docs/ENGRAM-ARCHITECTURAL-INVESTIGATION.md, "Geometry is evidence-bearing").
 export const CUSTODY_COLOR: Record<string, string> = {
   [CustodyStatus.CLEAN]: '#3fa34d',
   [CustodyStatus.TAINT_FLAGGED]: '#e0a62b',

@@ -79,7 +79,7 @@ returns 200, an unrelated origin is refused (400).
   and asserts structural identity (7/7 PASS). Bit-identical seals are
   explicitly not claimed: decision ids are random per seed and hashes
   embed wall-clock time.
-- Red-team: [docs/ENGRAM-REDTEAM-ROUND3.md](docs/ENGRAM-REDTEAM-ROUND3.md) records predicted vs observed for
+- Red-team: [ENGRAM-REDTEAM-ROUND3.md](ENGRAM-REDTEAM-ROUND3.md) records predicted vs observed for
   the 17 probes, with unresolved items named (device behaviour, race,
   fuzz, scale) rather than smoothed over.
 - XR beyond the camera tweak is bounded by preservation: scene and

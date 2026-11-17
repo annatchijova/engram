@@ -101,31 +101,55 @@ una computadora.
 
 ## Galería de evidencia
 
-### El Canvas de investigación
+### Capturas de la superficie 3D
 
-![Investigación inicial en ENGRAM](visual/canvas-initial.png)
+<img src="visual/3D/before-01-welcome-seated.jpg" alt="Escena de bienvenida 3D de ENGRAM" width="640">
 
-![Grafo de procedencia de ENGRAM](visual/canvas-provenance.png)
+<img src="visual/3D/image-1794948132039.jpg" alt="Captura 3D 01 de ENGRAM" width="640">
+
+<img src="visual/3D/image-1794948191198.jpg" alt="Captura 3D 02 de ENGRAM" width="640">
+
+<img src="visual/3D/image-1794948195781.jpg" alt="Captura 3D 03 de ENGRAM" width="640">
+
+<img src="visual/3D/image-1794948198012.jpg" alt="Captura 3D 04 de ENGRAM" width="640">
+
+<img src="visual/3D/image-1794948200109.jpg" alt="Captura 3D 05 de ENGRAM" width="640">
+
+<img src="visual/3D/image-1794948203021.jpg" alt="Captura 3D 06 de ENGRAM" width="640">
+
+<img src="visual/3D/image-1794948206820.jpg" alt="Captura 3D 07 de ENGRAM" width="640">
+
+<img src="visual/3D/image-1794948219645.png" alt="Captura 3D 08 de ENGRAM" width="640">
+
+<img src="visual/3D/image-1794948225150.png" alt="Captura 3D 09 de ENGRAM" width="640">
+
+<img src="visual/3D/image-1794948227325.png" alt="Captura 3D 10 de ENGRAM" width="640">
 
 ### Capturas de la superficie 2D
 
-<img src="visual/2D/Screenshot%20from%202026-11-17%2016-24-06.png" alt="Superficie 2D de investigación de ENGRAM" width="640">
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-24-06.png" alt="Captura 2D 01 de ENGRAM" width="640">
 
-<img src="visual/2D/Screenshot%20from%202026-11-17%2016-28-53.png" alt="Superficie 2D de memorias de ENGRAM" width="640">
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-24-37.png" alt="Captura 2D 02 de ENGRAM" width="640">
 
-<img src="visual/2D/Screenshot%20from%202026-11-17%2016-38-43.png" alt="Superficie 2D de procedencia de ENGRAM" width="640">
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-28-53.png" alt="Captura 2D 03 de ENGRAM" width="640">
 
-<img src="visual/2D/Screenshot%20from%202026-11-17%2016-39-22.png" alt="Superficie 2D móvil de ENGRAM" width="320">
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-29-17.png" alt="Captura 2D 04 de ENGRAM" width="640">
 
-### El observatorio
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-30-00.png" alt="Captura 2D 05 de ENGRAM" width="640">
 
-![Observatorio XR de ENGRAM](visual/observatory/01-observatory.png)
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-36-21.png" alt="Captura 2D 06 de ENGRAM" width="640">
 
-![Instrumento de verificación de ENGRAM](visual/observatory/06-verification-vault.png)
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-38-27.png" alt="Captura 2D 07 de ENGRAM" width="640">
 
-Las capturas de interacción con manos todavía se están preparando. La
-evidencia XR actual proviene del emulador y de superficies renderizadas; no es
-una afirmación de validación en un Quest físico.
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-38-36.png" alt="Captura 2D 08 de ENGRAM" width="640">
+
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-38-43.png" alt="Captura 2D 09 de ENGRAM" width="640">
+
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-38-53.png" alt="Captura 2D 10 de ENGRAM" width="640">
+
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-39-00.png" alt="Captura 2D 11 de ENGRAM" width="640">
+
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-39-22.png" alt="Captura 2D móvil de ENGRAM" width="320">
 
 ## Lo que ya está hecho
 

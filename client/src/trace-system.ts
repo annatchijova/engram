@@ -1,6 +1,6 @@
 /**
  * ENGRAM — Nivel 3 Causal Field. "Trace" per
- * ENGRAM-ARCHITECTURAL-INVESTIGATION.md §4: read-only, fully reversible,
+ * docs/ENGRAM-ARCHITECTURAL-INVESTIGATION.md §4: read-only, fully reversible,
  * pulls on DIRECT / DERIVED / DERIVED_UNATTESTED / POSSIBLE edges and
  * renders them as genuinely distinct — never as nodes at different
  * distances. Backed by MNEME's real causality.impact(), which its own

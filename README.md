@@ -101,31 +101,55 @@ research.
 
 ## Evidence gallery
 
-### The investigation canvas
+### 3D surface captures
 
-![ENGRAM Canvas initial investigation](visual/canvas-initial.png)
+<img src="visual/3D/before-01-welcome-seated.jpg" alt="ENGRAM 3D welcome scene" width="640">
 
-![ENGRAM Canvas provenance graph](visual/canvas-provenance.png)
+<img src="visual/3D/image-1794948132039.jpg" alt="ENGRAM 3D capture 01" width="640">
+
+<img src="visual/3D/image-1794948191198.jpg" alt="ENGRAM 3D capture 02" width="640">
+
+<img src="visual/3D/image-1794948195781.jpg" alt="ENGRAM 3D capture 03" width="640">
+
+<img src="visual/3D/image-1794948198012.jpg" alt="ENGRAM 3D capture 04" width="640">
+
+<img src="visual/3D/image-1794948200109.jpg" alt="ENGRAM 3D capture 05" width="640">
+
+<img src="visual/3D/image-1794948203021.jpg" alt="ENGRAM 3D capture 06" width="640">
+
+<img src="visual/3D/image-1794948206820.jpg" alt="ENGRAM 3D capture 07" width="640">
+
+<img src="visual/3D/image-1794948219645.png" alt="ENGRAM 3D capture 08" width="640">
+
+<img src="visual/3D/image-1794948225150.png" alt="ENGRAM 3D capture 09" width="640">
+
+<img src="visual/3D/image-1794948227325.png" alt="ENGRAM 3D capture 10" width="640">
 
 ### 2D surface snapshots
 
-<img src="visual/2D/Screenshot%20from%202026-11-17%2016-24-06.png" alt="ENGRAM 2D investigation surface" width="640">
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-24-06.png" alt="ENGRAM 2D capture 01" width="640">
 
-<img src="visual/2D/Screenshot%20from%202026-11-17%2016-28-53.png" alt="ENGRAM 2D memory surface" width="640">
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-24-37.png" alt="ENGRAM 2D capture 02" width="640">
 
-<img src="visual/2D/Screenshot%20from%202026-11-17%2016-38-43.png" alt="ENGRAM 2D provenance surface" width="640">
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-28-53.png" alt="ENGRAM 2D capture 03" width="640">
 
-<img src="visual/2D/Screenshot%20from%202026-11-17%2016-39-22.png" alt="ENGRAM 2D mobile surface" width="320">
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-29-17.png" alt="ENGRAM 2D capture 04" width="640">
 
-### The observatory
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-30-00.png" alt="ENGRAM 2D capture 05" width="640">
 
-![ENGRAM XR observatory](visual/observatory/01-observatory.png)
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-36-21.png" alt="ENGRAM 2D capture 06" width="640">
 
-![ENGRAM verification instrument](visual/observatory/06-verification-vault.png)
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-38-27.png" alt="ENGRAM 2D capture 07" width="640">
 
-The hand-interaction capture set is still being prepared. The current XR
-evidence is emulator and rendered-surface evidence; it is not a claim of
-physical Quest validation.
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-38-36.png" alt="ENGRAM 2D capture 08" width="640">
+
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-38-43.png" alt="ENGRAM 2D capture 09" width="640">
+
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-38-53.png" alt="ENGRAM 2D capture 10" width="640">
+
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-39-00.png" alt="ENGRAM 2D capture 11" width="640">
+
+<img src="visual/2D/Screenshot%20from%202026-11-17%2016-39-22.png" alt="ENGRAM 2D mobile capture" width="320">
 
 ## What is built
 

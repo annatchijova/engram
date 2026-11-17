@@ -50,7 +50,7 @@ explicit, authorized Commit.
   volume whose rim never touches the field's outer edge. Pinned by `O5`.
 - **Dropping something never commits.** Placing a totem in the cradle only
   calls the read-only preview endpoint; Commit stays a separate, explicit,
-  authorized click. (`ENGRAM-ARCHITECTURAL-INVESTIGATION.md` §4 lists
+  authorized click. ([ENGRAM-ARCHITECTURAL-INVESTIGATION.md](ENGRAM-ARCHITECTURAL-INVESTIGATION.md) §4 lists
   "soltar para ejecutar una mutación" among the gestures that must not exist.)
 - **A superseded memory is retired, not deleted**, and is drawn connected
   to the successor MNEME names in `superseded_by`.
